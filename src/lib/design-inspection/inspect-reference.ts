@@ -55,7 +55,7 @@ export interface ReferenceSiteInspectionEvidence {
     p: RenderedElementMetrics;
     primaryButton?: RenderedElementMetrics;
     card?: RenderedElementMetrics;
-    containerMaxWidth: string;
+    containerMaxWidth?: string;
     isDark: boolean;
     heroComposition?: "center" | "split" | "text-only";
   };
@@ -585,7 +585,7 @@ export async function inspectLiveSite(
 
       // Detect container max width from primary containers
       const mainContainers = document.querySelectorAll('main, [class*="container"], [class*="wrapper"]');
-      let maxContainerWidth = "1280px";
+      let maxContainerWidth: string | undefined = undefined;
       for (const c of Array.from(mainContainers)) {
         const w = c.getBoundingClientRect().width;
         if (w >= 600 && w <= 1600) {
@@ -991,7 +991,9 @@ export function buildDesignSystemFromEvidence(
 
   // 4. Layout
   const layout = {
-    containerMaxWidth: attr(evidence.metrics.containerMaxWidth || "1280px", "observed", url, "Measured container bounding rect", "desktop", 0.9),
+    containerMaxWidth: evidence.metrics.containerMaxWidth
+      ? attr(evidence.metrics.containerMaxWidth, "observed", url, "Measured container bounding rect", "desktop", 0.9)
+      : attr("1280px", "inferred", url, "Standard responsive container baseline (unmeasured)"),
     containerPadding: attr("24px", "inferred", url, "Standard responsive gutter padding"),
     gridColumns: attr(12, "inferred", url, "Standard 12-column responsive layout grid"),
     gutterWidth: attr("24px", "inferred", url, "Inter-column layout gutter"),

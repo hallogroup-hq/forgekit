@@ -5,6 +5,7 @@ import {
   inspectLiveSite,
   isChromeAvailable,
   buildDesignSystemFromEvidence,
+  rgbToHex,
   ReferenceSiteInspectionEvidence,
 } from "@/lib/design-inspection/inspect-reference";
 
@@ -46,10 +47,10 @@ export async function POST(req: NextRequest) {
       domain.split(".")[0].charAt(0).toUpperCase() + domain.split(".")[0].slice(1);
 
     // 0. Attempt Cloudflare Browser Run Worker (Zero-Cost Isolated Cloudflare Worker)
-    const workerUrl = process.env.DESIGN_INSPECTION_WORKER_URL;
-    if (workerUrl) {
+    const workerUrl = process.env.DESIGN_INSPECTION_WORKER_URL?.trim();
+    const workerSecret = process.env.DESIGN_INSPECTION_WORKER_AUTH?.trim();
+    if (workerUrl && workerSecret) {
       try {
-        const workerSecret = process.env.DESIGN_INSPECTION_WORKER_AUTH || "forgekit-worker-dev-token";
         const workerRes = await fetch(workerUrl, {
           method: "POST",
           headers: {
@@ -64,6 +65,48 @@ export async function POST(req: NextRequest) {
           const workerData = await workerRes.json();
           if (workerData.success && workerData.metrics) {
             const jobId = crypto.randomUUID();
+
+            // Strict 6-digit hex normalization for all incoming worker color values
+            const normalizeHex = (c?: string) => {
+              if (!c) return undefined;
+              const converted = rgbToHex(c);
+              return /^#[0-9a-fA-F]{6}$/.test(converted) ? converted.toLowerCase() : undefined;
+            };
+
+            const normalizedPalette: string[] = Array.isArray(workerData.extractedPalette)
+              ? workerData.extractedPalette
+                  .map((c: string) => normalizeHex(c))
+                  .filter((c: string | undefined): c is string => Boolean(c))
+              : [];
+
+            const normalizedBodyColor = normalizeHex(workerData.metrics.body?.color) || "#111111";
+            const normalizedBodyBg = normalizeHex(workerData.metrics.body?.backgroundColor) || "#ffffff";
+
+            const rawBtn = workerData.metrics.components?.primaryButton || workerData.metrics.primaryButton;
+            const normalizedPrimaryBtn = rawBtn
+              ? {
+                  ...rawBtn,
+                  color: normalizeHex(rawBtn.color) || "#ffffff",
+                  backgroundColor: normalizeHex(rawBtn.backgroundColor) || "#2563eb",
+                }
+              : undefined;
+
+            const rawCard = workerData.metrics.components?.card || workerData.metrics.card;
+            const normalizedCard = rawCard
+              ? {
+                  ...rawCard,
+                  backgroundColor: normalizeHex(rawCard.backgroundColor) || "#ffffff",
+                }
+              : undefined;
+
+            const rawHeadings = workerData.metrics.headings || {};
+            const normalizedH1 = rawHeadings.h1
+              ? { ...rawHeadings.h1, color: normalizeHex(rawHeadings.h1.color) || normalizedBodyColor }
+              : { ...workerData.metrics.body, color: normalizedBodyColor };
+            const normalizedH2 = rawHeadings.h2
+              ? { ...rawHeadings.h2, color: normalizeHex(rawHeadings.h2.color) || normalizedBodyColor }
+              : { ...workerData.metrics.body, color: normalizedBodyColor };
+
             const workerEvidence: ReferenceSiteInspectionEvidence = {
               siteKey,
               url: parsedUrl.toString(),
@@ -80,13 +123,17 @@ export async function POST(req: NextRequest) {
                 title: workerData.meta?.title || cleanProjectName,
               },
               metrics: {
-                body: workerData.metrics.body,
-                h1: workerData.metrics.headings?.h1 || workerData.metrics.body,
-                h2: workerData.metrics.headings?.h2 || workerData.metrics.body,
+                body: {
+                  ...workerData.metrics.body,
+                  color: normalizedBodyColor,
+                  backgroundColor: normalizedBodyBg,
+                },
+                h1: normalizedH1,
+                h2: normalizedH2,
                 p: workerData.metrics.paragraph || workerData.metrics.body,
-                primaryButton: workerData.metrics.components?.primaryButton || workerData.metrics.primaryButton,
-                card: workerData.metrics.components?.card || workerData.metrics.card,
-                containerMaxWidth: workerData.metrics.layout?.containerMaxWidth || "1280px",
+                primaryButton: normalizedPrimaryBtn,
+                card: normalizedCard,
+                containerMaxWidth: workerData.metrics.layout?.containerMaxWidth || undefined,
                 isDark: workerData.metrics.layout?.isDark ?? false,
                 heroComposition: workerData.metrics.layout?.heroComposition?.type
                   ? (workerData.metrics.layout.heroComposition.type === "centered"
@@ -96,7 +143,7 @@ export async function POST(req: NextRequest) {
                       : "text-only")
                   : undefined,
               },
-              extractedPalette: workerData.extractedPalette || [],
+              extractedPalette: normalizedPalette,
               extractedFonts: workerData.extractedFonts || [],
               screenshots: {
                 desktopDataUri: workerData.screenshots?.desktopDataUri,
@@ -274,8 +321,8 @@ export async function POST(req: NextRequest) {
             fontWeight: "400",
             lineHeight: "1.5",
             letterSpacing: "normal",
-            color: isDark ? "rgb(240, 240, 240)" : "rgb(17, 17, 17)",
-            backgroundColor: isDark ? "rgb(8, 9, 10)" : "rgb(255, 255, 255)",
+            color: isDark ? "#f0f0f0" : "#111111",
+            backgroundColor: isDark ? "#08090a" : "#ffffff",
           },
           h1: {
             fontFamily: headingFont,
@@ -283,7 +330,7 @@ export async function POST(req: NextRequest) {
             fontWeight: "700",
             lineHeight: "1.1",
             letterSpacing: "-0.02em",
-            color: isDark ? "rgb(255, 255, 255)" : "rgb(17, 17, 17)",
+            color: isDark ? "#ffffff" : "#111111",
             backgroundColor: "transparent",
           },
           h2: {
@@ -292,7 +339,7 @@ export async function POST(req: NextRequest) {
             fontWeight: "600",
             lineHeight: "1.2",
             letterSpacing: "-0.01em",
-            color: isDark ? "rgb(240, 240, 240)" : "rgb(24, 24, 27)",
+            color: isDark ? "#f0f0f0" : "#18181b",
             backgroundColor: "transparent",
           },
           p: {
@@ -301,7 +348,7 @@ export async function POST(req: NextRequest) {
             fontWeight: "400",
             lineHeight: "1.6",
             letterSpacing: "normal",
-            color: isDark ? "rgb(161, 161, 170)" : "rgb(100, 116, 139)",
+            color: isDark ? "#a1a1aa" : "#64748b",
             backgroundColor: "transparent",
           },
           primaryButton: {
@@ -310,11 +357,11 @@ export async function POST(req: NextRequest) {
             fontWeight: "500",
             lineHeight: "1",
             letterSpacing: "normal",
-            color: "rgb(255, 255, 255)",
-            backgroundColor: primaryColor.startsWith("#") ? primaryColor : "rgb(37, 99, 235)",
+            color: "#ffffff",
+            backgroundColor: primaryColor.startsWith("#") ? primaryColor : (isDark ? "#3b82f6" : "#2563eb"),
             borderRadius: "8px",
           },
-          containerMaxWidth: "1280px",
+          containerMaxWidth: undefined,
           isDark,
         },
         extractedPalette: detectedColors,

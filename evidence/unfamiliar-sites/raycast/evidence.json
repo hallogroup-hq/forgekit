@@ -1,0 +1,120 @@
+{
+  "siteKey": "raycast",
+  "url": "https://raycast.com",
+  "name": "Raycast",
+  "archetype": "modern-saas",
+  "timestamp": "2026-10-08T20:55:19.814Z",
+  "inspectionMethod": "headless-chrome",
+  "viewports": {
+    "desktop": {
+      "width": 1440,
+      "height": 900
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  "meta": {
+    "title": "Raycast - Your shortcut to everything",
+    "description": "A collection of powerful productivity tools all within an extendable launcher."
+  },
+  "metrics": {
+    "body": {
+      "fontFamily": "Inter, \"Inter Fallback\", sans-serif",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "lineHeight": "18.4px",
+      "letterSpacing": "normal",
+      "color": "rgb(255, 255, 255)",
+      "backgroundColor": "rgb(7, 8, 10)",
+      "width": 1440,
+      "height": 15983,
+      "padding": "0px"
+    },
+    "h1": {
+      "fontFamily": "Inter, \"Inter Fallback\", sans-serif",
+      "fontSize": "64px",
+      "fontWeight": "600",
+      "lineHeight": "70.4px",
+      "letterSpacing": "normal",
+      "color": "rgb(255, 255, 255)",
+      "backgroundColor": "rgb(7, 8, 10)",
+      "width": 540,
+      "height": 141,
+      "padding": "0px"
+    },
+    "h2": {
+      "fontFamily": "Inter, \"Inter Fallback\", sans-serif",
+      "fontSize": "20px",
+      "fontWeight": "500",
+      "lineHeight": "normal",
+      "letterSpacing": "0.2px",
+      "color": "rgb(255, 255, 255)",
+      "backgroundColor": "rgb(7, 8, 10)",
+      "width": 350,
+      "height": 24,
+      "padding": "0px"
+    },
+    "p": {
+      "fontFamily": "Inter, \"Inter Fallback\", sans-serif",
+      "fontSize": "18px",
+      "fontWeight": "400",
+      "lineHeight": "normal",
+      "letterSpacing": "0.2px",
+      "color": "rgb(255, 255, 255)",
+      "backgroundColor": "rgb(7, 8, 10)",
+      "width": 786,
+      "height": 42,
+      "padding": "0px"
+    },
+    "primaryButton": {
+      "fontFamily": "Inter, \"Inter Fallback\", sans-serif",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "16px",
+      "letterSpacing": "0.2px",
+      "color": "rgb(47, 48, 49)",
+      "backgroundColor": "rgb(230, 230, 230)",
+      "borderRadius": "8px",
+      "boxShadow": "rgba(0, 0, 0, 0.5) 0px 0px 0px 2px, rgba(255, 255, 255, 0.19) 0px 0px 14px 0px, rgba(0, 0, 0, 0.2) 0px -1px 0.4px 0px inset, rgb(255, 255, 255) 0px 1px 0.4px 0px inset",
+      "width": 117,
+      "height": 36,
+      "padding": "8px 12px"
+    },
+    "card": {
+      "fontFamily": "Inter, \"Inter Fallback\", sans-serif",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "lineHeight": "18.4px",
+      "letterSpacing": "normal",
+      "color": "rgb(255, 255, 255)",
+      "backgroundColor": "rgb(7, 8, 10)",
+      "borderRadius": "20px",
+      "boxShadow": "rgba(255, 255, 255, 0.1) 0px 1px 0px 0px inset, rgba(7, 13, 79, 0.05) 0px 0px 20px 3px, rgba(7, 13, 79, 0.05) 0px 0px 40px 20px, rgba(255, 255, 255, 0.06) 0px 0px 0px 1px inset",
+      "width": 360,
+      "height": 536,
+      "padding": "0px"
+    },
+    "containerMaxWidth": "1440px",
+    "isDark": true
+  },
+  "extractedPalette": [
+    "#ffffff",
+    "#07080a",
+    "#9c9c9d",
+    "#2f3031",
+    "#e6e6e6",
+    "#130d0e",
+    "#6a6b6c"
+  ],
+  "extractedFonts": [
+    "Inter",
+    "GeistMono"
+  ],
+  "screenshots": {
+    "desktopPath": "/evidence/reference-sites/raycast/desktop.png",
+    "mobilePath": "/evidence/reference-sites/raycast/mobile.png"
+  },
+  "fidelityReport": "Inspected Raycast via headless Chrome (1440x900 desktop & 390x844 mobile). Extracted 7 colors and 2 rendered fonts. Body: #ffffff on #07080a. Primary CTA: #e6e6e6."
+}

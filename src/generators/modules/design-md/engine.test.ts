@@ -371,6 +371,63 @@ describe("Design.md 3-Layer Strategic Engine", () => {
       assert.equal(parseResult.system.typography?.headingFont, undefined);
       assert.ok(parseResult.warnings.some((w) => w.includes("{typography.nonExistentFont}")));
     });
+
+    it("should reject 'channels' and unnormalized values per DTCG 2025.10", () => {
+      const deprecatedPayload = {
+        color: {
+          brand: {
+            $value: { colorSpace: "srgb", channels: [255, 0, 0] },
+            $type: "color",
+          },
+        },
+      };
+      const val1 = validateDtcgTokenTree(deprecatedPayload);
+      assert.equal(val1.valid, false);
+      assert.ok(val1.errors.some((e) => e.includes("expected 'components'")));
+
+      const unnormalizedPayload = {
+        color: {
+          brand: {
+            $value: { colorSpace: "srgb", components: [255, 0, 0] },
+            $type: "color",
+          },
+        },
+      };
+      const val2 = validateDtcgTokenTree(unnormalizedPayload);
+      assert.equal(val2.valid, false);
+      assert.ok(val2.errors.some((e) => e.includes("normalized number in range [0, 1]")));
+
+      const validDtcgPayload = {
+        color: {
+          brand: {
+            $value: { colorSpace: "srgb", components: [1.0, 0.0, 0.0], alpha: 1 },
+            $type: "color",
+          },
+        },
+      };
+      const val3 = validateDtcgTokenTree(validDtcgPayload);
+      assert.equal(val3.valid, true);
+    });
+
+    it("should record warnings and unsupportedFields instead of silent defaults for malformed input", () => {
+      const malformedJson = JSON.stringify({
+        color: {
+          primary: {
+            $value: { colorSpace: "srgb", channels: [100, 200, 300] },
+            $type: "color",
+          },
+        },
+        dimension: {
+          spacing: {
+            base: { $value: { invalid: true }, $type: "dimension" },
+          },
+        },
+      });
+      const res = parseDtcgTokens(malformedJson);
+      assert.ok(res.unsupportedFields.length >= 1);
+      assert.ok(res.warnings.some((w) => w.includes("channels")));
+      assert.equal(res.system.colors?.primary, undefined);
+    });
   });
 
   describe("HTML Component Cheatsheet Generator", () => {

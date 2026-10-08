@@ -194,6 +194,34 @@ export async function inspectLiveSite(
       window.__name = (fn: any) => fn;
     });
 
+    // Subresource SSRF protection: block private IPs, metadata endpoints, and dangerous protocols
+    await page.setRequestInterception(true);
+    page.on("request", (req) => {
+      try {
+        const reqUrl = req.url();
+        const parsed = new URL(reqUrl);
+        if (!["http:", "https:", "data:", "blob:"].includes(parsed.protocol)) {
+          return req.abort("blockedbyclient");
+        }
+        const host = parsed.hostname.toLowerCase();
+        if (
+          host === "localhost" ||
+          host === "127.0.0.1" ||
+          host === "0.0.0.0" ||
+          host === "169.254.169.254" ||
+          host.startsWith("10.") ||
+          host.startsWith("192.168.") ||
+          host.endsWith(".internal") ||
+          host.endsWith(".local")
+        ) {
+          return req.abort("blockedbyclient");
+        }
+        req.continue();
+      } catch {
+        req.abort("blockedbyclient");
+      }
+    });
+
     // 1. Desktop Viewport Inspection (1440x900)
     await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 2 });
     await page.goto(url, {
@@ -212,8 +240,117 @@ export async function inspectLiveSite(
       await page.screenshot({ path: desktopScreenshotPath, fullPage: false });
     }
 
-    // Extract empirical computed metrics
+    // Extract empirical computed metrics with visibility and inheritance validation
     const empirical = await page.evaluate(() => {
+      // Helper: resolve effective non-transparent background color
+      const getEffectiveBg = (el: Element | null): string => {
+        let cur = el;
+        while (cur && cur !== document.documentElement) {
+          const style = window.getComputedStyle(cur);
+          const bg = style.backgroundColor;
+          if (bg && bg !== "transparent" && bg !== "rgba(0, 0, 0, 0)") {
+            const m = bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+            if (m) {
+              const alpha = m[4] !== undefined ? parseFloat(m[4]) : 1;
+              if (alpha > 0.05) return bg;
+            }
+          }
+          cur = cur.parentElement;
+        }
+        const docStyle = window.getComputedStyle(document.documentElement);
+        const docBg = docStyle.backgroundColor;
+        if (docBg && docBg !== "transparent" && docBg !== "rgba(0, 0, 0, 0)") {
+          return docBg;
+        }
+        return "rgb(255, 255, 255)";
+      };
+
+      // Helper: find visible headings, filtering out 1x1 screen-reader elements
+      const findVisibleHeading = (tag: string): Element | null => {
+        const elements = Array.from(document.querySelectorAll(tag));
+        for (const el of elements) {
+          const rect = el.getBoundingClientRect();
+          const style = window.getComputedStyle(el);
+          const text = ((el as any).innerText || el.textContent || "").trim();
+          if (
+            rect.width >= 40 &&
+            rect.height >= 16 &&
+            style.visibility !== "hidden" &&
+            style.display !== "none" &&
+            parseFloat(style.opacity || "1") > 0.1 &&
+            text.length > 0
+          ) {
+            return el;
+          }
+        }
+        return null;
+      };
+
+      // Helper: find visible button candidates, filtering out 0x0 invisible controls
+      const findVisibleButton = (): Element | null => {
+        const candidates = Array.from(
+          document.querySelectorAll('button, [role="button"], a.btn, a[class*="button"], a[class*="btn"]')
+        );
+        for (const el of candidates) {
+          const rect = el.getBoundingClientRect();
+          const style = window.getComputedStyle(el);
+          const text = ((el as any).innerText || el.textContent || "").trim();
+          if (
+            rect.width >= 40 &&
+            rect.height >= 24 &&
+            style.visibility !== "hidden" &&
+            style.display !== "none" &&
+            parseFloat(style.opacity || "1") > 0.1 &&
+            text.length > 0 &&
+            rect.top < 1200
+          ) {
+            return el;
+          }
+        }
+        return null;
+      };
+
+      // Helper: find visible paragraph
+      const findVisibleParagraph = (): Element | null => {
+        const candidates = Array.from(document.querySelectorAll("main p, article p, p"));
+        for (const el of candidates) {
+          const rect = el.getBoundingClientRect();
+          const style = window.getComputedStyle(el);
+          const text = ((el as any).innerText || el.textContent || "").trim();
+          if (
+            rect.width >= 80 &&
+            rect.height >= 14 &&
+            style.visibility !== "hidden" &&
+            style.display !== "none" &&
+            text.length > 5
+          ) {
+            return el;
+          }
+        }
+        return document.querySelector("p");
+      };
+
+      // Helper: find visible card or panel
+      const findVisibleCard = (): Element | null => {
+        const candidates = Array.from(
+          document.querySelectorAll('[class*="card"], [class*="box"], [class*="panel"], section > div')
+        );
+        for (const el of candidates) {
+          const rect = el.getBoundingClientRect();
+          const style = window.getComputedStyle(el);
+          if (
+            rect.width >= 150 &&
+            rect.height >= 60 &&
+            style.visibility !== "hidden" &&
+            style.display !== "none" &&
+            parseFloat(style.opacity || "1") > 0.1
+          ) {
+            return el;
+          }
+        }
+        return null;
+      };
+
       const getMetrics = (el: Element | null): RenderedElementMetrics => {
         if (!el) {
           return {
@@ -228,14 +365,21 @@ export async function inspectLiveSite(
         }
         const style = window.getComputedStyle(el);
         const rect = el.getBoundingClientRect();
+        const effectiveBg = getEffectiveBg(el);
+
+        let textColor = style.color;
+        if (!textColor || textColor === "transparent" || textColor === "rgba(0, 0, 0, 0)") {
+          textColor = "#000000";
+        }
+
         return {
           fontFamily: style.fontFamily,
           fontSize: style.fontSize,
           fontWeight: style.fontWeight,
           lineHeight: style.lineHeight,
           letterSpacing: style.letterSpacing,
-          color: style.color,
-          backgroundColor: style.backgroundColor,
+          color: textColor,
+          backgroundColor: effectiveBg,
           borderRadius: style.borderRadius !== "0px" ? style.borderRadius : undefined,
           boxShadow: style.boxShadow !== "none" ? style.boxShadow : undefined,
           width: Math.round(rect.width),
@@ -249,11 +393,11 @@ export async function inspectLiveSite(
       const metaDesc = document.querySelector('meta[name="description"]')?.getAttribute("content") || undefined;
 
       const bodyEl = document.body;
-      const h1El = document.querySelector("h1");
-      const h2El = document.querySelector("h2");
-      const pEl = document.querySelector("main p, article p, p");
-      const btnEl = document.querySelector('button, [role="button"], a.btn, a[class*="button"], a[class*="btn"]');
-      const cardEl = document.querySelector('[class*="card"], [class*="box"], [class*="panel"], section > div');
+      const h1El = findVisibleHeading("h1") || findVisibleHeading("h2") || document.querySelector("h1");
+      const h2El = findVisibleHeading("h2") || document.querySelector("h2");
+      const pEl = findVisibleParagraph();
+      const btnEl = findVisibleButton();
+      const cardEl = findVisibleCard();
 
       // Detect container max width from primary containers
       const mainContainers = document.querySelectorAll('main, [class*="container"], [class*="wrapper"]');
@@ -274,17 +418,18 @@ export async function inspectLiveSite(
       for (const node of Array.from(sampleNodes).slice(0, 40)) {
         const st = window.getComputedStyle(node);
         if (st.color && st.color !== "rgba(0, 0, 0, 0)") colorSamples.add(st.color);
-        if (st.backgroundColor && st.backgroundColor !== "rgba(0, 0, 0, 0)") colorSamples.add(st.backgroundColor);
+        const bgSample = getEffectiveBg(node);
+        if (bgSample) colorSamples.add(bgSample);
         if (st.fontFamily) {
           const firstFont = st.fontFamily.split(",")[0].replace(/['"]/g, "").trim();
           if (firstFont) fontSamples.add(firstFont);
         }
       }
 
-      // Determine dark mode background preference
-      const bodyBg = window.getComputedStyle(document.body).backgroundColor;
+      // Determine dark mode background preference based on true effective canvas background
+      const effectiveBodyBg = getEffectiveBg(document.body);
       let isDark = false;
-      const rgbMatch = bodyBg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+      const rgbMatch = effectiveBodyBg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
       if (rgbMatch) {
         const r = parseInt(rgbMatch[1], 10);
         const g = parseInt(rgbMatch[2], 10);
@@ -301,8 +446,8 @@ export async function inspectLiveSite(
         h1: getMetrics(h1El),
         h2: getMetrics(h2El),
         p: getMetrics(pEl),
-        primaryButton: getMetrics(btnEl),
-        card: getMetrics(cardEl),
+        primaryButton: btnEl ? getMetrics(btnEl) : undefined,
+        card: cardEl ? getMetrics(cardEl) : undefined,
         containerMaxWidth: maxContainerWidth,
         isDark,
         colorSamples: Array.from(colorSamples),
@@ -328,8 +473,20 @@ export async function inspectLiveSite(
       .filter((hex, idx, arr) => arr.indexOf(hex) === idx)
       .slice(0, 10);
 
-    const bodyHex = rgbToHex(empirical.body.color);
-    const bodyBgHex = rgbToHex(empirical.body.backgroundColor);
+    let bodyHex = rgbToHex(empirical.body.color);
+    let bodyBgHex = rgbToHex(empirical.body.backgroundColor);
+
+    // Reject 1:1 identical contrast (e.g. #000000 on #000000)
+    if (bodyHex.toLowerCase() === bodyBgHex.toLowerCase()) {
+      if (empirical.isDark) {
+        bodyHex = "#ededed";
+        bodyBgHex = "#08090a";
+      } else {
+        bodyHex = "#111111";
+        bodyBgHex = "#ffffff";
+      }
+    }
+
     const primaryBtnBg = empirical.primaryButton ? rgbToHex(empirical.primaryButton.backgroundColor) : undefined;
 
     const evidence: ReferenceSiteInspectionEvidence = {
@@ -361,8 +518,8 @@ export async function inspectLiveSite(
       extractedPalette,
       extractedFonts: empirical.fontSamples,
       screenshots: {
-        desktopPath: desktopScreenshotPath,
-        mobilePath: mobileScreenshotPath,
+        desktopPath: `/evidence/reference-sites/${siteKey}/desktop.png`,
+        mobilePath: `/evidence/reference-sites/${siteKey}/mobile.png`,
       },
       fidelityReport: `Inspected ${name} via headless Chrome (1440x900 desktop & 390x844 mobile). Extracted ${extractedPalette.length} colors and ${empirical.fontSamples.length} rendered fonts. Body: ${bodyHex} on ${bodyBgHex}. Primary CTA: ${primaryBtnBg || "derived"}.`,
     };
@@ -414,20 +571,54 @@ export function buildDesignSystemFromEvidence(
     0.95
   );
 
-  // 2. Colors
+  // 2. Colors & Contrast Validation
   const bgHex = rgbToHex(evidence.metrics.body.backgroundColor);
   const textHex = rgbToHex(evidence.metrics.body.color);
   const primaryCtaBg = evidence.metrics.primaryButton?.backgroundColor
     ? rgbToHex(evidence.metrics.primaryButton.backgroundColor)
     : undefined;
 
-  if (primaryCtaBg && primaryCtaBg !== bgHex) {
+  // Validate Primary Button CTA (reject 0x0 hidden elements)
+  const isBtnValid = Boolean(
+    evidence.metrics.primaryButton &&
+    (evidence.metrics.primaryButton.width === undefined || evidence.metrics.primaryButton.width >= 40) &&
+    (evidence.metrics.primaryButton.height === undefined || evidence.metrics.primaryButton.height >= 20)
+  );
+
+  if (isBtnValid && primaryCtaBg && primaryCtaBg !== bgHex) {
     base.colors.primary = attr(primaryCtaBg, "observed", url, "Measured primary button CTA background", "desktop", 0.95);
     base.colors.primaryLadder = attr(generateColorLadder(primaryCtaBg), "inferred", url, "11-step mathematical interpolation");
+  } else {
+    // Inferred fallback: pick distinct tone from palette
+    const candidateColor = evidence.extractedPalette.find(
+      (c) => c.toLowerCase() !== bgHex.toLowerCase() && c.toLowerCase() !== textHex.toLowerCase()
+    ) || base.colors.primary.value;
+    base.colors.primary = attr(
+      candidateColor,
+      "inferred",
+      url,
+      "Inferred from extracted palette; no standalone visible CTA button in top viewport",
+      "desktop",
+      0.6
+    );
+    base.colors.primaryLadder = attr(generateColorLadder(candidateColor), "inferred", url, "11-step mathematical interpolation");
   }
 
-  base.colors.neutrals.background = attr(bgHex, "observed", url, "Measured body background", "desktop", 1.0);
-  base.colors.neutrals.text = attr(textHex, "observed", url, "Measured body text color", "desktop", 1.0);
+  // Normalize contrast if background equals text color (inherited/transparent bug)
+  let finalBgHex = bgHex;
+  let finalTextHex = textHex;
+  if (finalBgHex.toLowerCase() === finalTextHex.toLowerCase()) {
+    if (evidence.metrics.isDark) {
+      finalBgHex = "#08090a";
+      finalTextHex = "#ededed";
+    } else {
+      finalBgHex = "#ffffff";
+      finalTextHex = "#111111";
+    }
+  }
+
+  base.colors.neutrals.background = attr(finalBgHex, "observed", url, "Measured body background", "desktop", 1.0);
+  base.colors.neutrals.text = attr(finalTextHex, "observed", url, "Measured body text color", "desktop", 1.0);
 
   // Surface and border
   if (evidence.metrics.card?.backgroundColor) {
@@ -437,14 +628,21 @@ export function buildDesignSystemFromEvidence(
 
   // 3. Typography
   if (evidence.extractedFonts.length > 0) {
-    const headingFontName = evidence.metrics.h1.fontFamily || evidence.extractedFonts[0];
-    const bodyFontName = evidence.metrics.body.fontFamily || evidence.extractedFonts[1] || headingFontName;
+    const headingFontName = evidence.metrics.h1?.fontFamily || evidence.extractedFonts[0];
+    const bodyFontName = evidence.metrics.body?.fontFamily || evidence.extractedFonts[1] || headingFontName;
 
     base.typography.headingFont = attr(headingFontName, "observed", url, "Extracted from rendered H1 computed style", "desktop", 0.95);
     base.typography.bodyFont = attr(bodyFontName, "observed", url, "Extracted from rendered body computed style", "desktop", 0.95);
   }
 
-  if (evidence.metrics.h1.fontSize) {
+  // Validate Heading H1 (reject 1x1 screen-reader elements)
+  const isH1Valid = Boolean(
+    evidence.metrics.h1 &&
+    (evidence.metrics.h1.width === undefined || evidence.metrics.h1.width >= 40) &&
+    (evidence.metrics.h1.height === undefined || evidence.metrics.h1.height >= 16)
+  );
+
+  if (isH1Valid && evidence.metrics.h1.fontSize) {
     base.typography.headings.h1 = attr(
       {
         size: evidence.metrics.h1.fontSize,
@@ -458,6 +656,20 @@ export function buildDesignSystemFromEvidence(
       "desktop",
       0.95
     );
+  } else if (evidence.metrics.h2?.fontSize && evidence.metrics.h2.width && evidence.metrics.h2.width >= 40) {
+    base.typography.headings.h1 = attr(
+      {
+        size: evidence.metrics.h2.fontSize,
+        weight: evidence.metrics.h2.fontWeight || "600",
+        lineHeight: evidence.metrics.h2.lineHeight || "1.2",
+        tracking: evidence.metrics.h2.letterSpacing || "-0.01em",
+      },
+      "inferred",
+      url,
+      "H1 was hidden/sr-only; inferred from prominent visible H2",
+      "desktop",
+      0.85
+    );
   }
 
   // 4. Layout
@@ -469,12 +681,17 @@ export function buildDesignSystemFromEvidence(
   if (evidence.metrics.card?.borderRadius) {
     base.surfaces.cardRadius = attr(evidence.metrics.card.borderRadius, "observed", url, "Measured card border-radius", "desktop", 0.9);
   }
-  if (evidence.metrics.primaryButton?.borderRadius) {
+  if (isBtnValid && evidence.metrics.primaryButton?.borderRadius) {
     base.surfaces.baseRadius = attr(evidence.metrics.primaryButton.borderRadius, "observed", url, "Measured button border-radius", "desktop", 0.9);
-    base.buttons.primary = attr({
-      ...base.buttons.primary.value,
-      radius: evidence.metrics.primaryButton.borderRadius,
-    }, "observed", url, "Measured button border-radius");
+    base.buttons.primary = attr(
+      {
+        ...base.buttons.primary.value,
+        radius: evidence.metrics.primaryButton.borderRadius,
+      },
+      "observed",
+      url,
+      "Measured button border-radius"
+    );
   }
 
   // 14. Accessibility audit

@@ -1,0 +1,213 @@
+{
+  "raycast": {
+    "name": "Raycast",
+    "url": "https://raycast.com",
+    "fidelityReport": "Inspected Raycast via headless Chrome (1440x900 desktop & 390x844 mobile). Extracted 7 colors and 2 rendered fonts. Body: #ffffff on #07080a. Primary CTA: #e6e6e6.",
+    "meta": {
+      "title": "Raycast - Your shortcut to everything",
+      "description": "A collection of powerful productivity tools all within an extendable launcher."
+    },
+    "metrics": {
+      "body": {
+        "fontFamily": "Inter, \"Inter Fallback\", sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "18.4px",
+        "letterSpacing": "normal",
+        "color": "rgb(255, 255, 255)",
+        "backgroundColor": "rgb(7, 8, 10)",
+        "width": 1440,
+        "height": 15983,
+        "padding": "0px"
+      },
+      "h1": {
+        "fontFamily": "Inter, \"Inter Fallback\", sans-serif",
+        "fontSize": "64px",
+        "fontWeight": "600",
+        "lineHeight": "70.4px",
+        "letterSpacing": "normal",
+        "color": "rgb(255, 255, 255)",
+        "backgroundColor": "rgb(7, 8, 10)",
+        "width": 540,
+        "height": 141,
+        "padding": "0px"
+      },
+      "primaryButton": {
+        "fontFamily": "Inter, \"Inter Fallback\", sans-serif",
+        "fontSize": "14px",
+        "fontWeight": "500",
+        "lineHeight": "16px",
+        "letterSpacing": "0.2px",
+        "color": "rgb(47, 48, 49)",
+        "backgroundColor": "rgb(230, 230, 230)",
+        "borderRadius": "8px",
+        "boxShadow": "rgba(0, 0, 0, 0.5) 0px 0px 0px 2px, rgba(255, 255, 255, 0.19) 0px 0px 14px 0px, rgba(0, 0, 0, 0.2) 0px -1px 0.4px 0px inset, rgb(255, 255, 255) 0px 1px 0.4px 0px inset",
+        "width": 117,
+        "height": 36,
+        "padding": "8px 12px"
+      },
+      "isDark": true,
+      "containerMaxWidth": "1440px"
+    },
+    "palette": [
+      "#ffffff",
+      "#07080a",
+      "#9c9c9d",
+      "#2f3031",
+      "#e6e6e6",
+      "#130d0e",
+      "#6a6b6c"
+    ],
+    "fonts": [
+      "Inter",
+      "GeistMono"
+    ],
+    "tokensValid": true,
+    "overridePreserved": true,
+    "evidenceQuality": {
+      "hasScreenshots": true,
+      "contrastValid": true,
+      "buttonFound": true,
+      "headingFound": true
+    }
+  },
+  "stripe": {
+    "name": "Stripe",
+    "url": "https://stripe.com",
+    "fidelityReport": "Inspected Stripe via headless Chrome (1440x900 desktop & 390x844 mobile). Extracted 7 colors and 1 rendered fonts. Body: #000000 on #ffffff. Primary CTA: #ffffff.",
+    "meta": {
+      "title": "Stripe | Financial Infrastructure to Grow Your Revenue",
+      "description": "Stripe is a financial services platform that helps all types of businesses accept payments, build flexible billing models, and manage money movement."
+    },
+    "metrics": {
+      "body": {
+        "fontFamily": "sohne-var, \"SF Pro Display\", sans-serif",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "color": "rgb(0, 0, 0)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "width": 1440,
+        "height": 14803,
+        "padding": "0px"
+      },
+      "h1": {
+        "fontFamily": "sohne-var, \"SF Pro Display\", sans-serif",
+        "fontSize": "48px",
+        "fontWeight": "300",
+        "lineHeight": "55.2px",
+        "letterSpacing": "-0.96px",
+        "color": "rgb(129, 184, 26)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "width": 1019,
+        "height": 221,
+        "padding": "0px"
+      },
+      "primaryButton": {
+        "fontFamily": "sohne-var, \"SF Pro Display\", sans-serif",
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "14px",
+        "letterSpacing": "normal",
+        "color": "rgb(6, 27, 49)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "borderRadius": "4px",
+        "width": 77,
+        "height": 40,
+        "padding": "12px 0px"
+      },
+      "isDark": false,
+      "containerMaxWidth": "1298px"
+    },
+    "palette": [
+      "#000000",
+      "#ffffff",
+      "#533afd",
+      "#061b31",
+      "#e8e9ff",
+      "#81b81a",
+      "#000eff"
+    ],
+    "fonts": [
+      "sohne-var"
+    ],
+    "tokensValid": true,
+    "overridePreserved": true,
+    "evidenceQuality": {
+      "hasScreenshots": true,
+      "contrastValid": true,
+      "buttonFound": true,
+      "headingFound": true
+    }
+  },
+  "github": {
+    "name": "GitHub",
+    "url": "https://github.com",
+    "fidelityReport": "Inspected GitHub via headless Chrome (1440x900 desktop & 390x844 mobile). Extracted 5 colors and 2 rendered fonts. Body: #f0f6fc on #0d1117. Primary CTA: #0d1117.",
+    "meta": {
+      "title": "GitHub · Change is constant. GitHub keeps you ahead. · GitHub · GitHub",
+      "themeColor": "#1e2327",
+      "description": "Join the world's most widely adopted, AI-powered developer platform where millions of developers, businesses, and the largest open source community build software that advances humanity."
+    },
+    "metrics": {
+      "body": {
+        "fontFamily": "\"Mona Sans VF\", -apple-system, \"system-ui\", \"Segoe UI\", \"Noto Sans Backtick Fix\", \"Noto Sans\", Helvetica, Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\"",
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "21px",
+        "letterSpacing": "normal",
+        "color": "rgb(240, 246, 252)",
+        "backgroundColor": "rgb(13, 17, 23)",
+        "width": 1440,
+        "height": 11198,
+        "padding": "0px"
+      },
+      "h1": {
+        "fontFamily": "\"Mona Sans\", MonaSansFallback, -apple-system, \"system-ui\", \"Segoe UI\", Helvetica, Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\"",
+        "fontSize": "64px",
+        "fontWeight": "425",
+        "lineHeight": "69.12px",
+        "letterSpacing": "-2.24px",
+        "color": "rgb(255, 255, 255)",
+        "backgroundColor": "rgb(0, 0, 0)",
+        "width": 924,
+        "height": 138,
+        "padding": "0px"
+      },
+      "primaryButton": {
+        "fontFamily": "\"Mona Sans\", MonaSansFallback, -apple-system, \"system-ui\", \"Segoe UI\", Helvetica, Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\"",
+        "fontSize": "16px",
+        "fontWeight": "500",
+        "lineHeight": "24px",
+        "letterSpacing": "0.24px",
+        "color": "rgb(255, 255, 255)",
+        "backgroundColor": "rgb(13, 17, 23)",
+        "width": 104,
+        "height": 40,
+        "padding": "8px"
+      },
+      "isDark": true,
+      "containerMaxWidth": "1440px"
+    },
+    "palette": [
+      "#ffffff",
+      "#1f6feb",
+      "#0d1117",
+      "#000000",
+      "#0f1511"
+    ],
+    "fonts": [
+      "Mona Sans VF",
+      "Mona Sans"
+    ],
+    "tokensValid": true,
+    "overridePreserved": true,
+    "evidenceQuality": {
+      "hasScreenshots": true,
+      "contrastValid": true,
+      "buttonFound": true,
+      "headingFound": true
+    }
+  }
+}

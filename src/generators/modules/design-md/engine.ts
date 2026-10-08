@@ -37,8 +37,8 @@ export interface DtcgDimensionValue {
 
 export interface DtcgColorValue {
   colorSpace: string;
-  channels: [number, number, number];
-  hex: string;
+  components: [number, number, number];
+  hex?: string;
   alpha?: number;
 }
 
@@ -74,18 +74,31 @@ export function dtcgDimensionToString(dim: DtcgDimensionValue | string | number)
 
 export function hexToDtcgColor(hex: string): DtcgColorValue {
   const [r, g, b] = hexToRgb(hex);
+  // DTCG 2025.10: sRGB components must be normalized floats in [0, 1]
+  const normR = Math.round((r / 255) * 10000) / 10000;
+  const normG = Math.round((g / 255) * 10000) / 10000;
+  const normB = Math.round((b / 255) * 10000) / 10000;
   return {
     colorSpace: "srgb",
-    channels: [r, g, b],
+    components: [normR, normG, normB],
+    alpha: 1,
     hex: hex.toLowerCase(),
   };
 }
 
 export function dtcgColorToHex(color: DtcgColorValue | string): string {
-  if (typeof color === "object" && color !== null && "hex" in color) {
-    return color.hex;
+  if (typeof color === "object" && color !== null) {
+    if (Array.isArray(color.components) && color.components.length >= 3) {
+      const r = Math.max(0, Math.min(255, Math.round(color.components[0] * 255)));
+      const g = Math.max(0, Math.min(255, Math.round(color.components[1] * 255)));
+      const b = Math.max(0, Math.min(255, Math.round(color.components[2] * 255)));
+      return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+    }
+    if ("hex" in color && typeof color.hex === "string" && color.hex.startsWith("#")) {
+      return color.hex;
+    }
   }
-  if (typeof color === "string") {
+  if (typeof color === "string" && (color.startsWith("#") || color.startsWith("rgb"))) {
     return color;
   }
   return "#000000";
@@ -1933,6 +1946,7 @@ export function validateDtcgTokenTree(jsonObj: any): DtcgValidationResult {
 
       if (val === undefined || val === null) {
         errors.push(`Token at ${path} has missing or null $value`);
+        return;
       }
 
       const validTypes = new Set([
@@ -1953,13 +1967,73 @@ export function validateDtcgTokenTree(jsonObj: any): DtcgValidationResult {
         warnings.push(`Token at ${path} has non-standard $type: ${type}`);
       }
 
+      // Check aliases
       if (typeof val === "string" && val.startsWith("{") && val.endsWith("}")) {
         const dummyUnresolved: string[] = [];
         const resolved = resolveDtcgAlias(val, jsonObj, dummyUnresolved);
         if (resolved === undefined) {
           errors.push(`Token at ${path} references unresolved alias ${val}`);
         }
+        return;
       }
+
+      // DTCG 2025.10 Strict Type Validations
+      if (type === "color") {
+        if (typeof val === "object" && val !== null) {
+          if ("channels" in val) {
+            errors.push(
+              `Token at ${path} has invalid color format: expected 'components' array of normalized numbers [0, 1], found 'channels'`
+            );
+          } else if (!Array.isArray(val.components) || val.components.length < 3) {
+            errors.push(
+              `Token at ${path} has invalid color format: missing 'components' array with 3 values`
+            );
+          } else {
+            for (let i = 0; i < 3; i++) {
+              const c = val.components[i];
+              if (typeof c !== "number" || isNaN(c) || c < 0 || c > 1) {
+                errors.push(
+                  `Token at ${path} color component at index ${i} must be a normalized number in range [0, 1], found ${c}`
+                );
+              }
+            }
+          }
+          if (!val.colorSpace) {
+            warnings.push(`Token at ${path} color object is missing 'colorSpace' declaration`);
+          }
+        } else if (typeof val === "string") {
+          if (!val.startsWith("#") && !val.startsWith("rgb") && !val.startsWith("hsl")) {
+            warnings.push(`Token at ${path} color value '${val}' is not a recognized hex or css color`);
+          }
+        } else {
+          errors.push(`Token at ${path} color token must be a string or structured color object`);
+        }
+      } else if (type === "dimension") {
+        if (typeof val === "object" && val !== null) {
+          if (typeof val.value !== "number" || isNaN(val.value)) {
+            errors.push(`Token at ${path} dimension object must contain numeric 'value'`);
+          }
+          if (typeof val.unit !== "string" || !val.unit) {
+            errors.push(`Token at ${path} dimension object must contain string 'unit'`);
+          }
+        } else if (typeof val === "string") {
+          const match = val.trim().match(/^(-?\d+(?:\.\d+)?)\s*([a-zA-Z%]*)$/);
+          if (!match) {
+            errors.push(`Token at ${path} dimension string '${val}' is not a valid CSS dimension`);
+          }
+        } else if (typeof val !== "number") {
+          errors.push(`Token at ${path} dimension token must be a string, number, or dimension object`);
+        }
+      } else if (type === "shadow") {
+        if (typeof val === "object" && val !== null) {
+          if (!("offsetX" in val) || !("offsetY" in val) || !("blur" in val) || !("color" in val)) {
+            errors.push(
+              `Token at ${path} shadow token must declare offsetX, offsetY, blur, and color properties`
+            );
+          }
+        }
+      }
+
       return;
     }
 
@@ -2013,17 +2087,36 @@ export function parseDtcgTokens(jsonText: string): DtcgImportResult {
       }
     }
 
-    const extractColor = (token: any): string | undefined => {
+    const extractColor = (token: any, keyPath = "color"): string | undefined => {
       if (!token || !("$value" in token)) return undefined;
       const resolved = resolveDtcgAlias(token.$value, parsed, unresolvedAliases);
       if (resolved === undefined) return undefined;
+      if (typeof resolved === "object" && resolved !== null) {
+        if ("channels" in resolved) {
+          warnings.push(`Color at ${keyPath} uses deprecated 'channels'; expected DTCG 'components'`);
+          unsupportedFields.push(`${keyPath} (deprecated channels)`);
+          return undefined; // Do not silently convert malformed/unsupported input into unrelated defaults
+        }
+        if (!Array.isArray(resolved.components) && !("hex" in resolved)) {
+          warnings.push(`Color at ${keyPath} is malformed: missing components or hex`);
+          unsupportedFields.push(`${keyPath} (malformed color object)`);
+          return undefined;
+        }
+      }
       return dtcgColorToHex(resolved);
     };
 
-    const extractDim = (token: any): string | undefined => {
+    const extractDim = (token: any, keyPath = "dimension"): string | undefined => {
       if (!token || !("$value" in token)) return undefined;
       const resolved = resolveDtcgAlias(token.$value, parsed, unresolvedAliases);
       if (resolved === undefined) return undefined;
+      if (typeof resolved === "object" && resolved !== null) {
+        if (typeof resolved.value !== "number" || typeof resolved.unit !== "string") {
+          warnings.push(`Dimension at ${keyPath} is malformed: missing numeric value or unit`);
+          unsupportedFields.push(`${keyPath} (malformed dimension)`);
+          return undefined;
+        }
+      }
       return dtcgDimensionToString(resolved);
     };
 

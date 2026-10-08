@@ -137,5 +137,98 @@ describe("Reference Site Inspection Pipeline", () => {
       assert.ok(md.includes("#08090a"));
       assert.ok(md.includes("#5e6ad2"));
     });
+
+    it("should reject 0x0 button and 1x1 heading measurements and infer honest fallbacks", () => {
+      const flawedEvidence: ReferenceSiteInspectionEvidence = {
+        siteKey: "test-site",
+        url: "https://example.com",
+        name: "Test Site",
+        archetype: "minimal-landing",
+        timestamp: new Date().toISOString(),
+        inspectionMethod: "headless-chrome",
+        viewports: {
+          desktop: { width: 1440, height: 900 },
+          mobile: { width: 390, height: 844 },
+        },
+        meta: { title: "Test" },
+        metrics: {
+          body: {
+            fontFamily: "sans-serif",
+            fontSize: "16px",
+            fontWeight: "400",
+            lineHeight: "24px",
+            letterSpacing: "normal",
+            color: "rgb(0, 0, 0)",
+            backgroundColor: "rgb(0, 0, 0)", // Flawed: 1:1 identical contrast
+          },
+          h1: {
+            fontFamily: "sans-serif",
+            fontSize: "48px",
+            fontWeight: "700",
+            lineHeight: "56px",
+            letterSpacing: "normal",
+            width: 1, // Flawed: 1x1 sr-only heading
+            height: 1,
+            color: "rgb(0, 0, 0)",
+            backgroundColor: "transparent",
+          },
+          h2: {
+            fontFamily: "sans-serif",
+            fontSize: "32px",
+            fontWeight: "600",
+            lineHeight: "40px",
+            letterSpacing: "normal",
+            width: 400, // Valid visible H2
+            height: 40,
+            color: "rgb(0, 0, 0)",
+            backgroundColor: "transparent",
+          },
+          p: {
+            fontFamily: "sans-serif",
+            fontSize: "16px",
+            fontWeight: "400",
+            lineHeight: "24px",
+            letterSpacing: "normal",
+            color: "rgb(0, 0, 0)",
+            backgroundColor: "transparent",
+          },
+          primaryButton: {
+            fontFamily: "sans-serif",
+            fontSize: "14px",
+            fontWeight: "500",
+            lineHeight: "20px",
+            letterSpacing: "normal",
+            width: 0, // Flawed: 0x0 hidden button
+            height: 0,
+            color: "rgb(255, 255, 255)",
+            backgroundColor: "rgb(0, 0, 0)",
+          },
+          containerMaxWidth: "1280px",
+          isDark: false,
+        },
+        extractedPalette: ["#111111", "#3b82f6", "#ffffff"],
+        extractedFonts: ["Inter"],
+        screenshots: {
+          desktopPath: "/evidence/reference-sites/test-site/desktop.png",
+          mobilePath: "/evidence/reference-sites/test-site/mobile.png",
+        },
+        fidelityReport: "Tested rejection of invalid measurements",
+      };
+
+      const system = buildDesignSystemFromEvidence(flawedEvidence);
+
+      // Contrast must be normalized (not black text on black background)
+      assert.notEqual(
+        system.colors.neutrals.background.value.toLowerCase(),
+        system.colors.neutrals.text.value.toLowerCase()
+      );
+
+      // 0x0 button must NOT be accepted as observed
+      assert.equal(system.colors.primary.provenance, "inferred");
+
+      // 1x1 heading must fall back to visible H2
+      assert.equal(system.typography.headings.h1.value.size, "32px");
+      assert.equal(system.typography.headings.h1.provenance, "inferred");
+    });
   });
 });

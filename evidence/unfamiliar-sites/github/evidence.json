@@ -1,0 +1,115 @@
+{
+  "siteKey": "github",
+  "url": "https://github.com",
+  "name": "GitHub",
+  "archetype": "modern-saas",
+  "timestamp": "2026-10-08T20:55:38.427Z",
+  "inspectionMethod": "headless-chrome",
+  "viewports": {
+    "desktop": {
+      "width": 1440,
+      "height": 900
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  "meta": {
+    "title": "GitHub · Change is constant. GitHub keeps you ahead. · GitHub · GitHub",
+    "themeColor": "#1e2327",
+    "description": "Join the world's most widely adopted, AI-powered developer platform where millions of developers, businesses, and the largest open source community build software that advances humanity."
+  },
+  "metrics": {
+    "body": {
+      "fontFamily": "\"Mona Sans VF\", -apple-system, \"system-ui\", \"Segoe UI\", \"Noto Sans Backtick Fix\", \"Noto Sans\", Helvetica, Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\"",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "lineHeight": "21px",
+      "letterSpacing": "normal",
+      "color": "rgb(240, 246, 252)",
+      "backgroundColor": "rgb(13, 17, 23)",
+      "width": 1440,
+      "height": 11198,
+      "padding": "0px"
+    },
+    "h1": {
+      "fontFamily": "\"Mona Sans\", MonaSansFallback, -apple-system, \"system-ui\", \"Segoe UI\", Helvetica, Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\"",
+      "fontSize": "64px",
+      "fontWeight": "425",
+      "lineHeight": "69.12px",
+      "letterSpacing": "-2.24px",
+      "color": "rgb(255, 255, 255)",
+      "backgroundColor": "rgb(0, 0, 0)",
+      "width": 924,
+      "height": 138,
+      "padding": "0px"
+    },
+    "h2": {
+      "fontFamily": "\"Mona Sans\", MonaSansFallback, -apple-system, \"system-ui\", \"Segoe UI\", Helvetica, Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\"",
+      "fontSize": "40px",
+      "fontWeight": "460",
+      "lineHeight": "48px",
+      "letterSpacing": "normal",
+      "color": "rgb(255, 255, 255)",
+      "backgroundColor": "rgb(0, 0, 0)",
+      "width": 577,
+      "height": 48,
+      "padding": "0px"
+    },
+    "p": {
+      "fontFamily": "\"Mona Sans\", MonaSansFallback, -apple-system, \"system-ui\", \"Segoe UI\", Helvetica, Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\"",
+      "fontSize": "18px",
+      "fontWeight": "400",
+      "lineHeight": "27px",
+      "letterSpacing": "0.18px",
+      "color": "rgb(255, 255, 255)",
+      "backgroundColor": "rgb(0, 0, 0)",
+      "width": 600,
+      "height": 54,
+      "padding": "0px"
+    },
+    "primaryButton": {
+      "fontFamily": "\"Mona Sans\", MonaSansFallback, -apple-system, \"system-ui\", \"Segoe UI\", Helvetica, Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\"",
+      "fontSize": "16px",
+      "fontWeight": "500",
+      "lineHeight": "24px",
+      "letterSpacing": "0.24px",
+      "color": "rgb(255, 255, 255)",
+      "backgroundColor": "rgb(13, 17, 23)",
+      "width": 104,
+      "height": 40,
+      "padding": "8px"
+    },
+    "card": {
+      "fontFamily": "\"Mona Sans VF\", -apple-system, \"system-ui\", \"Segoe UI\", \"Noto Sans Backtick Fix\", \"Noto Sans\", Helvetica, Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\"",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "lineHeight": "21px",
+      "letterSpacing": "normal",
+      "color": "rgb(255, 255, 255)",
+      "backgroundColor": "rgb(0, 0, 0)",
+      "width": 1440,
+      "height": 1528,
+      "padding": "0px"
+    },
+    "containerMaxWidth": "1440px",
+    "isDark": true
+  },
+  "extractedPalette": [
+    "#ffffff",
+    "#1f6feb",
+    "#0d1117",
+    "#000000",
+    "#0f1511"
+  ],
+  "extractedFonts": [
+    "Mona Sans VF",
+    "Mona Sans"
+  ],
+  "screenshots": {
+    "desktopPath": "/evidence/reference-sites/github/desktop.png",
+    "mobilePath": "/evidence/reference-sites/github/mobile.png"
+  },
+  "fidelityReport": "Inspected GitHub via headless Chrome (1440x900 desktop & 390x844 mobile). Extracted 5 colors and 2 rendered fonts. Body: #f0f6fc on #0d1117. Primary CTA: #0d1117."
+}

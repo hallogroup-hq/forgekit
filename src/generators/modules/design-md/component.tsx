@@ -173,41 +173,48 @@ export default function DesignMdGenerator() {
       if (res.ok) {
         const newObs: DesignObservation = {
           sourceUrl: data.domain ? `https://${data.domain}` : undefined,
-          hasScreenshot: Boolean(screenshotName),
-          screenshotName: screenshotName || undefined,
-          observedTitle: data.observed?.title,
-          observedThemeColor: data.observed?.themeColor,
-          detectedColors: data.observed?.detectedColors || [],
-          detectedFonts: data.observed?.detectedFonts || [],
-          notes: data.notes || [],
+          hasScreenshot: Boolean(data.evidence?.screenshots?.desktopPath || screenshotName),
+          screenshotName: data.evidence?.screenshots?.desktopPath || screenshotName || undefined,
+          observedTitle: data.evidence?.meta?.title || data.observed?.title,
+          observedThemeColor: data.evidence?.meta?.themeColor || data.observed?.themeColor,
+          detectedColors: data.evidence?.extractedPalette || data.observed?.detectedColors || [],
+          detectedFonts: data.evidence?.extractedFonts || data.observed?.detectedFonts || [],
+          notes: data.evidence?.fidelityReport ? [data.evidence.fidelityReport] : data.notes || [],
         };
         setObservation(newObs);
 
-        setSystem((prev) => {
-          const updated = { ...prev };
-          if (data.projectName && !prev.identity.projectName.userOverridden) {
-            updated.identity.projectName = attr(data.projectName, "observed", data.domain);
-          }
-          if (data.brandTone && !prev.identity.brandTone.userOverridden) {
-            updated.identity.brandTone = attr(data.brandTone, "inferred", data.domain);
-          }
-          if (data.primaryColor && !prev.colors.primary.userOverridden) {
-            updated.colors.primary = attr(data.primaryColor, "observed", data.domain);
-          }
-          if (data.accentColor && !prev.colors.accent.userOverridden) {
-            updated.colors.accent = attr(data.accentColor, "observed", data.domain);
-          }
-          if (data.headingFont && !prev.typography.headingFont.userOverridden) {
-            updated.typography.headingFont = attr(data.headingFont, "observed", data.domain);
-          }
-          if (data.bodyFont && !prev.typography.bodyFont.userOverridden) {
-            updated.typography.bodyFont = attr(data.bodyFont, "observed", data.domain);
-          }
-          return updated;
-        });
+        if (data.system) {
+          // Strictly preserve all existing user manual edits
+          setSystem((prev) => preserveUserOverrides(data.system, prev));
+        } else {
+          setSystem((prev) => {
+            const updated = { ...prev };
+            if (data.projectName && !prev.identity.projectName.userOverridden) {
+              updated.identity.projectName = attr(data.projectName, "observed", data.domain);
+            }
+            if (data.brandTone && !prev.identity.brandTone.userOverridden) {
+              updated.identity.brandTone = attr(data.brandTone, "inferred", data.domain);
+            }
+            if (data.primaryColor && !prev.colors.primary.userOverridden) {
+              updated.colors.primary = attr(data.primaryColor, "observed", data.domain);
+            }
+            if (data.accentColor && !prev.colors.accent.userOverridden) {
+              updated.colors.accent = attr(data.accentColor, "observed", data.domain);
+            }
+            if (data.headingFont && !prev.typography.headingFont.userOverridden) {
+              updated.typography.headingFont = attr(data.headingFont, "observed", data.domain);
+            }
+            if (data.bodyFont && !prev.typography.bodyFont.userOverridden) {
+              updated.typography.bodyFont = attr(data.bodyFont, "observed", data.domain);
+            }
+            return updated;
+          });
+        }
 
-        if (data.source === "curated-preset") {
-          setExtractSuccess(`Loaded verified reference baseline for ${data.domain}`);
+        if (data.inspectionMethod === "headless-chrome") {
+          setExtractSuccess(`Inspected ${data.domain} live via headless Chrome (1440x900 & 390x844 viewports)!`);
+        } else if (data.partial) {
+          setExtractSuccess(`Partial inspection for ${data.domain}: ${data.warning || "Inferred from HTML metadata"}`);
         } else {
           setExtractSuccess(`Extracted live design tokens from ${data.domain}!`);
         }

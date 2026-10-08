@@ -5,6 +5,8 @@ import { RefreshCw } from "lucide-react";
 import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 
+import { computeAllHashes, generateSecureSecret } from "./engine";
+
 export default function HashSecretGenerator() {
   const [activeTab, setActiveTab] = useState<"hash" | "secret">("hash");
 
@@ -12,6 +14,7 @@ export default function HashSecretGenerator() {
   const [inputString, setInputString] = useState("Hello ForgeKit!");
   const [sha256, setSha256] = useState("");
   const [sha512, setSha512] = useState("");
+  const [sha384, setSha384] = useState("");
   const [sha1, setSha1] = useState("");
   const [base64Encoded, setBase64Encoded] = useState("");
 
@@ -21,53 +24,35 @@ export default function HashSecretGenerator() {
 
   // Compute hashes using subtle crypto
   useEffect(() => {
-    async function computeHashes() {
-      if (!inputString) {
-        setSha256("");
-        setSha512("");
-        setSha1("");
-        setBase64Encoded("");
-        return;
-      }
-
-      const encoder = new TextEncoder();
-      const data = encoder.encode(inputString);
-
-      // SHA-256
-      const buf256 = await crypto.subtle.digest("SHA-256", data);
-      setSha256(Array.from(new Uint8Array(buf256)).map((b) => b.toString(16).padStart(2, "0")).join(""));
-
-      // SHA-512
-      const buf512 = await crypto.subtle.digest("SHA-512", data);
-      setSha512(Array.from(new Uint8Array(buf512)).map((b) => b.toString(16).padStart(2, "0")).join(""));
-
-      // SHA-1
-      const buf1 = await crypto.subtle.digest("SHA-1", data);
-      setSha1(Array.from(new Uint8Array(buf1)).map((b) => b.toString(16).padStart(2, "0")).join(""));
-
-      // Base64
+    let isCancelled = false;
+    async function runCompute() {
       try {
-        setBase64Encoded(btoa(inputString));
-      } catch {
-        setBase64Encoded(btoa(encodeURIComponent(inputString)));
+        const hashes = await computeAllHashes(inputString);
+        if (!isCancelled) {
+          setSha256(hashes.sha256);
+          setSha512(hashes.sha512);
+          setSha384(hashes.sha384);
+          setSha1(hashes.sha1);
+          setBase64Encoded(hashes.base64);
+        }
+      } catch (err) {
+        console.error("Hash calculation error", err);
       }
     }
 
-    computeHashes();
+    runCompute();
+    return () => {
+      isCancelled = true;
+    };
   }, [inputString]);
 
-  // Generate random tokens
+  // Generate random tokens using CSPRNG
   const generatedTokens = useMemo(() => {
-    const array = new Uint8Array(secretBytes);
-    if (typeof window !== "undefined" && window.crypto) {
-      window.crypto.getRandomValues(array);
+    try {
+      return generateSecureSecret(secretBytes);
+    } catch {
+      return { hex: "", base64: "", base64Url: "", apiKey: "", byteLength: secretBytes };
     }
-
-    const hex = Array.from(array).map((b) => b.toString(16).padStart(2, "0")).join("");
-    const base64 = btoa(String.fromCharCode(...array)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-    const apiKey = `fk_live_${hex.slice(0, 32)}`;
-
-    return { hex, base64, apiKey };
   }, [secretBytes, secretSeed]);
 
   return (
@@ -118,6 +103,7 @@ export default function HashSecretGenerator() {
           <div className="space-y-3">
             {[
               { label: "SHA-256 (Standard)", value: sha256, bits: "256 bits / 64 hex chars" },
+              { label: "SHA-384 (Enterprise)", value: sha384, bits: "384 bits / 96 hex chars" },
               { label: "SHA-512 (High Security)", value: sha512, bits: "512 bits / 128 hex chars" },
               { label: "SHA-1 (Legacy / Git Object)", value: sha1, bits: "160 bits / 40 hex chars" },
               { label: "Base64 Encoded", value: base64Encoded, bits: "ASCII text format" },

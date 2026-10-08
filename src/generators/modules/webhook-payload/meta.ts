@@ -2,12 +2,14 @@ import { ToolMeta } from "../../types";
 
 export const meta: ToolMeta = {
   slug: "webhook-payload",
-  title: "Webhook Payload & Signature Simulator",
-  shortTitle: "Webhook Simulator",
-  description: "Generate realistic webhook event payloads (Stripe, GitHub, Clerk, Shopify) with HMAC-SHA256 signature headers and curl commands.",
+  title: "Webhook Payload Generator & Signature Studio",
+  shortTitle: "Webhook Studio",
+  description: "Mock webhook payloads and signature headers for Stripe, GitHub, Shopify, Clerk, and Supabase.",
   category: "developer",
-  tags: ["webhook", "stripe", "github", "clerk", "shopify", "hmac", "api", "curl", "devops"],
-  icon: "Workflow",
+  tags: ["webhook", "payload", "signature", "stripe", "github", "clerk", "shopify", "supabase", "devops", "testing"],
+  icon: "Radio",
+  kind: "assisted",
+  processing: ["client"],
+  lifecycle: "development", // Parked: mock signature dispatch disabled until verified HMAC calculation is added
   isPopular: true,
-  isNew: true,
 };

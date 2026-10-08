@@ -8,6 +8,9 @@ export const meta: ToolMeta = {
   category: "vibe-coder",
   tags: ["prd", "spec", "cursor", "vibe-coder", "ai", "architecture", "database", "roadmap"],
   icon: "FileText",
+  kind: "assisted",
+  processing: ["client"],
+  lifecycle: "development", // Parked: generic SQL templates under review
   isPopular: true,
   isNew: true,
 };

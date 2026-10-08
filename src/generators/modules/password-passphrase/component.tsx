@@ -5,13 +5,12 @@ import { RefreshCw, ShieldCheck, ShieldAlert, Sparkles, Key, BookOpen, Layers } 
 import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 
-const PASSPHRASE_WORDS = [
-  "correct", "horse", "battery", "staple", "galaxy", "velvet", "cobalt", "whisper",
-  "falcon", "timber", "canyon", "meadow", "lantern", "glacier", "phoenix", "beacon",
-  "summit", "orbit", "crystal", "shadow", "voyage", "compass", "horizon", "vortex",
-  "breeze", "thunder", "meteor", "anchor", "silver", "zenith", "quantum", "solitude",
-  "marble", "nebula", "radiant", "haven", "cascade", "mirage", "timber", "harbor"
-];
+import {
+  generatePassword,
+  generatePassphrase,
+  calculateEntropy,
+  EFF_WORDLIST,
+} from "./engine";
 
 export default function PasswordGenerator() {
   const [mode, setMode] = useState<"password" | "passphrase">("password");
@@ -36,60 +35,39 @@ export default function PasswordGenerator() {
 
   // Cryptographically secure generator
   const [generatedItems, setGeneratedItems] = useState<string[]>(["k8#P9!mX2$vL5@wQ"]);
+  const [cryptoError, setCryptoError] = useState<string | null>(null);
 
   useEffect(() => {
-    const results: string[] = [];
-
-    for (let q = 0; q < quantity; q++) {
-      if (mode === "password") {
-        let chars = "";
-        if (useUpper) chars += excludeAmbiguous ? "ABCDEFGHJKLMNPQRSTUVWXYZ" : "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        if (useLower) chars += excludeAmbiguous ? "abcdefghijkmnpqrstuvwxyz" : "abcdefghijklmnopqrstuvwxyz";
-        if (useNumbers) chars += excludeAmbiguous ? "23456789" : "0123456789";
-        if (useSymbols) chars += "!@#$%^&*()_+-=[]{}|;:,.<>?";
-
-        if (!chars) chars = "abcdefghijklmnopqrstuvwxyz";
-
-        let pass = "";
-        const array = new Uint32Array(length);
-        if (typeof window !== "undefined" && window.crypto) {
-          window.crypto.getRandomValues(array);
-          for (let i = 0; i < length; i++) {
-            pass += chars[array[i] % chars.length];
-          }
+    try {
+      const results: string[] = [];
+      for (let q = 0; q < quantity; q++) {
+        if (mode === "password") {
+          results.push(
+            generatePassword({
+              length,
+              useUpper,
+              useLower,
+              useNumbers,
+              useSymbols,
+              excludeAmbiguous,
+            })
+          );
         } else {
-          for (let i = 0; i < length; i++) {
-            pass += chars[Math.floor(Math.random() * chars.length)];
-          }
+          results.push(
+            generatePassphrase({
+              wordCount,
+              separator,
+              capitalize,
+              includeNumber,
+            })
+          );
         }
-        results.push(pass);
-      } else {
-        // Passphrase mode
-        const chosenWords: string[] = [];
-        const array = new Uint32Array(wordCount);
-        if (typeof window !== "undefined" && window.crypto) {
-          window.crypto.getRandomValues(array);
-          for (let i = 0; i < wordCount; i++) {
-            const word = PASSPHRASE_WORDS[array[i] % PASSPHRASE_WORDS.length];
-            chosenWords.push(capitalize ? word.charAt(0).toUpperCase() + word.slice(1) : word);
-          }
-        } else {
-          for (let i = 0; i < wordCount; i++) {
-            const word = PASSPHRASE_WORDS[Math.floor(Math.random() * PASSPHRASE_WORDS.length)];
-            chosenWords.push(capitalize ? word.charAt(0).toUpperCase() + word.slice(1) : word);
-          }
-        }
-
-        if (includeNumber) {
-          const num = Math.floor(Math.random() * 90) + 10;
-          chosenWords.push(String(num));
-        }
-
-        results.push(chosenWords.join(separator));
       }
+      setGeneratedItems(results);
+      setCryptoError(null);
+    } catch (err) {
+      setCryptoError(err instanceof Error ? err.message : "CSPRNG generation error");
     }
-
-    setGeneratedItems(results);
   }, [mode, length, useUpper, useLower, useNumbers, useSymbols, excludeAmbiguous, wordCount, separator, capitalize, includeNumber, quantity, seed]);
 
   // Entropy calculation
@@ -98,16 +76,15 @@ export default function PasswordGenerator() {
     if (!primaryPassword) return 0;
     if (mode === "password") {
       let poolSize = 0;
-      if (useUpper) poolSize += 26;
-      if (useLower) poolSize += 26;
-      if (useNumbers) poolSize += 10;
-      if (useSymbols) poolSize += 30;
-      return Math.round(primaryPassword.length * Math.log2(Math.max(poolSize, 2)));
+      if (useUpper) poolSize += excludeAmbiguous ? 24 : 26;
+      if (useLower) poolSize += excludeAmbiguous ? 24 : 26;
+      if (useNumbers) poolSize += excludeAmbiguous ? 8 : 10;
+      if (useSymbols) poolSize += 26;
+      return calculateEntropy(primaryPassword, false, 0, poolSize);
     } else {
-      // 40 words pool -> log2(40) ~ 5.32 bits per word
-      return Math.round(wordCount * Math.log2(PASSPHRASE_WORDS.length) + (includeNumber ? 7 : 0));
+      return calculateEntropy(primaryPassword, true, wordCount);
     }
-  }, [primaryPassword, mode, useUpper, useLower, useNumbers, useSymbols, wordCount, includeNumber]);
+  }, [primaryPassword, mode, useUpper, useLower, useNumbers, useSymbols, excludeAmbiguous, wordCount, includeNumber]);
 
   const strength = useMemo(() => {
     if (entropyBits < 40) return { label: "Weak", color: "text-rose-500", bar: "bg-rose-500", pct: 25 };

@@ -60,14 +60,17 @@ export default function PS5InspiredHomePage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Filter tools based on category
+  // Filter tools based on category and lifecycle
   const visibleTools = useMemo(() => {
+    const publicRegistry = registry.filter(
+      (t) => !t.meta.lifecycle || t.meta.lifecycle === "ready" || t.meta.lifecycle === "qa"
+    );
     if (selectedCategory === "pinned") {
       if (!isLoaded || favorites.length === 0) return [];
-      return registry.filter((t) => favorites.includes(t.meta.slug));
+      return publicRegistry.filter((t) => favorites.includes(t.meta.slug));
     }
-    if (selectedCategory === "all") return registry;
-    return registry.filter((t) => t.meta.category === selectedCategory);
+    if (selectedCategory === "all") return publicRegistry;
+    return publicRegistry.filter((t) => t.meta.category === selectedCategory);
   }, [selectedCategory, favorites, isLoaded]);
 
   // Ensure active index is bounded

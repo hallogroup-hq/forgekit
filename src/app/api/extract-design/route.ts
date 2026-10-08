@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { validateSafeUrlForFetch } from "@/lib/security/ssrf";
 
 interface ExtractedDesign {
   domain: string;
@@ -16,9 +17,15 @@ interface ExtractedDesign {
   elevationStyle: string;
   source: "live-extracted" | "curated-preset";
   notes: string[];
+  observed: {
+    title?: string;
+    themeColor?: string;
+    detectedColors: string[];
+    detectedFonts: string[];
+  };
 }
 
-// Curated high-fidelity presets for popular domains if direct network access is blocked or restricted
+// Curated high-fidelity presets for popular domains
 const CURATED_PRESETS: Record<string, Partial<ExtractedDesign>> = {
   "linear.app": {
     projectName: "Linear",
@@ -114,6 +121,15 @@ export async function POST(req: NextRequest) {
       url = `https://${url}`;
     }
 
+    // SSRF Security Validation
+    const ssrfCheck = await validateSafeUrlForFetch(url);
+    if (!ssrfCheck.safe) {
+      return NextResponse.json(
+        { error: ssrfCheck.reason || "URL access blocked by security policy (SSRF prevention)" },
+        { status: 400 }
+      );
+    }
+
     let parsedUrl: URL;
     try {
       parsedUrl = new URL(url);
@@ -122,29 +138,9 @@ export async function POST(req: NextRequest) {
     }
 
     const domain = parsedUrl.hostname.replace(/^www\./, "").toLowerCase();
-
-    // Check if we have an explicit curated preset match
     const preset = CURATED_PRESETS[domain];
 
-    const extracted: ExtractedDesign = {
-      domain,
-      projectName: preset?.projectName || domain.split(".")[0].toUpperCase(),
-      platform: "Web (Responsive)",
-      brandTone: preset?.brandTone || "Clean, Modern Digital Product",
-      primaryColor: preset?.primaryColor || "#2563eb",
-      secondaryColor: preset?.secondaryColor || "#4f46e5",
-      accentColor: preset?.accentColor || "#06b6d4",
-      neutralType: preset?.neutralType || "Zinc (Neutral Cool)",
-      headingFont: preset?.headingFont || "Inter",
-      bodyFont: preset?.bodyFont || "Inter",
-      monoFont: preset?.monoFont || "JetBrains Mono",
-      baseRadius: preset?.baseRadius || "12px (Soft Modern)",
-      elevationStyle: preset?.elevationStyle || "Subtle Multi-layer (Linear style)",
-      source: preset ? "curated-preset" : "live-extracted",
-      notes: [],
-    };
-
-    // Attempt live HTML/CSS fetch with a strict timeout
+    // Live HTML/CSS fetch with strict timeout
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 4500);
@@ -155,79 +151,177 @@ export async function POST(req: NextRequest) {
           Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         },
         signal: controller.signal,
+        redirect: "follow",
       });
 
       clearTimeout(timeoutId);
 
-      if (res.ok) {
-        const html = await res.text();
-
-        // 1. Extract Title
-        const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-        if (titleMatch && titleMatch[1]) {
-          const cleanTitle = titleMatch[1].split(/[|\-–—]/)[0].trim();
-          if (cleanTitle) extracted.projectName = cleanTitle;
+      if (!res.ok) {
+        // If live fetch returned an error (e.g. 403 bot-block or 404)
+        if (preset) {
+          return NextResponse.json({
+            domain,
+            projectName: preset.projectName || domain.split(".")[0].toUpperCase(),
+            platform: "Web (Responsive)",
+            brandTone: preset.brandTone || "Clean, Modern Digital Product",
+            primaryColor: preset.primaryColor || "#2563eb",
+            secondaryColor: preset.secondaryColor || "#4f46e5",
+            accentColor: preset.accentColor || "#06b6d4",
+            neutralType: preset.neutralType || "Zinc (Neutral Cool)",
+            headingFont: preset.headingFont || "Inter",
+            bodyFont: preset.bodyFont || "Inter",
+            monoFont: preset.monoFont || "JetBrains Mono",
+            baseRadius: preset.baseRadius || "8px",
+            elevationStyle: preset.elevationStyle || "Subtle Multi-layer",
+            source: "curated-preset",
+            notes: ["Live fetch blocked by target site; provided verified curated reference profile."],
+            observed: { detectedColors: [], detectedFonts: [] },
+          });
         }
 
-        // 2. Extract theme-color meta
-        const themeColorMatch = html.match(/<meta[^>]*name=["']theme-color["'][^>]*content=["']([^"']+)["']/i) ||
-                                html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']theme-color["']/i);
-        if (themeColorMatch && themeColorMatch[1]) {
-          const tc = themeColorMatch[1].trim();
-          if (/^#[0-9a-fA-F]{3,8}$/.test(tc)) {
-            extracted.primaryColor = tc;
-            extracted.notes.push(`Extracted brand theme-color: ${tc}`);
-          }
-        }
-
-        // 3. Extract colors via regex frequency scan
-        const colorMatches = html.match(/#[0-9a-fA-F]{6}\b/g) || [];
-        const colorCounts: Record<string, number> = {};
-        for (const c of colorMatches) {
-          const lower = c.toLowerCase();
-          // Filter out generic pure black/white
-          if (lower !== "#000000" && lower !== "#ffffff" && lower !== "#ffffff") {
-            colorCounts[lower] = (colorCounts[lower] || 0) + 1;
-          }
-        }
-
-        const sortedColors = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
-        if (sortedColors.length > 0 && !themeColorMatch && sortedColors[0]) {
-          extracted.primaryColor = sortedColors[0][0];
-          extracted.notes.push(`Dominant CSS color detected: ${sortedColors[0][0]}`);
-        }
-        if (sortedColors.length > 1 && sortedColors[1]) {
-          extracted.secondaryColor = sortedColors[1][0];
-        }
-        if (sortedColors.length > 2 && sortedColors[2]) {
-          extracted.accentColor = sortedColors[2][0];
-        }
-
-        // 4. Extract font families
-        const fontMatches = html.match(/font-family:\s*["']?([a-zA-Z0-9\s\-]+)["']?/gi) || [];
-        if (fontMatches.length > 0 && fontMatches[0]) {
-          const firstFont = fontMatches[0].replace(/font-family:\s*["']?/i, "").replace(/["'].*$/, "").trim();
-          if (firstFont && !firstFont.includes("inherit") && !firstFont.includes("sans-serif")) {
-            extracted.headingFont = firstFont;
-            extracted.bodyFont = firstFont;
-            extracted.notes.push(`Font family detected: ${firstFont}`);
-          }
-        }
-
-        // 5. Check for dark mode preference
-        if (html.includes('class="dark') || html.includes("color-scheme: dark") || html.includes("background:#0")) {
-          extracted.brandTone = "Dark-Mode First, High-Contrast Modern";
-          extracted.neutralType = "Zinc (Deep Obsidian Dark)";
-        }
-
-        extracted.source = "live-extracted";
+        return NextResponse.json(
+          {
+            error: `Website returned status ${res.status}. Automated inspection was blocked by the host. You can use manual specification or screenshot reference.`,
+            canFallbackToScreenshot: true,
+          },
+          { status: 422 }
+        );
       }
-    } catch {
-      // Live fetch failed (timeout, CORS, network), fallback seamlessly to preset or educated defaults
-      extracted.notes.push("Direct network fetch reached timeout; applied domain heuristic tokens.");
-    }
 
-    return NextResponse.json(extracted);
+      const html = await res.text();
+      const detectedColors: string[] = [];
+      const detectedFonts: string[] = [];
+      const notes: string[] = [];
+
+      // 1. Extract Title
+      let projectName = domain.split(".")[0].toUpperCase();
+      let extractedTitle: string | undefined;
+      const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+      if (titleMatch && titleMatch[1]) {
+        extractedTitle = titleMatch[1].trim();
+        const cleanTitle = extractedTitle.split(/[|\-–—]/)[0].trim();
+        if (cleanTitle) projectName = cleanTitle;
+        notes.push(`Extracted title: ${cleanTitle}`);
+      }
+
+      // 2. Extract theme-color meta
+      let themeColor: string | undefined;
+      const themeColorMatch =
+        html.match(/<meta[^>]*name=["']theme-color["'][^>]*content=["']([^"']+)["']/i) ||
+        html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']theme-color["']/i);
+      if (themeColorMatch && themeColorMatch[1]) {
+        const tc = themeColorMatch[1].trim();
+        if (/^#[0-9a-fA-F]{3,8}$/.test(tc)) {
+          themeColor = tc;
+          detectedColors.push(tc);
+          notes.push(`Found theme-color meta tag: ${tc}`);
+        }
+      }
+
+      // 3. Extract CSS hex colors
+      const colorMatches = html.match(/#[0-9a-fA-F]{6}\b/g) || [];
+      const colorCounts: Record<string, number> = {};
+      for (const c of colorMatches) {
+        const lower = c.toLowerCase();
+        if (lower !== "#000000" && lower !== "#ffffff") {
+          colorCounts[lower] = (colorCounts[lower] || 0) + 1;
+        }
+      }
+
+      const sortedColors = Object.entries(colorCounts).sort((a, b) => b[1] - a[1]);
+      for (const [col] of sortedColors.slice(0, 5)) {
+        if (!detectedColors.includes(col)) detectedColors.push(col);
+      }
+
+      // 4. Extract font families
+      const fontMatches = html.match(/font-family:\s*["']?([a-zA-Z0-9\s\-]+)["']?/gi) || [];
+      for (const match of fontMatches) {
+        const fontName = match
+          .replace(/font-family:\s*["']?/i, "")
+          .replace(/["'].*$/, "")
+          .trim();
+        if (
+          fontName &&
+          !fontName.toLowerCase().includes("inherit") &&
+          !fontName.toLowerCase().includes("sans-serif") &&
+          !detectedFonts.includes(fontName)
+        ) {
+          detectedFonts.push(fontName);
+        }
+      }
+
+      // 5. Detect dark theme preference
+      const isDark =
+        html.includes('class="dark') ||
+        html.includes("color-scheme: dark") ||
+        html.includes("background:#000") ||
+        html.includes("background:#0a0a0a");
+
+      const primaryColor = themeColor || detectedColors[0] || preset?.primaryColor || "#2563eb";
+      const secondaryColor = detectedColors[1] || preset?.secondaryColor || "#4f46e5";
+      const accentColor = detectedColors[2] || preset?.accentColor || "#06b6d4";
+      const headingFont = detectedFonts[0] || preset?.headingFont || "Inter";
+      const bodyFont = detectedFonts[1] || detectedFonts[0] || preset?.bodyFont || "Inter";
+
+      const extracted: ExtractedDesign = {
+        domain,
+        projectName: preset?.projectName || projectName,
+        platform: "Web (Responsive)",
+        brandTone: isDark
+          ? "Dark-Mode First, High-Contrast Modern"
+          : preset?.brandTone || "Clean, Modern Digital Product",
+        primaryColor,
+        secondaryColor,
+        accentColor,
+        neutralType: isDark ? "Zinc (Deep Obsidian Dark)" : "Zinc (Neutral Cool)",
+        headingFont,
+        bodyFont,
+        monoFont: preset?.monoFont || "JetBrains Mono",
+        baseRadius: preset?.baseRadius || "8px (Subtle Precision)",
+        elevationStyle: preset?.elevationStyle || "Subtle Multi-layer",
+        source: "live-extracted",
+        notes,
+        observed: {
+          title: extractedTitle,
+          themeColor,
+          detectedColors,
+          detectedFonts,
+        },
+      };
+
+      return NextResponse.json(extracted);
+    } catch {
+      // If live fetch fails (timeout or network failure)
+      if (preset) {
+        return NextResponse.json({
+          domain,
+          projectName: preset.projectName || domain.split(".")[0].toUpperCase(),
+          platform: "Web (Responsive)",
+          brandTone: preset.brandTone || "Clean, Modern Digital Product",
+          primaryColor: preset.primaryColor || "#2563eb",
+          secondaryColor: preset.secondaryColor || "#4f46e5",
+          accentColor: preset.accentColor || "#06b6d4",
+          neutralType: preset.neutralType || "Zinc (Neutral Cool)",
+          headingFont: preset.headingFont || "Inter",
+          bodyFont: preset.bodyFont || "Inter",
+          monoFont: preset.monoFont || "JetBrains Mono",
+          baseRadius: preset.baseRadius || "8px",
+          elevationStyle: preset.elevationStyle || "Subtle Multi-layer",
+          source: "curated-preset",
+          notes: ["Direct network connection timed out; used verified curated reference profile."],
+          observed: { detectedColors: [], detectedFonts: [] },
+        });
+      }
+
+      // Honest error reporting: do not pretend extraction succeeded!
+      return NextResponse.json(
+        {
+          error: `Could not connect to ${domain}. The website is unreachable or timed out. You can enter design specifications manually or reference a screenshot.`,
+          canFallbackToScreenshot: true,
+        },
+        { status: 422 }
+      );
+    }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Internal extraction error";
     return NextResponse.json({ error: message }, { status: 500 });

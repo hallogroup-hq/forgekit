@@ -8,6 +8,10 @@ export type ToolCategory =
   | "content"
   | "growth";
 
+export type GeneratorKind = "instant" | "assisted" | "ai-optional";
+export type ProcessingMode = "client" | "server" | "ai";
+export type Lifecycle = "ready" | "qa" | "development" | "hidden";
+
 export interface CategoryInfo {
   id: ToolCategory;
   name: string;
@@ -66,12 +70,18 @@ export interface ToolMeta {
   title: string;
   shortTitle?: string;
   description: string;
+  outcome?: string; // Short outcome for non-technical users
   category: ToolCategory;
   tags: string[];
   icon: string;
+  kind?: GeneratorKind;
+  processing?: ProcessingMode[];
+  acceptedInputs?: string[];
+  outputs?: string[];
+  lifecycle?: Lifecycle;
+  version?: string;
   isNew?: boolean;
   isPopular?: boolean;
-  version?: string;
 }
 
 export interface GeneratorModule {

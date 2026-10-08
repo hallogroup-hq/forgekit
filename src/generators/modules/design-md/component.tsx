@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { Download, Eye, Code, Globe, ArrowRight, Loader2, Check, FileJson, Layers, Palette, Sliders } from "lucide-react";
+import { Download, Eye, Code, Globe, ArrowRight, Loader2, Check, FileJson, Layers, Palette, Sliders, AlertCircle } from "lucide-react";
 import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { downloadFile } from "@/lib/utils";
@@ -44,6 +44,7 @@ export default function DesignMdGenerator() {
   const [urlInput, setUrlInput] = useState("");
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractSuccess, setExtractSuccess] = useState<string | null>(null);
+  const [extractError, setExtractError] = useState<string | null>(null);
 
   // Form State
   const [projectName, setProjectName] = useState("Linear");
@@ -70,6 +71,7 @@ export default function DesignMdGenerator() {
 
     setIsExtracting(true);
     setExtractSuccess(null);
+    setExtractError(null);
 
     try {
       const res = await fetch("/api/extract-design", {
@@ -78,8 +80,9 @@ export default function DesignMdGenerator() {
         body: JSON.stringify({ url: raw.trim() }),
       });
 
+      const data = await res.json();
+
       if (res.ok) {
-        const data = await res.json();
         if (data.projectName) setProjectName(data.projectName);
         if (data.brandTone) setBrandTone(data.brandTone);
         if (data.primaryColor) setPrimaryColor(data.primaryColor);
@@ -91,14 +94,21 @@ export default function DesignMdGenerator() {
         if (data.baseRadius) setBaseRadius(data.baseRadius);
         if (data.elevationStyle) setElevationStyle(data.elevationStyle);
 
-        setExtractSuccess(`Successfully extracted design specs for ${data.domain}!`);
+        if (data.source === "curated-preset") {
+          setExtractSuccess(`Loaded verified reference profile for ${data.domain}`);
+        } else {
+          setExtractSuccess(`Extracted live design tokens from ${data.domain}!`);
+        }
         confetti({ particleCount: 30, spread: 60, origin: { y: 0.8 } });
+      } else {
+        setExtractError(data.error || "Failed to inspect website. Enter details manually or check URL.");
       }
     } catch (err) {
+      setExtractError("Network connection failed while inspecting website.");
       console.error("Extraction error", err);
     } finally {
       setIsExtracting(false);
-      setTimeout(() => setExtractSuccess(null), 4000);
+      setTimeout(() => setExtractSuccess(null), 5000);
     }
   };
 
@@ -372,6 +382,13 @@ export default config;
             <div className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 font-medium pt-1 animate-in fade-in">
               <Check className="w-3.5 h-3.5" />
               <span>{extractSuccess}</span>
+            </div>
+          )}
+
+          {extractError && (
+            <div className="text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1.5 font-medium pt-1 animate-in fade-in">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <span>{extractError}</span>
             </div>
           )}
 

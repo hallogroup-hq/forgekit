@@ -313,7 +313,18 @@ console.log("Response:", data);`;
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <div className="space-y-6">
+      {/* Development Notice */}
+      <div className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs flex items-start gap-2.5">
+        <span className="font-semibold px-1.5 py-0.5 rounded bg-amber-500/20 text-[10px] uppercase tracking-wider shrink-0 mt-0.5">
+          In Development
+        </span>
+        <p>
+          This utility is currently parked for internal refinement. Sample payloads and cURL templates can be copied freely, but live cryptographic HMAC signature generation is pending implementation.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
       {/* Settings Column (Left) */}
       <div className="lg:col-span-5 space-y-6">
         {/* Provider Switcher */}
@@ -627,5 +638,6 @@ console.log("Response:", data);`;
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 }

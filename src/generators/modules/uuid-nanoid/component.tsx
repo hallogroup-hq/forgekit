@@ -6,7 +6,7 @@ import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { downloadFile } from "@/lib/utils";
 
-type IdType = "uuid4" | "uuid7" | "nanoid";
+import { IdType, generateBatchIds } from "./engine";
 
 export default function UuidNanoidGenerator() {
   const [type, setType] = useState<IdType>("uuid4");
@@ -17,57 +17,19 @@ export default function UuidNanoidGenerator() {
   const [nanoidLength, setNanoidLength] = useState(21);
   const [seed, setSeed] = useState(0);
 
-  // Generate UUID v7 (timestamp ordered)
-  const generateUuidV7 = (): string => {
-    const timestamp = typeof window !== "undefined" ? Date.now() : 1775600000000;
-    const timeHex = timestamp.toString(16).padStart(12, "0");
-    const randPart1 = Math.floor(Math.random() * 0x0fff).toString(16).padStart(3, "0");
-    const randPart2 = (Math.floor(Math.random() * 0x3fff) | 0x8000).toString(16).padStart(4, "0");
-    const randPart3 = Math.floor(Math.random() * 0xffffffffffff).toString(16).padStart(12, "0");
-    return `${timeHex.slice(0, 8)}-${timeHex.slice(8, 12)}-7${randPart1}-${randPart2}-${randPart3}`;
-  };
-
-  // Generate UUID v4 (random)
-  const generateUuidV4 = (): string => {
-    if (typeof crypto !== "undefined" && crypto.randomUUID) {
-      return crypto.randomUUID();
-    }
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-      const r = (Math.random() * 16) | 0;
-      const v = c === "x" ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
-  };
-
-  // Generate NanoID
-  const generateNanoId = (len: number): string => {
-    const alphabet = "useandom-26T198340PX75pxJACKVERYMINDBUSHWQGZ_cfghjklqvwyzECT";
-    let id = "";
-    for (let i = 0; i < len; i++) {
-      id += alphabet[Math.floor(Math.random() * alphabet.length)];
-    }
-    return id;
-  };
-
   const generatedList = useMemo(() => {
-    const list: string[] = [];
-    for (let i = 0; i < count; i++) {
-      let raw = "";
-      if (type === "uuid4") raw = generateUuidV4();
-      else if (type === "uuid7") raw = generateUuidV7();
-      else raw = generateNanoId(nanoidLength);
-
-      if (!hyphens && (type === "uuid4" || type === "uuid7")) {
-        raw = raw.replace(/-/g, "");
-      }
-      if (uppercase) {
-        raw = raw.toUpperCase();
-      } else if (type !== "nanoid") {
-        raw = raw.toLowerCase();
-      }
-      list.push(raw);
+    try {
+      return generateBatchIds({
+        type,
+        count,
+        uppercase,
+        hyphens,
+        nanoidLength,
+      });
+    } catch (err) {
+      console.error("CSPRNG batch generation error", err);
+      return [];
     }
-    return list;
   }, [type, count, uppercase, hyphens, nanoidLength, seed]);
 
   const outputText = useMemo(() => {

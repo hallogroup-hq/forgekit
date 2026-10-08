@@ -8,6 +8,9 @@ export const meta: ToolMeta = {
   category: "growth",
   tags: ["copywriting", "marketing", "pas", "aida", "bab", "landing-page", "hooks", "growth"],
   icon: "PenTool",
+  kind: "assisted",
+  processing: ["client"],
+  lifecycle: "development", // Parked: template formula refinement in progress
   isPopular: true,
   isNew: true,
 };

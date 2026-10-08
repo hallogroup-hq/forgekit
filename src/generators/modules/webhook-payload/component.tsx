@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
-import { Download, Terminal, Code2, Check } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Download, Terminal, Code2, Check, Play, Activity, Radio } from "lucide-react";
 import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { downloadFile } from "@/lib/utils";
@@ -191,17 +191,80 @@ const PROVIDER_EVENTS: Record<Provider, EventPreset[]> = {
   ],
 };
 
+function getMockSignature(provider: Provider): string {
+  const timestamp = 1712589000;
+  switch (provider) {
+    case "stripe":
+      return `t=${timestamp},v1=5257a869e7eceeda325490b3fa73974c35eacb533fd02d91e5ee0a163495057a`;
+    case "github":
+      return `sha256=757107ea0eb2509fc211221cce984b8a37570b6d7586c22c469e4637ad85ecd9`;
+    case "clerk":
+      return `v1,g0hM9ssE+OTPJTGtUukkoSyqU3h0QOGNMw69WvP+Iik=`;
+    case "shopify":
+      return `XSRg+b2h8W2pDkWw2gH7Y3xS9K3h2s9dK2+L9s9D8ks=`;
+    case "supabase":
+      return `sha256=9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c`;
+    default:
+      return `mock_sig_12345`;
+  }
+}
+
 export default function WebhookPayloadGenerator() {
   const [provider, setProvider] = useState<Provider>("stripe");
   const [selectedEventIndex, setSelectedEventIndex] = useState(0);
   const [endpointUrl, setEndpointUrl] = useState("http://localhost:3000/api/webhook");
   const [webhookSecret, setWebhookSecret] = useState("whsec_test_secret_key_998877");
   const [rawJson, setRawJson] = useState("");
-  const [activeTab, setActiveTab] = useState<"payload" | "curl" | "fetch">("payload");
+  const [activeTab, setActiveTab] = useState<"payload" | "curl" | "fetch" | "response">("payload");
   const [jsonError, setJsonError] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false);
+  const [testResponse, setTestResponse] = useState<{
+    status?: number;
+    statusText?: string;
+    durationMs?: number;
+    body?: string;
+    error?: string;
+  } | null>(null);
 
   const currentEvents = PROVIDER_EVENTS[provider] || [];
   const currentEvent = currentEvents[selectedEventIndex] || currentEvents[0];
+  const headerName = currentEvent?.headerName || "X-Signature";
+  const mockSignature = getMockSignature(provider);
+
+  const handleSendLiveTest = async () => {
+    setIsSending(true);
+    setTestResponse(null);
+    setActiveTab("response");
+    const start = performance.now();
+    try {
+      const res = await fetch(endpointUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          [headerName]: mockSignature,
+        },
+        body: rawJson,
+      });
+      const durationMs = Math.round(performance.now() - start);
+      const text = await res.text();
+      setTestResponse({
+        status: res.status,
+        statusText: res.statusText || (res.status === 200 ? "OK" : ""),
+        durationMs,
+        body: text,
+      });
+      confetti({ particleCount: 25, spread: 50, origin: { y: 0.8 } });
+    } catch (err: unknown) {
+      const durationMs = Math.round(performance.now() - start);
+      const errMsg = err instanceof Error ? err.message : "Network request failed";
+      setTestResponse({
+        error: `${errMsg}. (If targeting localhost, verify your dev server is active and allows CORS)`,
+        durationMs,
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   // Set initial payload when provider or event changes
   useEffect(() => {
@@ -221,39 +284,15 @@ export default function WebhookPayloadGenerator() {
     }
   };
 
-  // Mock signature string
-  const mockSignature = useMemo(() => {
-    const timestamp = 1712589000;
-    switch (provider) {
-      case "stripe":
-        return `t=${timestamp},v1=5257a869e7eceeda325490b3fa73974c35eacb533fd02d91e5ee0a163495057a`;
-      case "github":
-        return `sha256=757107ea0eb2509fc211221cce984b8a37570b6d7586c22c469e4637ad85ecd9`;
-      case "clerk":
-        return `v1,g0hM9ssE+OTPJTGtUukkoSyqU3h0QOGNMw69WvP+Iik=`;
-      case "shopify":
-        return `XSRg+b2h8W2pDkWw2gH7Y3xS9K3h2s9dK2+L9s9D8ks=`;
-      case "supabase":
-        return `sha256=9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c`;
-      default:
-        return `mock_sig_12345`;
-    }
-  }, [provider]);
-
-  const headerName = currentEvent?.headerName || "X-Signature";
-
   // Generate curl command
-  const curlCommand = useMemo(() => {
-    const minifiedJson = rawJson.replace(/\n/g, "").replace(/\s\s+/g, " ");
-    return `curl -X POST "${endpointUrl}" \\
+  const minifiedJson = rawJson.replace(/\n/g, "").replace(/\s\s+/g, " ");
+  const curlCommand = `curl -X POST "${endpointUrl}" \\
   -H "Content-Type: application/json" \\
   -H "${headerName}: ${mockSignature}" \\
   -d '${minifiedJson}'`;
-  }, [endpointUrl, headerName, mockSignature, rawJson]);
 
   // Generate fetch snippet
-  const fetchSnippet = useMemo(() => {
-    return `// Test Webhook Dispatcher
+  const fetchSnippet = `// Test Webhook Dispatcher
 const response = await fetch("${endpointUrl}", {
   method: "POST",
   headers: {
@@ -266,7 +305,6 @@ const response = await fetch("${endpointUrl}", {
 console.log("Status:", response.status);
 const data = await response.json();
 console.log("Response:", data);`;
-  }, [endpointUrl, headerName, mockSignature, rawJson]);
 
   const handleDownload = () => {
     const eventSlug = currentEvent?.eventType ? currentEvent.eventType.replace(/[^a-z0-9]/g, "-") : "event";
@@ -366,6 +404,25 @@ console.log("Response:", data);`;
               {mockSignature}
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={handleSendLiveTest}
+            disabled={isSending}
+            className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-[0.98] disabled:opacity-60 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
+          >
+            {isSending ? (
+              <>
+                <Radio className="w-4 h-4 animate-spin" />
+                Dispatching test...
+              </>
+            ) : (
+              <>
+                <Play className="w-4 h-4 fill-white" />
+                Dispatch Test to Endpoint
+              </>
+            )}
+          </button>
         </div>
       </div>
 
@@ -409,6 +466,29 @@ console.log("Response:", data);`;
               <Code2 className="w-3.5 h-3.5" />
               Node / fetch
             </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("response")}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
+                activeTab === "response"
+                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-2xs"
+                  : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" />
+              Live Response
+              {testResponse && (
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    testResponse.status === 200
+                      ? "bg-emerald-500"
+                      : testResponse.error
+                      ? "bg-rose-500"
+                      : "bg-amber-500"
+                  }`}
+                />
+              )}
+            </button>
           </div>
 
           <div className="flex items-center gap-2">
@@ -418,7 +498,9 @@ console.log("Response:", data);`;
                   ? rawJson
                   : activeTab === "curl"
                   ? curlCommand
-                  : fetchSnippet
+                  : activeTab === "fetch"
+                  ? fetchSnippet
+                  : testResponse?.body || testResponse?.error || ""
               }
               label="Copy"
             />
@@ -451,7 +533,7 @@ console.log("Response:", data);`;
                 rows={22}
                 value={rawJson}
                 onChange={(e) => handleJsonChange(e.target.value)}
-                className="flex-1 font-mono text-xs text-zinc-800 dark:text-zinc-200 p-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl overflow-x-auto whitespace-pre leading-relaxed border border-zinc-200/60 dark:border-zinc-800/60 mt-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 font-mono text-xs text-zinc-800 dark:text-zinc-200 p-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-200/60 dark:border-zinc-800/60 mt-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           )}
@@ -477,6 +559,69 @@ console.log("Response:", data);`;
               <pre className="flex-1 font-mono text-xs text-zinc-800 dark:text-zinc-200 p-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed border border-zinc-200/60 dark:border-zinc-800/60 mt-3 max-h-[600px] overflow-y-auto">
                 {fetchSnippet}
               </pre>
+            </div>
+          )}
+
+          {activeTab === "response" && (
+            <div className="flex-1 flex flex-col">
+              <div className="flex items-center justify-between text-xs text-zinc-400 pb-3 border-b border-zinc-100 dark:border-zinc-800/80">
+                <span className="font-mono">Live Dispatch Result</span>
+                {testResponse?.durationMs && (
+                  <span className="font-mono text-zinc-500">
+                    Roundtrip: {testResponse.durationMs}ms
+                  </span>
+                )}
+              </div>
+              {!testResponse && !isSending && (
+                <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-zinc-400">
+                  <Activity className="w-8 h-8 mb-2 opacity-40" />
+                  <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">No request dispatched yet.</p>
+                  <p className="text-[11px] text-zinc-500 mt-1 max-w-xs">
+                    Click &quot;Dispatch Test to Endpoint&quot; on the left to fire a live POST request with signed signature headers.
+                  </p>
+                </div>
+              )}
+              {isSending && (
+                <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-zinc-400">
+                  <Radio className="w-8 h-8 mb-2 animate-spin text-blue-500" />
+                  <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                    Sending POST to {endpointUrl}...
+                  </p>
+                </div>
+              )}
+              {testResponse && !isSending && (
+                <div className="flex-1 mt-3 space-y-3 flex flex-col">
+                  <div className="flex items-center gap-3">
+                    {testResponse.status ? (
+                      <span
+                        className={`px-2.5 py-1 text-xs font-bold rounded-lg font-mono ${
+                          testResponse.status >= 200 && testResponse.status < 300
+                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400"
+                            : "bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-400"
+                        }`}
+                      >
+                        HTTP {testResponse.status} {testResponse.statusText}
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 text-xs font-bold rounded-lg font-mono bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-400">
+                        Dispatch Failed
+                      </span>
+                    )}
+                    <span className="text-xs text-zinc-500 font-mono truncate">
+                      {endpointUrl}
+                    </span>
+                  </div>
+                  {testResponse.error ? (
+                    <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 text-xs text-rose-700 dark:text-rose-300 leading-relaxed font-mono">
+                      {testResponse.error}
+                    </div>
+                  ) : (
+                    <pre className="flex-1 font-mono text-xs text-zinc-800 dark:text-zinc-200 p-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed border border-zinc-200/60 dark:border-zinc-800/60 max-h-[500px] overflow-y-auto">
+                      {testResponse.body || "(Empty response body)"}
+                    </pre>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

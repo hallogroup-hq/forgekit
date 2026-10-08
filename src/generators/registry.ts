@@ -73,19 +73,47 @@ import MeetingAgendaGenerator from "./modules/meeting-agenda/component";
 import { meta as emailSigMeta } from "./modules/email-signature/meta";
 import EmailSignatureGenerator from "./modules/email-signature/component";
 
+import { meta as promptOptMeta } from "./modules/prompt-optimizer/meta";
+import PromptOptimizerGenerator from "./modules/prompt-optimizer/component";
+
+import { meta as regexCheatMeta } from "./modules/regex-cheat/meta";
+import RegexCheatGenerator from "./modules/regex-cheat/component";
+
+import { meta as curlConvMeta } from "./modules/curl-converter/meta";
+import CurlConverterGenerator from "./modules/curl-converter/component";
+
+import { meta as jwtInspectMeta } from "./modules/jwt-inspector/meta";
+import JwtInspectorGenerator from "./modules/jwt-inspector/component";
+
+import { meta as svgBlobMeta } from "./modules/svg-blob/meta";
+import SvgBlobGenerator from "./modules/svg-blob/component";
+
+import { meta as aspectRatioMeta } from "./modules/aspect-ratio/meta";
+import AspectRatioGenerator from "./modules/aspect-ratio/component";
+
+import { meta as socialBioMeta } from "./modules/social-bio/meta";
+import SocialBioGenerator from "./modules/social-bio/component";
+
 export const registry: GeneratorModule[] = [
-  // Flagship & High-Craft Modules
+  // Flagship Workstation Modules
+  { meta: qrMeta, component: QrCodeGenerator },
   { meta: designMeta, component: DesignMdGenerator },
+  { meta: promptOptMeta, component: PromptOptimizerGenerator },
   { meta: aiRulesMeta, component: AiRulesGenerator },
-  { meta: appPrdMeta, component: AppPrdGenerator },
   { meta: webhookMeta, component: WebhookPayloadGenerator },
+  { meta: appPrdMeta, component: AppPrdGenerator },
+  { meta: curlConvMeta, component: CurlConverterGenerator },
+  { meta: regexCheatMeta, component: RegexCheatGenerator },
+  { meta: jwtInspectMeta, component: JwtInspectorGenerator },
   { meta: sqlSchemaMeta, component: SqlSchemaGenerator },
   { meta: meshGradientMeta, component: MeshGradientGenerator },
+  { meta: svgBlobMeta, component: SvgBlobGenerator },
+  { meta: aspectRatioMeta, component: AspectRatioGenerator },
   { meta: colorContrastMeta, component: ColorContrastGenerator },
   { meta: utmMeta, component: UtmBuilderGenerator },
+  { meta: socialBioMeta, component: SocialBioGenerator },
   { meta: copywritingMeta, component: CopywritingFrameworkGenerator },
   { meta: readmeBadgeMeta, component: ReadmeBadgeGenerator },
-  { meta: qrMeta, component: QrCodeGenerator },
   { meta: characterMeta, component: CharacterGenerator },
   { meta: mockDataMeta, component: MockDataGenerator },
   { meta: cssGlassMeta, component: CssGlassShadowGenerator },

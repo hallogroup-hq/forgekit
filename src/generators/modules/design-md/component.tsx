@@ -1,10 +1,44 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { Download, Sliders, Eye, Code, Globe, ArrowRight, Loader2, Sparkles, Check } from "lucide-react";
+import { Download, Eye, Code, Globe, ArrowRight, Loader2, Check, FileJson, Layers, Palette, Sliders } from "lucide-react";
 import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { downloadFile } from "@/lib/utils";
+
+function hexToRgb(hex: string): [number, number, number] {
+  const clean = hex.replace("#", "");
+  const num = parseInt(clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean, 16);
+  if (isNaN(num)) return [94, 106, 210];
+  return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  return (
+    "#" +
+    [r, g, b]
+      .map((x) => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, "0"))
+      .join("")
+  );
+}
+
+function tintColor(hex: string, factor: number): string {
+  try {
+    const [r, g, b] = hexToRgb(hex);
+    return rgbToHex(r + (255 - r) * factor, g + (255 - g) * factor, b + (255 - b) * factor);
+  } catch {
+    return hex;
+  }
+}
+
+function shadeColor(hex: string, factor: number): string {
+  try {
+    const [r, g, b] = hexToRgb(hex);
+    return rgbToHex(r * (1 - factor), g * (1 - factor), b * (1 - factor));
+  } catch {
+    return hex;
+  }
+}
 
 export default function DesignMdGenerator() {
   const [urlInput, setUrlInput] = useState("");
@@ -23,7 +57,7 @@ export default function DesignMdGenerator() {
   const [monoFont, setMonoFont] = useState("JetBrains Mono");
   const [baseRadius, setBaseRadius] = useState("8px (Subtle Precision)");
   const [elevationStyle, setElevationStyle] = useState("Subtle Multi-layer (Linear style)");
-  const [previewTab, setPreviewTab] = useState<"code" | "preview">("preview");
+  const [previewTab, setPreviewTab] = useState<"preview" | "code" | "tailwind" | "css" | "tokens">("preview");
   const [dateString, setDateString] = useState("2026-10-08");
 
   useEffect(() => {
@@ -162,8 +196,130 @@ export default function DesignMdGenerator() {
 `;
   }, [projectName, platform, brandTone, primaryColor, accentColor, neutralType, headingFont, bodyFont, monoFont, baseRadius, elevationStyle, dateString]);
 
+  const tailwindCode = useMemo(() => {
+    const rawRad = baseRadius.split(" ")[0] || "8px";
+    return `// tailwind.config.ts
+import type { Config } from "tailwindcss";
+
+const config: Config = {
+  content: [
+    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        brand: {
+          50: "${tintColor(primaryColor, 0.92)}",
+          100: "${tintColor(primaryColor, 0.8)}",
+          200: "${tintColor(primaryColor, 0.6)}",
+          300: "${tintColor(primaryColor, 0.4)}",
+          400: "${tintColor(primaryColor, 0.2)}",
+          500: "${primaryColor}",
+          600: "${shadeColor(primaryColor, 0.15)}",
+          700: "${shadeColor(primaryColor, 0.3)}",
+          800: "${shadeColor(primaryColor, 0.5)}",
+          900: "${shadeColor(primaryColor, 0.7)}",
+          950: "${shadeColor(primaryColor, 0.85)}",
+        },
+        accent: {
+          500: "${accentColor}",
+          hover: "${shadeColor(accentColor, 0.15)}",
+        },
+      },
+      borderRadius: {
+        brand: "${rawRad}",
+      },
+      fontFamily: {
+        heading: ["'${headingFont}'", "system-ui", "sans-serif"],
+        sans: ["'${bodyFont}'", "system-ui", "sans-serif"],
+        mono: ["'${monoFont}'", "monospace"],
+      },
+    },
+  },
+  plugins: [],
+};
+
+export default config;
+`;
+  }, [primaryColor, accentColor, baseRadius, headingFont, bodyFont, monoFont]);
+
+  const cssCode = useMemo(() => {
+    const rawRad = baseRadius.split(" ")[0] || "8px";
+    return `/* Design Tokens & CSS Variables */
+:root {
+  /* Typography */
+  --font-heading: '${headingFont}', system-ui, -apple-system, sans-serif;
+  --font-body: '${bodyFont}', system-ui, -apple-system, sans-serif;
+  --font-mono: '${monoFont}', monospace;
+
+  /* Brand Palette (10-step ramp) */
+  --color-brand-50: ${tintColor(primaryColor, 0.92)};
+  --color-brand-100: ${tintColor(primaryColor, 0.8)};
+  --color-brand-200: ${tintColor(primaryColor, 0.6)};
+  --color-brand-300: ${tintColor(primaryColor, 0.4)};
+  --color-brand-400: ${tintColor(primaryColor, 0.2)};
+  --color-brand-500: ${primaryColor};
+  --color-brand-600: ${shadeColor(primaryColor, 0.15)};
+  --color-brand-700: ${shadeColor(primaryColor, 0.3)};
+  --color-brand-800: ${shadeColor(primaryColor, 0.5)};
+  --color-brand-900: ${shadeColor(primaryColor, 0.7)};
+  --color-brand-950: ${shadeColor(primaryColor, 0.85)};
+
+  /* Accent Highlight */
+  --color-accent: ${accentColor};
+
+  /* Radii & Elevation */
+  --radius-brand: ${rawRad};
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-overlay: 0 12px 30px -10px rgba(0, 0, 0, 0.15);
+
+  /* Transitions */
+  --ease-spring: cubic-bezier(0.23, 1, 0.32, 1);
+  --duration-interactive: 150ms;
+}
+`;
+  }, [primaryColor, accentColor, baseRadius, headingFont, bodyFont, monoFont]);
+
+  const tokensJson = useMemo(() => {
+    const rawRad = baseRadius.split(" ")[0] || "8px";
+    const data = {
+      $schema: "https://tokens.studio/schema.json",
+      name: projectName,
+      color: {
+        brand: {
+          50: { value: tintColor(primaryColor, 0.92), type: "color" },
+          100: { value: tintColor(primaryColor, 0.8), type: "color" },
+          500: { value: primaryColor, type: "color" },
+          900: { value: shadeColor(primaryColor, 0.7), type: "color" },
+        },
+        accent: {
+          500: { value: accentColor, type: "color" },
+        },
+      },
+      font: {
+        heading: { value: headingFont, type: "fontFamilies" },
+        body: { value: bodyFont, type: "fontFamilies" },
+        mono: { value: monoFont, type: "fontFamilies" },
+      },
+      radius: {
+        base: { value: rawRad, type: "borderRadius" },
+      },
+    };
+    return JSON.stringify(data, null, 2);
+  }, [projectName, primaryColor, accentColor, baseRadius, headingFont, bodyFont, monoFont]);
+
   const handleDownload = () => {
-    downloadFile(markdownContent, "DESIGN.md", "text/markdown");
+    if (previewTab === "tailwind") {
+      downloadFile(tailwindCode, "tailwind.config.ts", "application/typescript");
+    } else if (previewTab === "css") {
+      downloadFile(cssCode, "tokens.css", "text/css");
+    } else if (previewTab === "tokens") {
+      downloadFile(tokensJson, "tokens.json", "application/json");
+    } else {
+      downloadFile(markdownContent, "DESIGN.md", "text/markdown");
+    }
     confetti({ particleCount: 30, spread: 60, origin: { y: 0.8 } });
   };
 
@@ -414,13 +570,14 @@ export default function DesignMdGenerator() {
       {/* Output Panel (Right) */}
       <div className="lg:col-span-7 flex flex-col rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-950/60 overflow-hidden">
         {/* Toolbar */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-          <div className="flex items-center gap-1.5">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex-wrap gap-2">
+          <div className="flex items-center gap-1 flex-wrap">
             <button
+              type="button"
               onClick={() => setPreviewTab("preview")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
                 previewTab === "preview"
-                  ? "bg-zinc-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-400"
+                  ? "bg-zinc-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-semibold"
                   : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
               }`}
             >
@@ -428,43 +585,117 @@ export default function DesignMdGenerator() {
               <span>Preview</span>
             </button>
             <button
+              type="button"
               onClick={() => setPreviewTab("code")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
                 previewTab === "code"
-                  ? "bg-zinc-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-400"
+                  ? "bg-zinc-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-semibold"
                   : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
               }`}
             >
               <Code className="w-3.5 h-3.5" />
-              <span>Raw Markdown</span>
+              <span>DESIGN.md</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreviewTab("tailwind")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                previewTab === "tailwind"
+                  ? "bg-zinc-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-semibold"
+                  : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>Tailwind Config</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreviewTab("css")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                previewTab === "css"
+                  ? "bg-zinc-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-semibold"
+                  : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+              }`}
+            >
+              <Palette className="w-3.5 h-3.5" />
+              <span>CSS Ramp</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreviewTab("tokens")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                previewTab === "tokens"
+                  ? "bg-zinc-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-semibold"
+                  : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+              }`}
+            >
+              <FileJson className="w-3.5 h-3.5" />
+              <span>tokens.json</span>
             </button>
           </div>
 
           <div className="flex items-center gap-2">
             <CopyButton
-              text={markdownContent}
-              label="Copy Spec"
+              text={
+                previewTab === "tailwind"
+                  ? tailwindCode
+                  : previewTab === "css"
+                  ? cssCode
+                  : previewTab === "tokens"
+                  ? tokensJson
+                  : markdownContent
+              }
+              label="Copy"
               size="sm"
               variant="secondary"
               triggerConfetti
             />
             <button
+              type="button"
               onClick={handleDownload}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium shadow-sm transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium shadow-sm transition-all cursor-pointer active:scale-[0.98]"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Download .md</span>
+              <span>
+                {previewTab === "tailwind"
+                  ? "Download .ts"
+                  : previewTab === "css"
+                  ? "Download .css"
+                  : previewTab === "tokens"
+                  ? "Download .json"
+                  : "Download .md"}
+              </span>
             </button>
           </div>
         </div>
 
         {/* Content Viewer */}
         <div className="p-5 flex-1 max-h-[640px] overflow-y-auto">
-          {previewTab === "code" ? (
+          {previewTab === "code" && (
             <pre className="font-mono text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap selection:bg-blue-500/20">
               {markdownContent}
             </pre>
-          ) : (
+          )}
+
+          {previewTab === "tailwind" && (
+            <pre className="font-mono text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap selection:bg-blue-500/20">
+              {tailwindCode}
+            </pre>
+          )}
+
+          {previewTab === "css" && (
+            <pre className="font-mono text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap selection:bg-blue-500/20">
+              {cssCode}
+            </pre>
+          )}
+
+          {previewTab === "tokens" && (
+            <pre className="font-mono text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap selection:bg-blue-500/20">
+              {tokensJson}
+            </pre>
+          )}
+
+          {previewTab === "preview" && (
             <div className="space-y-4 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed font-sans">
               <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-2">
                 <div className="flex items-center justify-between">

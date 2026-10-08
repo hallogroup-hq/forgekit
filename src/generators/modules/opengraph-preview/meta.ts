@@ -5,7 +5,7 @@ export const meta: ToolMeta = {
   title: "OpenGraph & Meta Tag Studio",
   shortTitle: "OpenGraph & SEO",
   description: "Live social share card previewer for Google, Twitter/X, and LinkedIn with HTML & Next.js metadata export.",
-  category: "content",
+  category: "growth",
   tags: ["opengraph", "seo", "meta", "twitter", "linkedin", "preview", "google", "tags"],
   icon: "Share2",
   isPopular: true,

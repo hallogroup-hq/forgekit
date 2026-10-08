@@ -20,12 +20,12 @@ export async function generateMetadata({ params }: ToolPageProps): Promise<Metad
 
   if (!tool) {
     return {
-      title: "Tool Not Found — ForgeKit",
+      title: "Tool Not Found: ForgeKit",
     };
   }
 
   return {
-    title: `${tool.meta.title} — ForgeKit`,
+    title: `${tool.meta.title} | ForgeKit`,
     description: tool.meta.description,
   };
 }

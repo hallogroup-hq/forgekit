@@ -135,7 +135,7 @@ export default function HashSecretGenerator() {
 
                 <div className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
                   <div className="font-mono text-xs text-zinc-800 dark:text-zinc-200 break-all select-all">
-                    {item.value || "—"}
+                    {item.value || "-"}
                   </div>
                   <CopyButton
                     text={item.value}

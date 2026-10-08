@@ -81,7 +81,7 @@ const QUOTES = [
   "\"Rules are simply suggestions written by people who survived without ambition.\"",
   "\"Trust is expensive. I only trade in hard currency and direct leverage.\"",
   "\"If the world is burning, make sure you hold the torch with purpose.\"",
-  "\"Courage isn't the absence of fear—it's moving forward regardless.\"",
+  "\"Courage isn't the absence of fear, it's moving forward regardless.\"",
 ];
 
 const DEFAULT_CHARACTER: CharacterData = {

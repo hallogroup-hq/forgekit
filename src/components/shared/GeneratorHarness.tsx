@@ -42,14 +42,14 @@ export function GeneratorHarness({ meta, children }: GeneratorHarnessProps) {
 
             {/* Title & Badge */}
             <div className="flex items-center gap-3 flex-wrap">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center shadow-sm">
+              <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shadow-2xs ${category?.badgeColor || "bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200"}`}>
                 <Icon name={meta.icon} size={22} />
               </div>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
                   {meta.title}
                 </h1>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
                   {meta.description}
                 </p>
               </div>

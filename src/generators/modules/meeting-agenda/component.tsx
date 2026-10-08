@@ -73,11 +73,11 @@ export default function MeetingAgendaGenerator() {
 
   const markdownAgenda = useMemo(() => {
     const topicsMd = topics
-      .map((t, idx) => `${idx + 1}. **${t.title}** (${t.durationMin} min) — *Lead: ${t.leader}*`)
+      .map((t, idx) => `${idx + 1}. **${t.title}** (${t.durationMin} min) | *Lead: ${t.leader}*`)
       .join("\n");
 
     const actionsMd = actions
-      .map((a) => `- [ ] **${a.task}** (@${a.assignee}) — *Due: ${a.deadline}*`)
+      .map((a) => `- [ ] **${a.task}** (@${a.assignee}) | *Due: ${a.deadline}*`)
       .join("\n");
 
     return `# Meeting Agenda: ${meetingTitle}

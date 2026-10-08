@@ -13,7 +13,7 @@ function TwitterIcon({ className = "w-3.5 h-3.5" }: { className?: string }) {
 }
 
 export default function OpenGraphPreviewGenerator() {
-  const [title, setTitle] = useState("ForgeKit — The Ultimate Workstation of Modern Generators");
+  const [title, setTitle] = useState("ForgeKit: The Workstation of Modern Generators");
   const [description, setDescription] = useState("Instant client-side generators for developers, designers, and creators. QR codes, design specs, dummy data, CSS glass, and productivity tools.");
   const [url, setUrl] = useState("https://forgekit.dev");
   const [imageUrl, setImageUrl] = useState("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80");

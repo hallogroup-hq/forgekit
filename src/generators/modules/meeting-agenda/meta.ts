@@ -5,7 +5,7 @@ export const meta: ToolMeta = {
   title: "Meeting Agenda & Notes Studio",
   shortTitle: "Meeting Agenda",
   description: "Structure crisp, timeboxed meeting agendas, discussion topics, and action-item trackers in Markdown.",
-  category: "productivity",
+  category: "content",
   tags: ["meeting", "agenda", "notes", "action-items", "productivity", "management", "markdown"],
   icon: "CalendarCheck",
   isPopular: true,

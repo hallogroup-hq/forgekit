@@ -1,32 +1,75 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { Download, Sliders, Eye, Code } from "lucide-react";
+import React, { useState, useMemo, useEffect } from "react";
+import { Download, Sliders, Eye, Code, Globe, ArrowRight, Loader2, Sparkles, Check } from "lucide-react";
 import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { downloadFile } from "@/lib/utils";
 
 export default function DesignMdGenerator() {
-  const [projectName, setProjectName] = useState("Acme Studio");
+  const [urlInput, setUrlInput] = useState("");
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [extractSuccess, setExtractSuccess] = useState<string | null>(null);
+
+  // Form State
+  const [projectName, setProjectName] = useState("Linear");
   const [platform, setPlatform] = useState("Web (Responsive)");
-  const [brandTone, setBrandTone] = useState("Modern, Clean, Developer-First");
-  const [primaryColor, setPrimaryColor] = useState("#2563eb");
-  const [accentColor, setAccentColor] = useState("#8b5cf6");
-  const [neutralType, setNeutralType] = useState("Zinc (Neutral Cool)");
-  const [headingFont, setHeadingFont] = useState("Inter");
+  const [brandTone, setBrandTone] = useState("Precision, High-Contrast, Developer-Centric");
+  const [primaryColor, setPrimaryColor] = useState("#5e6ad2");
+  const [accentColor, setAccentColor] = useState("#f43f5e");
+  const [neutralType, setNeutralType] = useState("Zinc (Deep Obsidian Dark)");
+  const [headingFont, setHeadingFont] = useState("Inter Display");
   const [bodyFont, setBodyFont] = useState("Inter");
   const [monoFont, setMonoFont] = useState("JetBrains Mono");
-  const [baseRadius, setBaseRadius] = useState("12px (Soft Modern)");
+  const [baseRadius, setBaseRadius] = useState("8px (Subtle Precision)");
   const [elevationStyle, setElevationStyle] = useState("Subtle Multi-layer (Linear style)");
   const [previewTab, setPreviewTab] = useState<"code" | "preview">("preview");
   const [dateString, setDateString] = useState("2026-10-08");
 
-  React.useEffect(() => {
+  useEffect(() => {
     setDateString(new Date().toISOString().split("T")[0]);
   }, []);
 
+  const handleExtractFromUrl = async (targetUrl?: string) => {
+    const raw = targetUrl || urlInput;
+    if (!raw.trim()) return;
+
+    setIsExtracting(true);
+    setExtractSuccess(null);
+
+    try {
+      const res = await fetch("/api/extract-design", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: raw.trim() }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.projectName) setProjectName(data.projectName);
+        if (data.brandTone) setBrandTone(data.brandTone);
+        if (data.primaryColor) setPrimaryColor(data.primaryColor);
+        if (data.accentColor) setAccentColor(data.accentColor);
+        if (data.neutralType) setNeutralType(data.neutralType);
+        if (data.headingFont) setHeadingFont(data.headingFont);
+        if (data.bodyFont) setBodyFont(data.bodyFont);
+        if (data.monoFont) setMonoFont(data.monoFont);
+        if (data.baseRadius) setBaseRadius(data.baseRadius);
+        if (data.elevationStyle) setElevationStyle(data.elevationStyle);
+
+        setExtractSuccess(`Successfully extracted design specs for ${data.domain}!`);
+        confetti({ particleCount: 30, spread: 60, origin: { y: 0.8 } });
+      }
+    } catch (err) {
+      console.error("Extraction error", err);
+    } finally {
+      setIsExtracting(false);
+      setTimeout(() => setExtractSuccess(null), 4000);
+    }
+  };
+
   const markdownContent = useMemo(() => {
-    return `# DESIGN.md — Design System & UI Specifications
+    return `# DESIGN.md: Design System and UI Specifications
 
 > **Project:** ${projectName}  
 > **Target Platform:** ${platform}  
@@ -127,18 +170,96 @@ export default function DesignMdGenerator() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
       {/* Configuration Form (Left) */}
-      <div className="lg:col-span-5 space-y-5">
-        <div className="flex items-center gap-2 pb-2 border-b border-zinc-200 dark:border-zinc-800">
-          <Sliders className="w-4 h-4 text-blue-500" />
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            System Parameters
-          </h3>
+      <div className="lg:col-span-5 space-y-6">
+        {/* Instant Website URL Extractor Box */}
+        <div className="p-4 rounded-2xl border border-blue-500/30 bg-blue-500/5 dark:bg-blue-500/10 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
+              <Globe className="w-3.5 h-3.5" />
+              <span>Extract Design from Any Website</span>
+            </span>
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-600 dark:text-blue-300">
+              Live Scanner
+            </span>
+          </div>
+
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleExtractFromUrl()}
+              placeholder="e.g. linear.app, stripe.com, apple.com"
+              className="flex-1 px-3 py-2 text-xs rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              type="button"
+              onClick={() => handleExtractFromUrl()}
+              disabled={isExtracting}
+              className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+            >
+              {isExtracting ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Extracting...</span>
+                </>
+              ) : (
+                <>
+                  <span>Extract</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </>
+              )}
+            </button>
+          </div>
+
+          {extractSuccess && (
+            <div className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 font-medium pt-1 animate-in fade-in">
+              <Check className="w-3.5 h-3.5" />
+              <span>{extractSuccess}</span>
+            </div>
+          )}
+
+          {/* Quick Preset Chips */}
+          <div className="space-y-1.5 pt-1">
+            <span className="text-[10px] text-zinc-400 uppercase tracking-wider block">
+              Or Try Popular Workstations:
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { name: "Linear", url: "https://linear.app" },
+                { name: "Stripe", url: "https://stripe.com" },
+                { name: "Supabase", url: "https://supabase.com" },
+                { name: "Apple", url: "https://apple.com" },
+                { name: "Vercel", url: "https://vercel.com" },
+              ].map((site) => (
+                <button
+                  key={site.name}
+                  type="button"
+                  onClick={() => {
+                    setUrlInput(site.url);
+                    handleExtractFromUrl(site.url);
+                  }}
+                  className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-blue-500/50 text-zinc-700 dark:text-zinc-300 transition-colors"
+                >
+                  {site.name}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
+        {/* Manual Adjustments */}
         <div className="space-y-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-zinc-200 dark:border-zinc-800">
+            <Sliders className="w-4 h-4 text-blue-500" />
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              Fine-Tune Parameters
+            </h3>
+          </div>
+
           <div>
             <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-              Project / Product Name
+              Project / Brand Name
             </label>
             <input
               type="text"
@@ -168,16 +289,12 @@ export default function DesignMdGenerator() {
               <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                 Aesthetic Tone
               </label>
-              <select
+              <input
+                type="text"
                 value={brandTone}
                 onChange={(e) => setBrandTone(e.target.value)}
-                className="w-full px-2.5 py-2 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
-              >
-                <option value="Modern, Clean, Developer-First">Modern & Developer-First</option>
-                <option value="Minimalist & Apple HIG Soft">Apple HIG Soft & Elegant</option>
-                <option value="Vibrant & High Energy">Vibrant & High Energy</option>
-                <option value="Enterprise & Trustworthy">Enterprise & Trustworthy</option>
-              </select>
+                className="w-full px-2.5 py-2 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              />
             </div>
           </div>
 
@@ -230,53 +347,40 @@ export default function DesignMdGenerator() {
               <label className="block text-[11px] text-zinc-600 dark:text-zinc-400 mb-1">
                 Neutral Family
               </label>
-              <select
+              <input
+                type="text"
                 value={neutralType}
                 onChange={(e) => setNeutralType(e.target.value)}
                 className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
-              >
-                <option value="Zinc (Neutral Cool)">Zinc (Modern Cool Grey)</option>
-                <option value="Slate (Deep Blue Grey)">Slate (Blue Tint Grey)</option>
-                <option value="Neutral (True Pure Grey)">Neutral (Pure Monochrome)</option>
-                <option value="Stone (Warm Earthy Grey)">Stone (Warm Grey)</option>
-              </select>
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                Primary Font
+                Heading / Body Font
               </label>
-              <select
+              <input
+                type="text"
                 value={headingFont}
                 onChange={(e) => {
                   setHeadingFont(e.target.value);
                   setBodyFont(e.target.value);
                 }}
                 className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
-              >
-                <option value="Inter">Inter</option>
-                <option value="Geist Sans">Geist Sans</option>
-                <option value="Plus Jakarta Sans">Plus Jakarta Sans</option>
-                <option value="Roboto">Roboto</option>
-                <option value="System UI Native">System UI Native</option>
-              </select>
+              />
             </div>
             <div>
               <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                 Monospace Font
               </label>
-              <select
+              <input
+                type="text"
                 value={monoFont}
                 onChange={(e) => setMonoFont(e.target.value)}
                 className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
-              >
-                <option value="JetBrains Mono">JetBrains Mono</option>
-                <option value="Geist Mono">Geist Mono</option>
-                <option value="Fira Code">Fira Code</option>
-                <option value="SF Mono">SF Mono</option>
-              </select>
+              />
             </div>
           </div>
 
@@ -285,30 +389,23 @@ export default function DesignMdGenerator() {
               <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                 Border Radius
               </label>
-              <select
+              <input
+                type="text"
                 value={baseRadius}
                 onChange={(e) => setBaseRadius(e.target.value)}
                 className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
-              >
-                <option value="8px (Clean & Subtle)">8px (Clean)</option>
-                <option value="12px (Soft Modern)">12px (Modern)</option>
-                <option value="16px (Apple Rounded)">16px (Apple Soft)</option>
-                <option value="4px (Sharp Tech)">4px (Sharp)</option>
-              </select>
+              />
             </div>
             <div>
               <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                 Elevation
               </label>
-              <select
+              <input
+                type="text"
                 value={elevationStyle}
                 onChange={(e) => setElevationStyle(e.target.value)}
                 className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
-              >
-                <option value="Subtle Multi-layer (Linear style)">Linear Multi-layer</option>
-                <option value="Soft Floating (Apple style)">Apple Soft Floating</option>
-                <option value="Flat with Borders (Vercel style)">Vercel Sharp Borders</option>
-              </select>
+              />
             </div>
           </div>
         </div>
@@ -362,7 +459,7 @@ export default function DesignMdGenerator() {
         </div>
 
         {/* Content Viewer */}
-        <div className="p-5 flex-1 max-h-[560px] overflow-y-auto">
+        <div className="p-5 flex-1 max-h-[640px] overflow-y-auto">
           {previewTab === "code" ? (
             <pre className="font-mono text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap selection:bg-blue-500/20">
               {markdownContent}
@@ -386,12 +483,12 @@ export default function DesignMdGenerator() {
               {/* Tokens Preview Card */}
               <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3">
                 <span className="font-semibold text-zinc-900 dark:text-zinc-100 block">
-                  Color Token Sample
+                  Color Token Palette
                 </span>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4 flex-wrap">
                   <div className="flex items-center gap-2">
                     <div
-                      className="w-7 h-7 rounded-lg shadow-sm border border-black/10"
+                      className="w-8 h-8 rounded-lg shadow-sm border border-black/10"
                       style={{ backgroundColor: primaryColor }}
                     />
                     <div>
@@ -402,12 +499,20 @@ export default function DesignMdGenerator() {
 
                   <div className="flex items-center gap-2">
                     <div
-                      className="w-7 h-7 rounded-lg shadow-sm border border-black/10"
+                      className="w-8 h-8 rounded-lg shadow-sm border border-black/10"
                       style={{ backgroundColor: accentColor }}
                     />
                     <div>
                       <div className="font-medium text-[11px]">Accent</div>
                       <div className="font-mono text-[10px] text-zinc-400">{accentColor}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg shadow-sm border border-zinc-700 bg-zinc-900" />
+                    <div>
+                      <div className="font-medium text-[11px]">Neutral</div>
+                      <div className="font-mono text-[10px] text-zinc-400">{neutralType.split(" ")[0]}</div>
                     </div>
                   </div>
                 </div>
@@ -422,8 +527,37 @@ export default function DesignMdGenerator() {
                   The quick brown fox jumps over the lazy dog ({headingFont})
                 </p>
                 <p className="font-mono text-[11px] text-zinc-500" style={{ fontFamily: monoFont }}>
-                  const tokens = &#123; primary: &quot;{primaryColor}&quot; &#125;;
+                  const designTokens = &#123; primary: &quot;{primaryColor}&quot;, radius: &quot;{baseRadius}&quot; &#125;;
                 </p>
+              </div>
+
+              {/* UI Component Simulation */}
+              <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3">
+                <span className="font-semibold text-zinc-900 dark:text-zinc-100 block">
+                  Component Simulation Preview
+                </span>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    style={{
+                      backgroundColor: primaryColor,
+                      borderRadius: baseRadius.split(" ")[0],
+                    }}
+                    className="px-4 py-2 text-white font-semibold text-xs shadow-xs"
+                  >
+                    Primary Button
+                  </button>
+                  <button
+                    type="button"
+                    style={{
+                      borderRadius: baseRadius.split(" ")[0],
+                      borderColor: primaryColor,
+                    }}
+                    className="px-4 py-2 border text-zinc-800 dark:text-zinc-200 font-medium text-xs bg-transparent"
+                  >
+                    Secondary Outline
+                  </button>
+                </div>
               </div>
             </div>
           )}

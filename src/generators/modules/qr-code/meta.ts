@@ -5,7 +5,7 @@ export const meta: ToolMeta = {
   title: "QR Code Studio",
   shortTitle: "QR Code",
   description: "Generate high-resolution custom QR codes for URLs, WiFi networks, vCards, text, and email.",
-  category: "core",
+  category: "growth",
   tags: ["qr", "wifi", "vcard", "barcode", "generator", "png", "svg"],
   icon: "QrCode",
   isPopular: true,

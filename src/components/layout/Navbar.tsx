@@ -26,21 +26,18 @@ export function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           {/* Brand */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-200">
-              <Wrench className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 flex items-center justify-center font-bold text-sm shadow-2xs group-hover:scale-105 transition-transform duration-150">
+              <Wrench className="w-4 h-4" />
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
-                <span className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">
+                <span className="font-bold text-base tracking-tight text-zinc-900 dark:text-zinc-100">
                   ForgeKit
                 </span>
-                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                <span className="text-[10px] font-mono font-medium px-1.5 py-0.2 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
                   v1.0
                 </span>
               </div>
-              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-mono -mt-1 hidden sm:inline">
-                The Workstation of Generators
-              </span>
             </div>
           </Link>
 

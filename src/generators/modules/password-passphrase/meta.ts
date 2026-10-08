@@ -5,7 +5,7 @@ export const meta: ToolMeta = {
   title: "Password & Passphrase Studio",
   shortTitle: "Password Generator",
   description: "Cryptographically secure random passwords and memorable XKCD passphrases with entropy analysis.",
-  category: "core",
+  category: "developer",
   tags: ["password", "passphrase", "security", "crypto", "generator", "entropy"],
   icon: "KeyRound",
   isPopular: true,

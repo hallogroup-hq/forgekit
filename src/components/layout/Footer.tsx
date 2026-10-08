@@ -35,23 +35,28 @@ export function Footer() {
             </h4>
             <ul className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
               <li>
-                <Link href="/?category=developer" className="hover:text-blue-500 transition-colors">
-                  Tech & Developer
+                <Link href="/?category=vibe-coder" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
+                  Vibe Coder & AI
                 </Link>
               </li>
               <li>
-                <Link href="/?category=design" className="hover:text-blue-500 transition-colors">
+                <Link href="/?category=developer" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
+                  Tech & DevOps
+                </Link>
+              </li>
+              <li>
+                <Link href="/?category=design" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
                   Design & UI/UX
                 </Link>
               </li>
               <li>
-                <Link href="/?category=content" className="hover:text-blue-500 transition-colors">
-                  Creative & Content
+                <Link href="/?category=growth" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
+                  Marketer & Growth
                 </Link>
               </li>
               <li>
-                <Link href="/?category=productivity" className="hover:text-blue-500 transition-colors">
-                  Productivity & Business
+                <Link href="/?category=content" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
+                  Creative & Story
                 </Link>
               </li>
             </ul>

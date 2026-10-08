@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ForgeKit — The Workstation of Modern Generators",
+  title: "ForgeKit: The Workstation of Modern Generators",
   description:
     "An extensible, high-precision workstation of client-side generators for developers, designers, writers, and productivity workflows. 100% private and zero-latency.",
 };

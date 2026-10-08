@@ -28,12 +28,12 @@ import { CommandPalette } from "@/components/shared/CommandPalette";
 import { getConsoleAsset } from "@/data/consoleAssets";
 
 const CATEGORY_TABS = [
-  { id: "all", label: "All Utilities" },
+  { id: "all", label: "All" },
   { id: "productivity", label: "Productivity" },
-  { id: "sales", label: "Business & Sales" },
-  { id: "marketing", label: "Marketing & Growth" },
-  { id: "creative", label: "Creative & Design" },
-  { id: "vibe-coder", label: "Vibe Coder & DevOps" },
+  { id: "sales", label: "Sales" },
+  { id: "marketing", label: "Marketing" },
+  { id: "creative", label: "Creative" },
+  { id: "vibe-coder", label: "Dev & AI" },
   { id: "pinned", label: "Favorites" },
 ];
 
@@ -293,56 +293,26 @@ export default function PS5InspiredHomePage() {
         <div className="absolute inset-0 bg-radial-at-c from-transparent via-[#05070b]/30 to-[#05070b]/80" />
       </div>
 
-      {/* 2. TOP HUD: BRAND & PRIMARY CONTROLS */}
-      <header className="relative z-30 pt-6 px-6 sm:px-12 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Left: Brand Identity & Instant Search */}
-        <div className="flex items-center gap-4 flex-wrap sm:flex-nowrap">
-          <Link href="/" className="flex items-center gap-3 group shrink-0">
+      {/* 2. TOP HUD: BRAND & PRIMARY CONTROLS (UNBREAKABLE SINGLE ROW) */}
+      <header className="relative z-30 pt-6 px-6 sm:px-10 flex items-center justify-between gap-4 flex-nowrap w-full">
+        {/* Left: Brand Identity & Category Navigation */}
+        <div className="flex items-center gap-5 min-w-0">
+          <Link href="/" className="flex items-center gap-2.5 group shrink-0">
             <div className="w-8 h-8 rounded-xl bg-white text-black font-black text-sm flex items-center justify-center tracking-tighter shadow-md group-hover:scale-105 transition-transform">
               FK
             </div>
             <div className="flex flex-col">
-              <span className="font-extrabold text-sm tracking-wider uppercase text-white">
+              <span className="font-extrabold text-sm tracking-wider uppercase text-white leading-none">
                 ForgeKit
               </span>
-              <span className="text-[10px] font-mono text-white/40 tracking-wider">
-                Generator Suite
+              <span className="text-[10px] font-mono text-white/40 tracking-wider mt-0.5">
+                Suite
               </span>
             </div>
           </Link>
 
-          {/* Instant Search Bar (Always visible for fast discovery) */}
-          <div className="relative flex-1 sm:w-72 md:w-80">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                if (e.target.value.trim() && viewMode !== "grid") {
-                  setViewMode("grid"); // auto-switch to grid on search for fastest discovery
-                }
-              }}
-              placeholder="Quick search 28+ tools (invoice, QR, resize)..."
-              className="w-full pl-8 pr-8 py-1.5 rounded-full bg-black/40 hover:bg-black/60 focus:bg-black/80 backdrop-blur-md border border-white/10 focus:border-white/30 text-xs text-white placeholder-white/40 focus:outline-none transition-all"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Center/Right: Category Pills & View Switcher */}
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* Category Tabs */}
-          <div className="flex items-center gap-1 bg-black/40 backdrop-blur-md px-1.5 py-1 rounded-full border border-white/10 shadow-inner overflow-x-auto max-w-full">
+          {/* Clean Category Navigation Pills (Horizontally scrollable if tight) */}
+          <nav className="flex items-center gap-1 bg-black/40 backdrop-blur-md px-1.5 py-1 rounded-full border border-white/10 shadow-inner overflow-x-auto scrollbar-none flex-nowrap">
             {CATEGORY_TABS.map((tab) => {
               const active = selectedCategory === tab.id;
               return (
@@ -364,10 +334,40 @@ export default function PS5InspiredHomePage() {
                 </button>
               );
             })}
+          </nav>
+        </div>
+
+        {/* Right Utilities (Strictly unbreakable single group, never leaks/wraps) */}
+        <div className="flex items-center gap-2.5 shrink-0 flex-nowrap">
+          {/* Instant Search Bar */}
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                if (e.target.value.trim() && viewMode !== "grid") {
+                  setViewMode("grid"); // auto-switch to grid on search for fastest discovery
+                }
+              }}
+              placeholder="Search tools..."
+              className="w-32 sm:w-44 md:w-52 focus:w-60 pl-8 pr-7 py-1.5 rounded-full bg-black/40 hover:bg-black/60 focus:bg-black/80 backdrop-blur-md border border-white/10 focus:border-white/30 text-xs text-white placeholder-white/40 focus:outline-none transition-all duration-200"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
           </div>
 
           {/* View Mode Toggle: Shelf vs Grid */}
-          <div className="flex items-center bg-black/40 backdrop-blur-md p-0.5 rounded-full border border-white/10">
+          <div className="flex items-center bg-black/40 backdrop-blur-md p-0.5 rounded-full border border-white/10 shrink-0">
             <button
               type="button"
               onClick={() => {
@@ -375,7 +375,7 @@ export default function PS5InspiredHomePage() {
                 soundManager.playNavigate();
               }}
               className={`p-1.5 rounded-full transition-all cursor-pointer ${
-                viewMode === "shelf" ? "bg-white text-black" : "text-white/60 hover:text-white"
+                viewMode === "shelf" ? "bg-white text-black shadow-xs" : "text-white/60 hover:text-white"
               }`}
               title="Console Shelf Mode"
             >
@@ -388,7 +388,7 @@ export default function PS5InspiredHomePage() {
                 soundManager.playNavigate();
               }}
               className={`p-1.5 rounded-full transition-all cursor-pointer ${
-                viewMode === "grid" ? "bg-white text-black" : "text-white/60 hover:text-white"
+                viewMode === "grid" ? "bg-white text-black shadow-xs" : "text-white/60 hover:text-white"
               }`}
               title="Full Grid Mode"
             >
@@ -403,11 +403,16 @@ export default function PS5InspiredHomePage() {
               const res = soundManager.toggleSound();
               setSoundEnabled(res);
             }}
-            className="p-2 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-colors cursor-pointer"
+            className="p-1.5 rounded-full bg-black/40 border border-white/10 text-white/70 hover:text-white transition-colors cursor-pointer shrink-0"
             title={soundEnabled ? "Mute Sound" : "Enable Sound"}
           >
-            {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 text-white/40" />}
+            {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5 text-white/40" />}
           </button>
+
+          {/* System Time */}
+          <span className="hidden xl:inline-block text-xs font-mono text-white/40 border-l border-white/10 pl-2.5 shrink-0">
+            {currentTime || "00:14"}
+          </span>
         </div>
       </header>
 

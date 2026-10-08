@@ -1,14 +1,20 @@
 import puppeteer, { Browser } from "puppeteer-core";
 import fs from "node:fs/promises";
+import syncFs from "node:fs";
 import path from "node:path";
+import dns from "node:dns/promises";
+import net from "node:net";
+import crypto from "node:crypto";
 import {
   FullDesignSystem,
   createArchetypeDesignSystem,
   attr,
+  calculateContrastRatio,
   auditContrastPairs,
   DesignArchetype,
   generateColorLadder,
 } from "../../generators/modules/design-md/engine";
+import { isPrivateOrReservedIpv4, isPrivateOrReservedIpv6 } from "../security/ssrf";
 
 export interface RenderedElementMetrics {
   fontFamily: string;
@@ -31,7 +37,8 @@ export interface ReferenceSiteInspectionEvidence {
   name: string;
   archetype: DesignArchetype;
   timestamp: string;
-  inspectionMethod: "headless-chrome" | "manual-fallback";
+  inspectionMethod: "headless-chrome" | "manual-fallback" | "ssrf-fetch";
+  jobId?: string;
   viewports: {
     desktop: { width: number; height: number };
     mobile: { width: number; height: number };
@@ -56,6 +63,10 @@ export interface ReferenceSiteInspectionEvidence {
   screenshots: {
     desktopPath?: string;
     mobilePath?: string;
+    desktopDataUri?: string;
+    mobileDataUri?: string;
+    desktopUrl?: string;
+    mobileUrl?: string;
   };
   fidelityReport: string;
 }
@@ -103,20 +114,147 @@ export const TARGET_REFERENCE_SITES: Record<
 };
 
 /**
- * Finds the Chrome executable on macOS, Linux, or Windows.
+ * Resolves an existing, executable Chrome or Chromium binary across macOS, Linux, and Windows.
+ * Checks environment variables, system directories, and standard installation paths.
  */
-export function getLocalChromePath(): string {
-  const possiblePaths = [
+export function resolveChromeExecutable(): string | null {
+  // 1. Explicit Environment Variables
+  const envCandidates = [
+    process.env.PUPPETEER_EXECUTABLE_PATH,
+    process.env.CHROME_PATH,
+    process.env.CHROME_BIN,
+    process.env.GOOGLE_CHROME_BIN,
+  ];
+  for (const envPath of envCandidates) {
+    if (envPath && syncFs.existsSync(/*turbopackIgnore: true*/ envPath)) {
+      return envPath;
+    }
+  }
+
+  // 2. Standard system locations across OS platforms
+  const standardPaths = [
+    // Linux standard locations
+    "/usr/bin/google-chrome",
+    "/usr/bin/google-chrome-stable",
+    "/usr/bin/chromium",
+    "/usr/bin/chromium-browser",
+    "/snap/bin/chromium",
+    "/usr/bin/brave-browser",
+    "/usr/bin/microsoft-edge",
+    "/usr/local/bin/chromium",
+    "/usr/local/bin/chrome",
+    // macOS application bundles
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
     "/Applications/Chromium.app/Contents/MacOS/Chromium",
     "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary",
-    "/usr/bin/google-chrome",
-    "/usr/bin/chromium-browser",
+    "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
+    "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+    // Windows common locations
     "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
     "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+    "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
+    "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
   ];
 
-  return possiblePaths[0];
+  for (const p of standardPaths) {
+    if (syncFs.existsSync(/*turbopackIgnore: true*/ p)) {
+      return p;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Returns true if a valid Chrome/Chromium executable is found on the host system.
+ */
+export function isChromeAvailable(): boolean {
+  return resolveChromeExecutable() !== null;
+}
+
+/**
+ * Backward compatibility helper. Returns resolved Chrome path, or a sensible fallback string.
+ */
+export function getLocalChromePath(): string {
+  const resolved = resolveChromeExecutable();
+  if (resolved) return resolved;
+
+  if (process.platform === "win32") {
+    return "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+  }
+  if (process.platform === "darwin") {
+    return "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+  }
+  return "/usr/bin/google-chrome";
+}
+
+/**
+ * Dynamically classifies a website archetype from empirical measurements rather than assuming modern-saas.
+ */
+export function detectArchetypeFromEvidence(
+  metrics: ReferenceSiteInspectionEvidence["metrics"],
+  palette: string[],
+  fonts: string[],
+  meta: ReferenceSiteInspectionEvidence["meta"]
+): DesignArchetype {
+  const allFonts = (fonts || [])
+    .concat([metrics.body?.fontFamily || "", metrics.h1?.fontFamily || ""])
+    .join(" ")
+    .toLowerCase();
+
+  const isSerif =
+    allFonts.includes("newsreader") ||
+    allFonts.includes("charter") ||
+    allFonts.includes("georgia") ||
+    allFonts.includes("playfair") ||
+    allFonts.includes("serif");
+
+  const isMonoOrDev =
+    allFonts.includes("geist") ||
+    allFonts.includes("jetbrains") ||
+    allFonts.includes("fira") ||
+    allFonts.includes("mono") ||
+    allFonts.includes("mona sans");
+
+  const metaText = `${meta?.title || ""} ${meta?.description || ""}`.toLowerCase();
+
+  // 1. Editorial: serif typography, reading / publishing orientation
+  if (isSerif && !metrics.isDark) {
+    return "editorial";
+  }
+
+  // 2. Luxury: razor-sharp 0px radius, high restraint
+  if (
+    metrics.card?.borderRadius === "0px" &&
+    metrics.primaryButton?.borderRadius === "0px"
+  ) {
+    return "luxury";
+  }
+
+  // 3. Expressive Studio: playful large radii (>=20px), multi-color accents
+  const hasLargeRadii =
+    (metrics.card?.borderRadius && parseInt(metrics.card.borderRadius, 10) >= 20) ||
+    (metrics.primaryButton?.borderRadius && parseInt(metrics.primaryButton.borderRadius, 10) >= 20);
+  if (hasLargeRadii && palette.length >= 6) {
+    return "expressive-studio";
+  }
+
+  // 4. Minimal Landing: dark monochrome with monospace / developer accents
+  if (metrics.isDark && isMonoOrDev) {
+    return "minimal-landing";
+  }
+
+  // 5. Ecommerce: commerce terms or buy CTA
+  if (
+    metaText.includes("shop") ||
+    metaText.includes("commerce") ||
+    metaText.includes("store") ||
+    metaText.includes("checkout")
+  ) {
+    return "ecommerce";
+  }
+
+  return "modern-saas";
 }
 
 /**
@@ -147,25 +285,31 @@ export function rgbToHex(colorStr: string): string {
  * Inspects a live website using Puppeteer and headless Chrome.
  * Captures rendered DOM styles, screenshots (desktop & mobile), and layout measurements.
  */
+export interface InspectLiveSiteOptions {
+  outputBaseDir?: string;
+  privateOutputDir?: string;
+  jobId?: string;
+  captureScreenshots?: boolean;
+  browserInstance?: Browser;
+}
+
 export async function inspectLiveSite(
   siteKey: string,
   url: string,
   name: string,
-  archetype: DesignArchetype,
-  options?: {
-    outputBaseDir?: string;
-    captureScreenshots?: boolean;
-    browserInstance?: Browser;
-  }
+  archetype?: DesignArchetype,
+  options?: InspectLiveSiteOptions
 ): Promise<ReferenceSiteInspectionEvidence> {
-  const outputDir = path.resolve(
-    options?.outputBaseDir || "evidence/reference-sites",
-    siteKey
-  );
+  const jobId = options?.jobId || crypto.randomUUID();
+  const outputDir =
+    options?.privateOutputDir ||
+    (options?.outputBaseDir
+      ? path.resolve(options.outputBaseDir, siteKey)
+      : path.resolve(process.cwd(), "storage/inspections", jobId));
   await fs.mkdir(outputDir, { recursive: true });
 
   const captureScreenshots = options?.captureScreenshots ?? true;
-  const chromePath = getLocalChromePath();
+  const chromePath = resolveChromeExecutable() || getLocalChromePath();
 
   const ownBrowser = !options?.browserInstance;
   const browser =
@@ -196,12 +340,15 @@ export async function inspectLiveSite(
 
     // Subresource SSRF protection: block private IPs, metadata endpoints, and dangerous protocols
     await page.setRequestInterception(true);
-    page.on("request", (req) => {
+    page.on("request", async (req) => {
       try {
         const reqUrl = req.url();
         const parsed = new URL(reqUrl);
         if (!["http:", "https:", "data:", "blob:"].includes(parsed.protocol)) {
           return req.abort("blockedbyclient");
+        }
+        if (parsed.protocol === "data:" || parsed.protocol === "blob:") {
+          return req.continue();
         }
         const host = parsed.hostname.toLowerCase();
         if (
@@ -212,9 +359,30 @@ export async function inspectLiveSite(
           host.startsWith("10.") ||
           host.startsWith("192.168.") ||
           host.endsWith(".internal") ||
-          host.endsWith(".local")
+          host.endsWith(".local") ||
+          host.endsWith(".onion")
         ) {
           return req.abort("blockedbyclient");
+        }
+        const ipType = net.isIP(host);
+        if (ipType === 4 && isPrivateOrReservedIpv4(host)) {
+          return req.abort("blockedbyclient");
+        }
+        if (ipType === 6 && isPrivateOrReservedIpv6(host)) {
+          return req.abort("blockedbyclient");
+        }
+        try {
+          const records = await dns.lookup(host, { all: true });
+          for (const rec of records) {
+            if (rec.family === 4 && isPrivateOrReservedIpv4(rec.address)) {
+              return req.abort("blockedbyclient");
+            }
+            if (rec.family === 6 && isPrivateOrReservedIpv6(rec.address)) {
+              return req.abort("blockedbyclient");
+            }
+          }
+        } catch {
+          // ignore DNS lookup error for third-party subresources
         }
         req.continue();
       } catch {
@@ -235,9 +403,13 @@ export async function inspectLiveSite(
     await new Promise((r) => setTimeout(r, 2000));
 
     let desktopScreenshotPath: string | undefined;
+    let desktopDataUri: string | undefined;
     if (captureScreenshots) {
       desktopScreenshotPath = path.join(outputDir, "desktop.png");
-      await page.screenshot({ path: desktopScreenshotPath, fullPage: false });
+      const desktopBuf = (await page.screenshot({ path: desktopScreenshotPath, fullPage: false })) as Buffer;
+      if (desktopBuf) {
+        desktopDataUri = `data:image/png;base64,${desktopBuf.toString("base64")}`;
+      }
     }
 
     // Extract empirical computed metrics with visibility and inheritance validation
@@ -460,9 +632,13 @@ export async function inspectLiveSite(
     await new Promise((r) => setTimeout(r, 1000));
 
     let mobileScreenshotPath: string | undefined;
+    let mobileDataUri: string | undefined;
     if (captureScreenshots) {
       mobileScreenshotPath = path.join(outputDir, "mobile.png");
-      await page.screenshot({ path: mobileScreenshotPath, fullPage: false });
+      const mobileBuf = (await page.screenshot({ path: mobileScreenshotPath, fullPage: false })) as Buffer;
+      if (mobileBuf) {
+        mobileDataUri = `data:image/png;base64,${mobileBuf.toString("base64")}`;
+      }
     }
 
     await page.close();
@@ -489,13 +665,26 @@ export async function inspectLiveSite(
 
     const primaryBtnBg = empirical.primaryButton ? rgbToHex(empirical.primaryButton.backgroundColor) : undefined;
 
+    const detectedArchetype = detectArchetypeFromEvidence(
+      empirical,
+      extractedPalette,
+      empirical.fontSamples,
+      {
+        title: empirical.title,
+        themeColor: empirical.metaTheme,
+        description: empirical.metaDesc,
+      }
+    );
+    const finalArchetype = archetype && archetype !== "modern-saas" ? archetype : detectedArchetype;
+
     const evidence: ReferenceSiteInspectionEvidence = {
       siteKey,
       url,
       name,
-      archetype,
+      archetype: finalArchetype,
       timestamp: new Date().toISOString(),
       inspectionMethod: "headless-chrome",
+      jobId,
       viewports: {
         desktop: { width: 1440, height: 900 },
         mobile: { width: 390, height: 844 },
@@ -518,10 +707,14 @@ export async function inspectLiveSite(
       extractedPalette,
       extractedFonts: empirical.fontSamples,
       screenshots: {
-        desktopPath: `/evidence/reference-sites/${siteKey}/desktop.png`,
-        mobilePath: `/evidence/reference-sites/${siteKey}/mobile.png`,
+        desktopPath: desktopScreenshotPath,
+        mobilePath: mobileScreenshotPath,
+        desktopDataUri,
+        mobileDataUri,
+        desktopUrl: `/api/inspection-artifacts/${jobId}/desktop.png`,
+        mobileUrl: `/api/inspection-artifacts/${jobId}/mobile.png`,
       },
-      fidelityReport: `Inspected ${name} via headless Chrome (1440x900 desktop & 390x844 mobile). Extracted ${extractedPalette.length} colors and ${empirical.fontSamples.length} rendered fonts. Body: ${bodyHex} on ${bodyBgHex}. Primary CTA: ${primaryBtnBg || "derived"}.`,
+      fidelityReport: `Inspected ${name} via headless Chrome (1440x900 desktop & 390x844 mobile). Extracted ${extractedPalette.length} colors and ${empirical.fontSamples.length} rendered fonts. Archetype: ${finalArchetype}. Body: ${bodyHex} on ${bodyBgHex}. Primary CTA: ${primaryBtnBg || "derived"}.`,
     };
 
     // Save evidence.json
@@ -626,6 +819,43 @@ export function buildDesignSystemFromEvidence(
     base.colors.neutrals.surface = attr(cardBgHex, "observed", url, "Measured card/container surface", "desktop", 0.9);
   }
 
+  // Extract distinctive brand accents from empirical palette (diverging from generic defaults)
+  const distinctAccents = evidence.extractedPalette.filter((c) => {
+    const lower = c.toLowerCase();
+    return (
+      lower !== finalBgHex.toLowerCase() &&
+      lower !== finalTextHex.toLowerCase() &&
+      lower !== base.colors.primary.value.toLowerCase() &&
+      lower !== "#000000" &&
+      lower !== "#ffffff" &&
+      lower !== "#08090a" &&
+      lower !== "#0a0a0a" &&
+      lower !== "#111111" &&
+      lower !== "#ededed" &&
+      lower !== "#f7f8f8"
+    );
+  });
+  if (distinctAccents.length > 0) {
+    base.colors.accent = attr(
+      distinctAccents[0],
+      "observed",
+      url,
+      "Extracted distinctive brand accent from rendered page elements",
+      "desktop",
+      0.9
+    );
+    if (distinctAccents.length > 1) {
+      base.colors.secondary = attr(
+        distinctAccents[1],
+        "observed",
+        url,
+        "Extracted secondary brand color",
+        "desktop",
+        0.85
+      );
+    }
+  }
+
   // 3. Typography
   if (evidence.extractedFonts.length > 0) {
     const headingFontName = evidence.metrics.h1?.fontFamily || evidence.extractedFonts[0];
@@ -672,34 +902,111 @@ export function buildDesignSystemFromEvidence(
     );
   }
 
+  // Heading H2 & Body Font Size hierarchy
+  if (evidence.metrics.h2?.fontSize) {
+    base.typography.headings.h2 = attr(
+      {
+        size: evidence.metrics.h2.fontSize,
+        weight: evidence.metrics.h2.fontWeight || "600",
+        lineHeight: evidence.metrics.h2.lineHeight || "1.2",
+        tracking: evidence.metrics.h2.letterSpacing || "-0.01em",
+      },
+      "observed",
+      url,
+      "Extracted from computed H2 styles",
+      "desktop",
+      0.9
+    );
+  }
+  if (evidence.metrics.body?.fontSize) {
+    const parsedBase = parseInt(evidence.metrics.body.fontSize, 10);
+    if (!isNaN(parsedBase) && parsedBase >= 12 && parsedBase <= 24) {
+      base.typography.baseFontSize = attr(
+        parsedBase,
+        "observed",
+        url,
+        "Measured body font size",
+        "desktop",
+        0.95
+      );
+    }
+  }
+
   // 4. Layout
   if (evidence.metrics.containerMaxWidth) {
     base.layout.containerMaxWidth = attr(evidence.metrics.containerMaxWidth, "observed", url, "Measured container bounding rect", "desktop", 0.9);
   }
 
-  // 6. Surfaces
+  // 6. Surfaces & Shadows
   if (evidence.metrics.card?.borderRadius) {
     base.surfaces.cardRadius = attr(evidence.metrics.card.borderRadius, "observed", url, "Measured card border-radius", "desktop", 0.9);
   }
-  if (isBtnValid && evidence.metrics.primaryButton?.borderRadius) {
-    base.surfaces.baseRadius = attr(evidence.metrics.primaryButton.borderRadius, "observed", url, "Measured button border-radius", "desktop", 0.9);
-    base.buttons.primary = attr(
-      {
-        ...base.buttons.primary.value,
-        radius: evidence.metrics.primaryButton.borderRadius,
-      },
+  if (evidence.metrics.card?.boxShadow) {
+    base.surfaces.shadows.medium = attr(
+      evidence.metrics.card.boxShadow,
       "observed",
       url,
-      "Measured button border-radius"
+      "Measured card box-shadow",
+      "desktop",
+      0.9
     );
   }
 
-  // 14. Accessibility audit
+  // 7. Measured Button System (bg, text, radius, padding, height, shadow)
+  if (isBtnValid && evidence.metrics.primaryButton) {
+    const btnBg = primaryCtaBg || rgbToHex(evidence.metrics.primaryButton.backgroundColor);
+    const btnText = rgbToHex(evidence.metrics.primaryButton.color);
+    const btnRadius = evidence.metrics.primaryButton.borderRadius || base.surfaces.baseRadius.value;
+    const btnShadow = evidence.metrics.primaryButton.boxShadow || "none";
+
+    base.surfaces.baseRadius = attr(btnRadius, "observed", url, "Measured button border-radius", "desktop", 0.9);
+    base.buttons.primary = attr(
+      {
+        bg: btnBg,
+        text: btnText,
+        radius: btnRadius,
+        shadow: btnShadow,
+      },
+      "observed",
+      url,
+      "Measured primary CTA button styles (bg, text, radius, shadow)",
+      "desktop",
+      0.95
+    );
+
+    if (evidence.metrics.primaryButton.boxShadow) {
+      base.surfaces.shadows.subtle = attr(
+        evidence.metrics.primaryButton.boxShadow,
+        "observed",
+        url,
+        "Measured button box-shadow",
+        "desktop",
+        0.9
+      );
+    }
+
+    if (evidence.metrics.primaryButton.height || evidence.metrics.primaryButton.padding) {
+      const currentSizes = { ...base.buttons.sizes.value };
+      currentSizes.md = {
+        height: evidence.metrics.primaryButton.height ? `${evidence.metrics.primaryButton.height}px` : currentSizes.md.height,
+        padding: evidence.metrics.primaryButton.padding || currentSizes.md.padding,
+        text: evidence.metrics.primaryButton.fontSize || currentSizes.md.text,
+      };
+      base.buttons.sizes = attr(currentSizes, "observed", url, "Measured button dimensions", "desktop", 0.9);
+    }
+  }
+
+  // 14. Real Measured Accessibility Contrast Pairs
+  const btnTextColor = isBtnValid && evidence.metrics.primaryButton?.color
+    ? rgbToHex(evidence.metrics.primaryButton.color)
+    : undefined;
+
   base.accessibility.verifiedContrastPairs = auditContrastPairs(
     base.colors.primary.value,
     base.colors.neutrals.background.value,
     base.colors.neutrals.surface.value,
-    base.colors.neutrals.text.value
+    base.colors.neutrals.text.value,
+    btnTextColor
   );
 
   return base;

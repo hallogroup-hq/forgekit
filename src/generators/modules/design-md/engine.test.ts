@@ -242,11 +242,14 @@ describe("Design.md 3-Layer Strategic Engine", () => {
   describe("DTCG 2025.10 Token Specification & Composite Shadows", () => {
     it("should parse CSS box-shadow into structured DTCG composite shadow object", () => {
       const shadow = parseCssBoxShadowToDtcg("0 4px 12px rgba(0, 0, 0, 0.15)");
+      assert.ok(!Array.isArray(shadow));
       assert.deepEqual(shadow.offsetX, { value: 0, unit: "px" });
       assert.deepEqual(shadow.offsetY, { value: 4, unit: "px" });
       assert.deepEqual(shadow.blur, { value: 12, unit: "px" });
       assert.deepEqual(shadow.spread, { value: 0, unit: "px" });
-      assert.equal(shadow.color, "rgba(0, 0, 0, 0.15)");
+      assert.equal(typeof shadow.color, "object");
+      assert.equal((shadow.color as any).colorSpace, "srgb");
+      assert.equal((shadow.color as any).alpha, 0.15);
 
       const cssRoundtrip = dtcgShadowToCss(shadow);
       assert.ok(cssRoundtrip.includes("4px 12px"));
@@ -295,7 +298,7 @@ describe("Design.md 3-Layer Strategic Engine", () => {
               offsetY: "2px",
               blur: "4px",
               spread: "0px",
-              color: "rgba(0,0,0,0.06)",
+              color: { colorSpace: "srgb", components: [0, 0, 0], alpha: 0.06 },
             },
           },
         },

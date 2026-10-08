@@ -67,6 +67,7 @@ export default function DesignMdGenerator() {
   const [extractError, setExtractError] = useState<string | null>(null);
   const [screenshotName, setScreenshotName] = useState<string | null>(null);
   const [screenshotStatus, setScreenshotStatus] = useState<string | null>(null);
+  const [screenshotPreviewUrl, setScreenshotPreviewUrl] = useState<string | null>(null);
   const [observation, setObservation] = useState<DesignObservation | undefined>();
 
   // Mode 3: Quick Archetype State
@@ -171,9 +172,15 @@ export default function DesignMdGenerator() {
       const data = await res.json();
 
       if (res.ok) {
+        if (data.evidence?.screenshots?.desktopDataUri) {
+          setScreenshotPreviewUrl(data.evidence.screenshots.desktopDataUri);
+        } else if (data.evidence?.screenshots?.desktopUrl) {
+          setScreenshotPreviewUrl(data.evidence.screenshots.desktopUrl);
+        }
+
         const newObs: DesignObservation = {
           sourceUrl: data.domain ? `https://${data.domain}` : undefined,
-          hasScreenshot: Boolean(data.evidence?.screenshots?.desktopPath || screenshotName),
+          hasScreenshot: Boolean(data.evidence?.screenshots?.desktopPath || data.evidence?.screenshots?.desktopDataUri || screenshotName),
           screenshotName: data.evidence?.screenshots?.desktopPath || screenshotName || undefined,
           observedTitle: data.evidence?.meta?.title || data.observed?.title,
           observedThemeColor: data.evidence?.meta?.themeColor || data.observed?.themeColor,
@@ -238,6 +245,14 @@ export default function DesignMdGenerator() {
 
     setScreenshotName(file.name);
     setScreenshotStatus("Sampling image pixels via HTML5 Canvas...");
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (typeof event.target?.result === "string") {
+        setScreenshotPreviewUrl(event.target.result);
+      }
+    };
+    reader.readAsDataURL(file);
 
     try {
       const objectUrl = URL.createObjectURL(file);
@@ -569,6 +584,29 @@ export default function DesignMdGenerator() {
           {screenshotStatus && (
             <div className="text-[11px] text-zinc-500 dark:text-zinc-400 font-mono truncate">
               {screenshotStatus}
+            </div>
+          )}
+          {screenshotPreviewUrl && (
+            <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-900 border border-indigo-200 dark:border-indigo-900/50 flex items-center gap-3 shadow-2xs">
+              <div className="relative w-20 h-14 rounded overflow-hidden border border-zinc-200 dark:border-zinc-800 shrink-0 bg-zinc-950">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={screenshotPreviewUrl}
+                  alt="Visual inspection preview"
+                  className="w-full h-full object-cover object-top"
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+                  <span>Visual Evidence Attached</span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-mono">
+                    Captured
+                  </span>
+                </div>
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                  Observed colors and layout properties matched against rendered visual context
+                </p>
+              </div>
             </div>
           )}
         </div>

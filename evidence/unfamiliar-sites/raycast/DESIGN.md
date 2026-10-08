@@ -1,8 +1,8 @@
 # DESIGN.md: Design System & UI Specifications
 
 > **Project:** Raycast Empirical Design System  
-> **Archetype:** Modern SaaS / Productivity (Precision, High-Density, Functional)  
-> **Platform:** Web & Cross-Platform  
+> **Archetype:** Expressive Creative / Studio (Bold Display Fonts, Glassmorphism, Neon)  
+> **Platform:** Creative Studio Web  
 > **Brand Tone:** A collection of powerful productivity tools all within an extendable launcher.  
 > **Specification Version:** 1.0.0  
 > **Generated:** 2026-10-08
@@ -21,8 +21,8 @@ ForgeKit enforces strict epistemic separation between empirical observations and
 
 ### 📐 1.2 Inferred Specifications (Engine Synthesis)
 - **[Inferred]** Primary palette ladder (50–950) generated via linear tint/shade interpolation.
-- **[Inferred]** Typography scale ratio: 1.25 with base size 15px.
-- **[Inferred]** Surface radii and spatial scale structured around archetype "Modern SaaS / Productivity".
+- **[Inferred]** Typography scale ratio: 1.333 with base size 16px.
+- **[Inferred]** Surface radii and spatial scale structured around archetype "Expressive Creative / Studio".
 - **[Inferred]** WCAG contrast pairs audited automatically against declared background.
 
 ### ⚠️ 1.3 Unknown / Requires Human Verification
@@ -47,19 +47,19 @@ ForgeKit enforces strict epistemic separation between empirical observations and
 | `primary-950` | `#232323` | High-contrast dark backgrounds |
 
 ### Signal & Semantic Colors
-- **Accent Highlight:** `#10b981`
-- **Secondary Neutral:** `#94a3b8`
-- **Success:** `#10b981`
-- **Warning:** `#f59e0b`
-- **Error / Danger:** `#ef4444`
-- **Info:** `#3b82f6`
+- **Accent Highlight:** `#9c9c9d`
+- **Secondary Neutral:** `#2f3031`
+- **Success:** `#34d399`
+- **Warning:** `#fbbf24`
+- **Error / Danger:** `#f87171`
+- **Info:** `#38bdf8`
 
 ### Neutrals
 - **Background:** `#07080a`
 - **Surface:** `#07080a`
-- **Border:** `#27272a`
+- **Border:** `#2e1065`
 - **Body Text:** `#ffffff`
-- **Muted Text:** `#a1a1aa`
+- **Muted Text:** `#c4b5fd`
 
 ---
 
@@ -67,24 +67,24 @@ ForgeKit enforces strict epistemic separation between empirical observations and
 
 - **Heading Font:** `Inter, "Inter Fallback", sans-serif`
 - **Body Font:** `Inter, "Inter Fallback", sans-serif`
-- **Code / Mono Font:** `JetBrains Mono, monospace`
-- **Scale Factor:** `1.25` (Base size: `15px`)
+- **Code / Mono Font:** `Fira Code, monospace`
+- **Scale Factor:** `1.333` (Base size: `16px`)
 
 | Level | Size | Weight | Line Height | Tracking |
 | :--- | :--- | :--- | :--- | :--- |
 | **H1 Display** | `64px` | `600` | `70.4px` | `normal` |
-| **H2 Section** | `1.875rem` | `600` | `1.2` | `-0.02em` |
-| **H3 Subsection** | `1.375rem` | `600` | `1.25` | `-0.015em` |
-| **H4 Title** | `1.125rem` | `500` | `1.3` | `-0.01em` |
+| **H2 Section** | `20px` | `500` | `normal` | `0.2px` |
+| **H3 Subsection** | `1.75rem` | `600` | `1.25` | `-0.02em` |
+| **H4 Title** | `1.25rem` | `600` | `1.3` | `-0.01em` |
 
 ---
 
 ## 4. Grid, Layout & Containers
 
 - **Container Max Width:** `1440px`
-- **Container Padding:** `1.5rem`
+- **Container Padding:** `2rem`
 - **Grid Columns:** `12`
-- **Gutter Width:** `1.5rem`
+- **Gutter Width:** `2rem`
 
 ---
 
@@ -97,8 +97,8 @@ ForgeKit enforces strict epistemic separation between empirical observations and
   - `sm`: `8px`
   - `md`: `16px`
   - `lg`: `24px`
-  - `xl`: `32px`
-  - `2xl`: `48px`
+  - `xl`: `36px`
+  - `2xl`: `60px`
 
 ---
 
@@ -106,64 +106,64 @@ ForgeKit enforces strict epistemic separation between empirical observations and
 
 - **Base Radius:** `8px`
 - **Card Radius:** `20px`
-- **Border Stroke:** `1px` solid `#27272a`
+- **Border Stroke:** `1px` solid `#2e1065`
 - **Shadow Scale:**
-  - **Subtle:** `0 1px 2px 0 rgba(0, 0, 0, 0.4)`
-  - **Medium:** `0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5)`
-  - **Elevated:** `0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.6)`
-- **Glassmorphism:** `Disabled`
+  - **Subtle:** `rgba(0, 0, 0, 0.5) 0px 0px 0px 2px, rgba(255, 255, 255, 0.19) 0px 0px 14px 0px, rgba(0, 0, 0, 0.2) 0px -1px 0.4px 0px inset, rgb(255, 255, 255) 0px 1px 0.4px 0px inset`
+  - **Medium:** `rgba(255, 255, 255, 0.1) 0px 1px 0px 0px inset, rgba(7, 13, 79, 0.05) 0px 0px 20px 3px, rgba(7, 13, 79, 0.05) 0px 0px 40px 20px, rgba(255, 255, 255, 0.06) 0px 0px 0px 1px inset`
+  - **Elevated:** `0 20px 60px rgba(236, 72, 153, 0.3)`
+- **Glassmorphism:** `Enabled (blur: 16px)`
 
 ---
 
 ## 7. Button & Interactive System
 
-- **Primary Button:** Background `#6366f1`, text `#ffffff`, radius `8px`
-- **Secondary Button:** Background `#27272a`, border `1px solid #3f3f46`
-- **Ghost Button:** Hover background `#27272a`
-- **Destructive Button:** Background `#ef4444`
+- **Primary Button:** Background `#e6e6e6`, text `#2f3031`, radius `8px`
+- **Secondary Button:** Background `rgba(255,255,255,0.08)`, border `1px solid rgba(255,255,255,0.15)`
+- **Ghost Button:** Hover background `rgba(255,255,255,0.1)`
+- **Destructive Button:** Background `#f43f5e`
 
 ---
 
 ## 8. Form Controls & Inputs
 
-- **Default Input Height:** `38px`
-- **Input Radius:** `8px`
-- **Default Border:** `#27272a`
-- **Focus Ring:** `0 0 0 2px rgba(99, 102, 241, 0.35)`
+- **Default Input Height:** `48px`
+- **Input Radius:** `16px`
+- **Default Border:** `#2e1065`
+- **Focus Ring:** `0 0 0 3px rgba(139,92,246,0.4)`
 
 ---
 
 ## 9. Navigation & App Shell
 
-- **Navbar Height:** `56px`
-- **Sidebar Width:** `240px`
-- **Nav Style:** `sticky`
+- **Navbar Height:** `76px`
+- **Sidebar Width:** `260px`
+- **Nav Style:** `floating`
 
 ---
 
 ## 10. Key Component Patterns
 
-- **Card Specification:** 12px radius, subtle border 1px #27272a, high density surface
-- **Badge Specification:** Compact 6px radius badge with tinted background and 1px border
-- **Modal Backdrop:** `rgba(0, 0, 0, 0.7) backdrop-blur-sm`
-- **Tooltip Specification:** Dark obsidian surface with 1px border and sharp typography
+- **Card Specification:** Deep violet frosted glass card, neon gradient hover border, 28px radius
+- **Badge Specification:** Neon glowing gradient pill with dark fill and vibrant border
+- **Modal Backdrop:** `rgba(15, 7, 40, 0.8) backdrop-blur-xl`
+- **Tooltip Specification:** Frosted violet pill with bright cyan typography
 
 ---
 
 ## 11. Imagery, Media & Iconography
 
 - **Recommended Icon Set:** Lucide Icons
-- **Avatar Radius:** `8px`
+- **Avatar Radius:** `9999px`
 - **Default Media Aspect Ratio:** `16:9`
 
 ---
 
 ## 12. Motion & Transitions
 
-- **Fast:** `120ms` (tooltips, micro-toggles)
-- **Normal:** `200ms` (dialogs, drawers, standard hovers)
-- **Slow:** `320ms` (page transitions, complex accordions)
-- **Default Easing:** `cubic-bezier(0.16, 1, 0.3, 1)`
+- **Fast:** `150ms` (tooltips, micro-toggles)
+- **Normal:** `300ms` (dialogs, drawers, standard hovers)
+- **Slow:** `500ms` (page transitions, complex accordions)
+- **Default Easing:** `cubic-bezier(0.34, 1.56, 0.64, 1)`
 
 ---
 
@@ -182,14 +182,14 @@ ForgeKit enforces strict epistemic separation between empirical observations and
 ## 14. Accessibility & Contrast Verification
 
 - **Target Compliance:** **WCAG_AA**
-- **Focus Visible Standard:** `outline: 2px solid #6366f1; outline-offset: 2px;`
+- **Focus Visible Standard:** `outline: 2px solid #ec4899; outline-offset: 3px;`
 
 ### Verified Contrast Audit
 | Pair | Foreground | Background | Ratio | WCAG AA (≥4.5) | WCAG AAA (≥7.0) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Text on Background** | `#ffffff` | `#07080a` | **20.04:1** | ✅ Pass | ✅ Pass |
 | **Text on Surface** | `#ffffff` | `#07080a` | **20.04:1** | ✅ Pass | ✅ Pass |
-| **White on Primary CTA** | `#ffffff` | `#e6e6e6` | **1.25:1** | ❌ Fail | ❌ Fail |
+| **Button Label on Primary CTA** | `#2f3031` | `#e6e6e6` | **10.6:1** | ✅ Pass | ✅ Pass |
 | **Primary on Background** | `#e6e6e6` | `#07080a` | **16.05:1** | ✅ Pass | ✅ Pass |
 
 ---

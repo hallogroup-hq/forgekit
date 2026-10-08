@@ -2,7 +2,7 @@
   "raycast": {
     "name": "Raycast",
     "url": "https://raycast.com",
-    "fidelityReport": "Inspected Raycast via headless Chrome (1440x900 desktop & 390x844 mobile). Extracted 7 colors and 2 rendered fonts. Body: #ffffff on #07080a. Primary CTA: #e6e6e6.",
+    "fidelityReport": "Inspected Raycast via headless Chrome (1440x900 desktop & 390x844 mobile). Extracted 7 colors and 2 rendered fonts. Archetype: expressive-studio. Body: #ffffff on #07080a. Primary CTA: #e6e6e6.",
     "meta": {
       "title": "Raycast - Your shortcut to everything",
       "description": "A collection of powerful productivity tools all within an extendable launcher."
@@ -74,7 +74,7 @@
   "stripe": {
     "name": "Stripe",
     "url": "https://stripe.com",
-    "fidelityReport": "Inspected Stripe via headless Chrome (1440x900 desktop & 390x844 mobile). Extracted 7 colors and 1 rendered fonts. Body: #000000 on #ffffff. Primary CTA: #ffffff.",
+    "fidelityReport": "Inspected Stripe via headless Chrome (1440x900 desktop & 390x844 mobile). Extracted 7 colors and 1 rendered fonts. Archetype: editorial. Body: #000000 on #ffffff. Primary CTA: #ffffff.",
     "meta": {
       "title": "Stripe | Financial Infrastructure to Grow Your Revenue",
       "description": "Stripe is a financial services platform that helps all types of businesses accept payments, build flexible billing models, and manage money movement."
@@ -89,7 +89,7 @@
         "color": "rgb(0, 0, 0)",
         "backgroundColor": "rgb(255, 255, 255)",
         "width": 1440,
-        "height": 14803,
+        "height": 15241,
         "padding": "0px"
       },
       "h1": {
@@ -144,7 +144,7 @@
   "github": {
     "name": "GitHub",
     "url": "https://github.com",
-    "fidelityReport": "Inspected GitHub via headless Chrome (1440x900 desktop & 390x844 mobile). Extracted 5 colors and 2 rendered fonts. Body: #f0f6fc on #0d1117. Primary CTA: #0d1117.",
+    "fidelityReport": "Inspected GitHub via headless Chrome (1440x900 desktop & 390x844 mobile). Extracted 5 colors and 2 rendered fonts. Archetype: minimal-landing. Body: #f0f6fc on #0d1117. Primary CTA: #0d1117.",
     "meta": {
       "title": "GitHub · Change is constant. GitHub keeps you ahead. · GitHub · GitHub",
       "themeColor": "#1e2327",

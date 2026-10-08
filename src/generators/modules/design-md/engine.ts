@@ -48,6 +48,7 @@ export interface DtcgCompositeShadow {
   blur: DtcgDimensionValue | string;
   spread: DtcgDimensionValue | string;
   color: DtcgColorValue | string;
+  inset?: boolean;
 }
 
 export function parseDimensionToDtcg(dim: string | number): DtcgDimensionValue {
@@ -86,6 +87,105 @@ export function hexToDtcgColor(hex: string): DtcgColorValue {
   };
 }
 
+/**
+ * Parses any CSS color string (hex, rgb, rgba, or named) into a valid DTCG 2025.10 color value.
+ */
+export function parseCssColorToDtcg(colorStr: string): DtcgColorValue {
+  if (!colorStr) {
+    return {
+      colorSpace: "srgb",
+      components: [0, 0, 0],
+      alpha: 1,
+      hex: "#000000",
+    };
+  }
+
+  const str = colorStr.trim().toLowerCase();
+
+  // Named colors
+  if (str === "transparent") {
+    return {
+      colorSpace: "srgb",
+      components: [0, 0, 0],
+      alpha: 0,
+      hex: "#000000",
+    };
+  }
+  if (str === "white") {
+    return {
+      colorSpace: "srgb",
+      components: [1, 1, 1],
+      alpha: 1,
+      hex: "#ffffff",
+    };
+  }
+  if (str === "black") {
+    return {
+      colorSpace: "srgb",
+      components: [0, 0, 0],
+      alpha: 1,
+      hex: "#000000",
+    };
+  }
+
+  // Hex colors: #rgb, #rgba, #rrggbb, #rrggbbaa
+  if (str.startsWith("#")) {
+    const raw = str.slice(1);
+    let r = 0, g = 0, b = 0, a = 1;
+    if (raw.length === 3) {
+      r = parseInt(raw[0] + raw[0], 16);
+      g = parseInt(raw[1] + raw[1], 16);
+      b = parseInt(raw[2] + raw[2], 16);
+    } else if (raw.length === 4) {
+      r = parseInt(raw[0] + raw[0], 16);
+      g = parseInt(raw[1] + raw[1], 16);
+      b = parseInt(raw[2] + raw[2], 16);
+      a = Math.round((parseInt(raw[3] + raw[3], 16) / 255) * 10000) / 10000;
+    } else if (raw.length === 6) {
+      r = parseInt(raw.slice(0, 2), 16);
+      g = parseInt(raw.slice(2, 4), 16);
+      b = parseInt(raw.slice(4, 6), 16);
+    } else if (raw.length === 8) {
+      r = parseInt(raw.slice(0, 2), 16);
+      g = parseInt(raw.slice(2, 4), 16);
+      b = parseInt(raw.slice(4, 6), 16);
+      a = Math.round((parseInt(raw.slice(6, 8), 16) / 255) * 10000) / 10000;
+    }
+    const hex = `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+    return {
+      colorSpace: "srgb",
+      components: [
+        Math.round((r / 255) * 10000) / 10000,
+        Math.round((g / 255) * 10000) / 10000,
+        Math.round((b / 255) * 10000) / 10000,
+      ],
+      alpha: a,
+      hex,
+    };
+  }
+
+  // rgba(r, g, b, a) or rgb(r, g, b)
+  const rgbMatch = str.match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+))?\s*\)/);
+  if (rgbMatch) {
+    const r = Math.min(255, Math.max(0, parseFloat(rgbMatch[1])));
+    const g = Math.min(255, Math.max(0, parseFloat(rgbMatch[2])));
+    const b = Math.min(255, Math.max(0, parseFloat(rgbMatch[3])));
+    const a = rgbMatch[4] !== undefined ? Math.min(1, Math.max(0, parseFloat(rgbMatch[4]))) : 1;
+    const normR = Math.round((r / 255) * 10000) / 10000;
+    const normG = Math.round((g / 255) * 10000) / 10000;
+    const normB = Math.round((b / 255) * 10000) / 10000;
+    const hex = `#${Math.round(r).toString(16).padStart(2, "0")}${Math.round(g).toString(16).padStart(2, "0")}${Math.round(b).toString(16).padStart(2, "0")}`;
+    return {
+      colorSpace: "srgb",
+      components: [normR, normG, normB],
+      alpha: Math.round(a * 10000) / 10000,
+      hex,
+    };
+  }
+
+  return hexToDtcgColor("#000000");
+}
+
 export function dtcgColorToHex(color: DtcgColorValue | string): string {
   if (typeof color === "object" && color !== null) {
     if (Array.isArray(color.components) && color.components.length >= 3) {
@@ -104,55 +204,134 @@ export function dtcgColorToHex(color: DtcgColorValue | string): string {
   return "#000000";
 }
 
-export function parseCssBoxShadowToDtcg(cssShadow: string): DtcgCompositeShadow {
+export function dtcgColorToCss(color: DtcgColorValue | string): string {
+  if (typeof color === "string") {
+    return color;
+  }
+  if (typeof color === "object" && color !== null) {
+    if (Array.isArray(color.components) && color.components.length >= 3) {
+      const r = Math.max(0, Math.min(255, Math.round(color.components[0] * 255)));
+      const g = Math.max(0, Math.min(255, Math.round(color.components[1] * 255)));
+      const b = Math.max(0, Math.min(255, Math.round(color.components[2] * 255)));
+      const a = color.alpha !== undefined ? color.alpha : 1;
+      if (a < 1) {
+        return `rgba(${r}, ${g}, ${b}, ${Math.round(a * 100) / 100})`;
+      }
+      return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+    }
+    if (color.hex) return color.hex;
+  }
+  return "#000000";
+}
+
+/**
+ * Splits comma-separated CSS shadow layers without breaking on commas inside parentheses (e.g. rgba(0, 0, 0, 0.1)).
+ */
+export function splitCssShadowLayers(cssShadow: string): string[] {
+  const layers: string[] = [];
+  let cur = "";
+  let parenDepth = 0;
+
+  for (let i = 0; i < cssShadow.length; i++) {
+    const ch = cssShadow[i];
+    if (ch === "(") parenDepth++;
+    else if (ch === ")") parenDepth = Math.max(0, parenDepth - 1);
+
+    if (ch === "," && parenDepth === 0) {
+      if (cur.trim()) layers.push(cur.trim());
+      cur = "";
+    } else {
+      cur += ch;
+    }
+  }
+  if (cur.trim()) layers.push(cur.trim());
+  return layers;
+}
+
+/**
+ * Parses a single CSS shadow string into a DTCG composite shadow object.
+ */
+export function parseSingleCssShadowToDtcg(layer: string): DtcgCompositeShadow {
+  let clean = layer.trim();
+  const isInset = /\binset\b/i.test(clean);
+  if (isInset) {
+    clean = clean.replace(/\binset\b/gi, "").trim();
+  }
+
+  // Extract color substring: could be rgba(...), rgb(...), hsla(...), #..., or word at start/end
+  let colorStr = "rgba(0, 0, 0, 0.08)";
+  const colorMatch = clean.match(/(rgba?\([^)]+\)|hsla?\([^)]+\)|#[0-9a-fA-F]{3,8}|[a-zA-Z]+$|^[a-zA-Z]+)/);
+  if (colorMatch) {
+    colorStr = colorMatch[0];
+    clean = clean.replace(colorMatch[0], "").trim();
+  }
+
+  const parts = clean.split(/\s+/).filter(Boolean);
+  const offsetX = parseDimensionToDtcg(parts[0] || "0px");
+  const offsetY = parseDimensionToDtcg(parts[1] || "1px");
+  const blur = parseDimensionToDtcg(parts[2] || "2px");
+  const spread = parseDimensionToDtcg(parts[3] || "0px");
+
+  const shadowColor = parseCssColorToDtcg(colorStr);
+
+  const shadow: DtcgCompositeShadow = {
+    offsetX,
+    offsetY,
+    blur,
+    spread,
+    color: shadowColor,
+  };
+  if (isInset) {
+    shadow.inset = true;
+  }
+  return shadow;
+}
+
+/**
+ * Parses a CSS box-shadow declaration into DTCG 2025.10 composite shadow tokens.
+ * Supports multi-layer shadows (array) and insets.
+ */
+export function parseCssBoxShadowToDtcg(
+  cssShadow: string
+): DtcgCompositeShadow | DtcgCompositeShadow[] {
   if (!cssShadow || cssShadow.trim() === "none") {
     return {
       offsetX: { value: 0, unit: "px" },
       offsetY: { value: 0, unit: "px" },
       blur: { value: 0, unit: "px" },
       spread: { value: 0, unit: "px" },
-      color: "transparent",
+      color: { colorSpace: "srgb", components: [0, 0, 0], alpha: 0, hex: "#000000" },
     };
   }
 
-  let colorStr = "rgba(0, 0, 0, 0.08)";
-  let lengthsPart = cssShadow.trim();
-
-  const colorMatch = lengthsPart.match(/(rgba?\([^)]+\)|hsla?\([^)]+\)|#[0-9a-fA-F]{3,8}|[a-zA-Z]+$)/);
-  if (colorMatch) {
-    colorStr = colorMatch[0];
-    lengthsPart = lengthsPart.replace(colorMatch[0], "").trim();
+  const layers = splitCssShadowLayers(cssShadow);
+  if (layers.length > 1) {
+    return layers.map(parseSingleCssShadowToDtcg);
   }
-
-  const parts = lengthsPart.split(/\s+/).filter(Boolean);
-
-  const offsetX = parseDimensionToDtcg(parts[0] || "0px");
-  const offsetY = parseDimensionToDtcg(parts[1] || "1px");
-  const blur = parseDimensionToDtcg(parts[2] || "2px");
-  const spread = parseDimensionToDtcg(parts[3] || "0px");
-
-  let shadowColor: DtcgColorValue | string = colorStr;
-  if (colorStr.startsWith("#")) {
-    shadowColor = hexToDtcgColor(colorStr);
-  }
-
-  return { offsetX, offsetY, blur, spread, color: shadowColor };
+  return parseSingleCssShadowToDtcg(layers[0] || cssShadow);
 }
 
-export function dtcgShadowToCss(shadow: DtcgCompositeShadow): string {
+function dtcgSingleShadowToCss(s: DtcgCompositeShadow): string {
+  if (!s) return "none";
+  const insetStr = s.inset ? "inset " : "";
+  const ox = dtcgDimensionToString(s.offsetX);
+  const oy = dtcgDimensionToString(s.offsetY);
+  const b = dtcgDimensionToString(s.blur);
+  const sp = dtcgDimensionToString(s.spread);
+  const colStr = dtcgColorToCss(s.color);
+
+  return `${insetStr}${ox} ${oy} ${b} ${sp} ${colStr}`.trim();
+}
+
+export function dtcgShadowToCss(
+  shadow: DtcgCompositeShadow | DtcgCompositeShadow[]
+): string {
   if (!shadow) return "none";
-  const colorStr = typeof shadow.color === "object" && shadow.color !== null && "hex" in shadow.color
-    ? shadow.color.hex
-    : String(shadow.color || "");
-
-  if (colorStr === "transparent" || colorStr === "none") return "none";
-
-  const ox = dtcgDimensionToString(shadow.offsetX);
-  const oy = dtcgDimensionToString(shadow.offsetY);
-  const b = dtcgDimensionToString(shadow.blur);
-  const sp = dtcgDimensionToString(shadow.spread);
-
-  return `${ox} ${oy} ${b} ${sp} ${colorStr}`.trim();
+  if (Array.isArray(shadow)) {
+    if (shadow.length === 0) return "none";
+    return shadow.map(dtcgSingleShadowToCss).join(", ");
+  }
+  return dtcgSingleShadowToCss(shadow);
 }
 
 export type DesignArchetype =
@@ -459,12 +638,14 @@ export function auditContrastPairs(
   primary: string,
   background: string,
   surface: string,
-  text: string
+  text: string,
+  buttonText?: string
 ): ContrastPairCheck[] {
+  const actualBtnText = buttonText || (calculateContrastRatio("#ffffff", primary) >= 4.5 ? "#ffffff" : "#000000");
   const pairs: { pair: string; fg: string; bg: string; usage: string }[] = [
     { pair: "Text on Background", fg: text, bg: background, usage: "Main body paragraphs & headings" },
     { pair: "Text on Surface", fg: text, bg: surface, usage: "Card & container body text" },
-    { pair: "White on Primary CTA", fg: "#ffffff", bg: primary, usage: "Primary button label" },
+    { pair: "Button Label on Primary CTA", fg: actualBtnText, bg: primary, usage: "Primary button label" },
     { pair: "Primary on Background", fg: primary, bg: background, usage: "Interactive links & indicators" },
   ];
 
@@ -2025,12 +2206,63 @@ export function validateDtcgTokenTree(jsonObj: any): DtcgValidationResult {
           errors.push(`Token at ${path} dimension token must be a string, number, or dimension object`);
         }
       } else if (type === "shadow") {
-        if (typeof val === "object" && val !== null) {
-          if (!("offsetX" in val) || !("offsetY" in val) || !("blur" in val) || !("color" in val)) {
+        const validateShadowObj = (sObj: any, subPath: string) => {
+          if (!sObj || typeof sObj !== "object") {
+            errors.push(`Token at ${subPath} shadow token must be an object`);
+            return;
+          }
+          if (!("offsetX" in sObj) || !("offsetY" in sObj) || !("blur" in sObj) || !("color" in sObj)) {
             errors.push(
-              `Token at ${path} shadow token must declare offsetX, offsetY, blur, and color properties`
+              `Token at ${subPath} shadow token must declare offsetX, offsetY, blur, and color properties`
             );
           }
+          // Validate color in shadow per DTCG 2025.10
+          const sc = sObj.color;
+          if (typeof sc === "string") {
+            if (sc.startsWith("{") && sc.endsWith("}")) {
+              const dummyUnresolved: string[] = [];
+              const resolved = resolveDtcgAlias(sc, jsonObj, dummyUnresolved);
+              if (resolved === undefined) {
+                errors.push(`Token at ${subPath} shadow color references unresolved alias ${sc}`);
+              }
+            } else {
+              errors.push(
+                `Token at ${subPath} shadow color '${sc}' is invalid: expected structured color object or alias reference {color...} per DTCG 2025.10`
+              );
+            }
+          } else if (typeof sc === "object" && sc !== null) {
+            if ("channels" in sc) {
+              errors.push(`Token at ${subPath} shadow color uses deprecated 'channels'; expected 'components'`);
+            } else if (!Array.isArray(sc.components) || sc.components.length < 3) {
+              errors.push(`Token at ${subPath} shadow color missing normalized 'components' array`);
+            } else {
+              for (let i = 0; i < 3; i++) {
+                const comp = sc.components[i];
+                if (typeof comp !== "number" || isNaN(comp) || comp < 0 || comp > 1) {
+                  errors.push(`Token at ${subPath} shadow color component at index ${i} must be in range [0, 1]`);
+                }
+              }
+              if (sc.alpha !== undefined && (typeof sc.alpha !== "number" || isNaN(sc.alpha) || sc.alpha < 0 || sc.alpha > 1)) {
+                errors.push(`Token at ${subPath} shadow color alpha must be in range [0, 1]`);
+              }
+            }
+          } else {
+            errors.push(`Token at ${subPath} shadow color must be a structured color object or alias reference`);
+          }
+          // Validate inset if present
+          if ("inset" in sObj && typeof sObj.inset !== "boolean") {
+            errors.push(`Token at ${subPath} shadow 'inset' must be boolean`);
+          }
+        };
+
+        if (Array.isArray(val)) {
+          if (val.length === 0) {
+            errors.push(`Token at ${path} shadow array cannot be empty`);
+          } else {
+            val.forEach((s, idx) => validateShadowObj(s, `${path}[${idx}]`));
+          }
+        } else {
+          validateShadowObj(val, path);
         }
       }
 
@@ -2214,30 +2446,46 @@ export function parseDtcgTokens(jsonText: string): DtcgImportResult {
       importedTokens++;
     }
 
-    // 4. Parse Shadows (composite or string)
-    if (parsed.shadow?.subtle?.$value) {
-      const resolved = resolveDtcgAlias(parsed.shadow.subtle.$value, parsed, unresolvedAliases);
-      if (resolved !== undefined) {
-        const cssVal = typeof resolved === "object" ? dtcgShadowToCss(resolved) : String(resolved);
-        result.surfaces.shadows.subtle = attr(cssVal, "observed");
-        importedTokens++;
+    // 4. Parse Shadows (composite, array, or alias)
+    const extractShadow = (token: any, keyPath = "shadow"): string | undefined => {
+      if (!token || !("$value" in token)) return undefined;
+      const resolved = resolveDtcgAlias(token.$value, parsed, unresolvedAliases);
+      if (resolved === undefined) return undefined;
+      if (typeof resolved === "object" && resolved !== null) {
+        const checkColor = (c: any) => {
+          if (c && typeof c === "object" && "channels" in c) {
+            warnings.push(`Shadow color at ${keyPath} uses deprecated 'channels'; expected DTCG 'components'`);
+            unsupportedFields.push(`${keyPath} (deprecated channels)`);
+            return false;
+          }
+          return true;
+        };
+        if (Array.isArray(resolved)) {
+          for (const s of resolved) {
+            if (!checkColor(s.color)) return undefined;
+          }
+        } else {
+          if (!checkColor(resolved.color)) return undefined;
+        }
+        return dtcgShadowToCss(resolved);
       }
+      return String(resolved);
+    };
+
+    const subtleVal = extractShadow(parsed.shadow?.subtle, "shadow.subtle");
+    if (subtleVal) {
+      result.surfaces.shadows.subtle = attr(subtleVal, "observed");
+      importedTokens++;
     }
-    if (parsed.shadow?.medium?.$value) {
-      const resolved = resolveDtcgAlias(parsed.shadow.medium.$value, parsed, unresolvedAliases);
-      if (resolved !== undefined) {
-        const cssVal = typeof resolved === "object" ? dtcgShadowToCss(resolved) : String(resolved);
-        result.surfaces.shadows.medium = attr(cssVal, "observed");
-        importedTokens++;
-      }
+    const mediumVal = extractShadow(parsed.shadow?.medium, "shadow.medium");
+    if (mediumVal) {
+      result.surfaces.shadows.medium = attr(mediumVal, "observed");
+      importedTokens++;
     }
-    if (parsed.shadow?.elevated?.$value) {
-      const resolved = resolveDtcgAlias(parsed.shadow.elevated.$value, parsed, unresolvedAliases);
-      if (resolved !== undefined) {
-        const cssVal = typeof resolved === "object" ? dtcgShadowToCss(resolved) : String(resolved);
-        result.surfaces.shadows.elevated = attr(cssVal, "observed");
-        importedTokens++;
-      }
+    const elevatedVal = extractShadow(parsed.shadow?.elevated, "shadow.elevated");
+    if (elevatedVal) {
+      result.surfaces.shadows.elevated = attr(elevatedVal, "observed");
+      importedTokens++;
     }
 
     if (unresolvedAliases.length > 0) {

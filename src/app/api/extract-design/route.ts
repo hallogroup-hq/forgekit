@@ -3,7 +3,8 @@ import fs from "node:fs";
 import { validateSafeUrlForFetch, safeFetchWithRedirects, readSafeResponseBody } from "@/lib/security/ssrf";
 import {
   inspectLiveSite,
-  getLocalChromePath,
+  resolveChromeExecutable,
+  isChromeAvailable,
   buildDesignSystemFromEvidence,
 } from "@/lib/design-inspection/inspect-reference";
 import { createArchetypeDesignSystem, attr } from "@/generators/modules/design-md/engine";
@@ -46,16 +47,16 @@ export async function POST(req: NextRequest) {
       domain.split(".")[0].charAt(0).toUpperCase() + domain.split(".")[0].slice(1);
 
     // 1. Attempt Real Headless Chrome Live Inspection if Chrome is available
-    const chromePath = getLocalChromePath();
-    if (chromePath && fs.existsSync(chromePath)) {
+    if (isChromeAvailable()) {
       try {
+        const jobId = crypto.randomUUID();
         const evidence = await inspectLiveSite(
           siteKey,
           parsedUrl.toString(),
           cleanProjectName,
-          "modern-saas",
+          undefined, // Dynamically detects archetype from empirical metrics
           {
-            outputBaseDir: "public/evidence/reference-sites",
+            jobId,
             captureScreenshots: true,
           }
         );
@@ -65,10 +66,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
           success: true,
           inspectionMethod: "headless-chrome",
+          jobId,
           domain,
           projectName: evidence.name,
           evidence,
           system,
+          screenshots: evidence.screenshots,
           source: "live-extracted",
           notes: [evidence.fidelityReport],
         });

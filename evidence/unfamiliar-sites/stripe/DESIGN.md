@@ -1,8 +1,8 @@
 # DESIGN.md: Design System & UI Specifications
 
 > **Project:** Stripe Empirical Design System  
-> **Archetype:** Modern SaaS / Productivity (Precision, High-Density, Functional)  
-> **Platform:** Web & Cross-Platform  
+> **Archetype:** Editorial / Longform (Serif Typography, Warm Surfaces, Restraint)  
+> **Platform:** Web & Tablet Reading  
 > **Brand Tone:** Stripe is a financial services platform that helps all types of businesses accept payments, build flexible billing models, and manage money movement.  
 > **Specification Version:** 1.0.0  
 > **Generated:** 2026-10-08
@@ -21,8 +21,8 @@ ForgeKit enforces strict epistemic separation between empirical observations and
 
 ### 📐 1.2 Inferred Specifications (Engine Synthesis)
 - **[Inferred]** Primary palette ladder (50–950) generated via linear tint/shade interpolation.
-- **[Inferred]** Typography scale ratio: 1.25 with base size 15px.
-- **[Inferred]** Surface radii and spatial scale structured around archetype "Modern SaaS / Productivity".
+- **[Inferred]** Typography scale ratio: 1.333 with base size 16px.
+- **[Inferred]** Surface radii and spatial scale structured around archetype "Editorial / Longform".
 - **[Inferred]** WCAG contrast pairs audited automatically against declared background.
 
 ### ⚠️ 1.3 Unknown / Requires Human Verification
@@ -47,19 +47,19 @@ ForgeKit enforces strict epistemic separation between empirical observations and
 | `primary-950` | `#0c0926` | High-contrast dark backgrounds |
 
 ### Signal & Semantic Colors
-- **Accent Highlight:** `#10b981`
-- **Secondary Neutral:** `#94a3b8`
-- **Success:** `#10b981`
-- **Warning:** `#f59e0b`
-- **Error / Danger:** `#ef4444`
-- **Info:** `#3b82f6`
+- **Accent Highlight:** `#061b31`
+- **Secondary Neutral:** `#e8e9ff`
+- **Success:** `#15803d`
+- **Warning:** `#b45309`
+- **Error / Danger:** `#b91c1c`
+- **Info:** `#0369a1`
 
 ### Neutrals
 - **Background:** `#ffffff`
 - **Surface:** `#ffffff`
-- **Border:** `#27272a`
+- **Border:** `#e7e2d7`
 - **Body Text:** `#000000`
-- **Muted Text:** `#a1a1aa`
+- **Muted Text:** `#78716c`
 
 ---
 
@@ -67,94 +67,94 @@ ForgeKit enforces strict epistemic separation between empirical observations and
 
 - **Heading Font:** `sohne-var, "SF Pro Display", sans-serif`
 - **Body Font:** `sohne-var, "SF Pro Display", sans-serif`
-- **Code / Mono Font:** `JetBrains Mono, monospace`
-- **Scale Factor:** `1.25` (Base size: `15px`)
+- **Code / Mono Font:** `Courier Prime, monospace`
+- **Scale Factor:** `1.333` (Base size: `16px`)
 
 | Level | Size | Weight | Line Height | Tracking |
 | :--- | :--- | :--- | :--- | :--- |
 | **H1 Display** | `48px` | `300` | `55.2px` | `-0.96px` |
-| **H2 Section** | `1.875rem` | `600` | `1.2` | `-0.02em` |
-| **H3 Subsection** | `1.375rem` | `600` | `1.25` | `-0.015em` |
-| **H4 Title** | `1.125rem` | `500` | `1.3` | `-0.01em` |
+| **H2 Section** | `32px` | `300` | `35.2px` | `-0.64px` |
+| **H3 Subsection** | `1.5rem` | `500` | `1.25` | `-0.01em` |
+| **H4 Title** | `1.25rem` | `500` | `1.3` | `0em` |
 
 ---
 
 ## 4. Grid, Layout & Containers
 
 - **Container Max Width:** `1298px`
-- **Container Padding:** `1.5rem`
+- **Container Padding:** `2rem`
 - **Grid Columns:** `12`
-- **Gutter Width:** `1.5rem`
+- **Gutter Width:** `2rem`
 
 ---
 
 ## 5. Spacing & Density
 
-- **Base Unit:** `4px`
-- **Density Mode:** `normal`
+- **Base Unit:** `8px`
+- **Density Mode:** `comfortable`
 - **Spacing Scale:**
   - `xs`: `4px`
   - `sm`: `8px`
   - `md`: `16px`
   - `lg`: `24px`
-  - `xl`: `32px`
-  - `2xl`: `48px`
+  - `xl`: `40px`
+  - `2xl`: `64px`
 
 ---
 
 ## 6. Surfaces, Elevation & Borders
 
 - **Base Radius:** `4px`
-- **Card Radius:** `12px`
-- **Border Stroke:** `1px` solid `#27272a`
+- **Card Radius:** `6px`
+- **Border Stroke:** `1px` solid `#e7e2d7`
 - **Shadow Scale:**
-  - **Subtle:** `0 1px 2px 0 rgba(0, 0, 0, 0.4)`
-  - **Medium:** `0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5)`
-  - **Elevated:** `0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.6)`
+  - **Subtle:** `0 1px 3px rgba(0,0,0,0.04)`
+  - **Medium:** `0 4px 12px rgba(0,0,0,0.06)`
+  - **Elevated:** `0 12px 24px rgba(0,0,0,0.08)`
 - **Glassmorphism:** `Disabled`
 
 ---
 
 ## 7. Button & Interactive System
 
-- **Primary Button:** Background `#6366f1`, text `#ffffff`, radius `4px`
-- **Secondary Button:** Background `#27272a`, border `1px solid #3f3f46`
-- **Ghost Button:** Hover background `#27272a`
-- **Destructive Button:** Background `#ef4444`
+- **Primary Button:** Background `#ffffff`, text `#061b31`, radius `4px`
+- **Secondary Button:** Background `transparent`, border `1px solid #d6cfc2`
+- **Ghost Button:** Hover background `#ede7da`
+- **Destructive Button:** Background `#b91c1c`
 
 ---
 
 ## 8. Form Controls & Inputs
 
-- **Default Input Height:** `38px`
-- **Input Radius:** `8px`
-- **Default Border:** `#27272a`
-- **Focus Ring:** `0 0 0 2px rgba(99, 102, 241, 0.35)`
+- **Default Input Height:** `42px`
+- **Input Radius:** `4px`
+- **Default Border:** `#d6cfc2`
+- **Focus Ring:** `0 0 0 2px rgba(28,25,23,0.15)`
 
 ---
 
 ## 9. Navigation & App Shell
 
-- **Navbar Height:** `56px`
+- **Navbar Height:** `64px`
 - **Sidebar Width:** `240px`
-- **Nav Style:** `sticky`
+- **Nav Style:** `minimal`
 
 ---
 
 ## 10. Key Component Patterns
 
-- **Card Specification:** 12px radius, subtle border 1px #27272a, high density surface
-- **Badge Specification:** Compact 6px radius badge with tinted background and 1px border
-- **Modal Backdrop:** `rgba(0, 0, 0, 0.7) backdrop-blur-sm`
-- **Tooltip Specification:** Dark obsidian surface with 1px border and sharp typography
+- **Card Specification:** Paper-like surface, 1px border #e7e2d7, 0 1px 3px shadow
+- **Badge Specification:** Muted neutral pill with subtle border and serif italic label
+- **Modal Backdrop:** `rgba(28, 25, 23, 0.4) with slight blur`
+- **Tooltip Specification:** Warm charcoal surface with crisp border, serif typography
 
 ---
 
 ## 11. Imagery, Media & Iconography
 
-- **Recommended Icon Set:** Lucide Icons
-- **Avatar Radius:** `8px`
-- **Default Media Aspect Ratio:** `16:9`
+- **Recommended Icon Set:** Lucide Icons (thin stroke)
+- **Avatar Radius:** `50%`
+- **Default Media Aspect Ratio:** `4:3`
 
 ---
 
@@ -162,8 +162,8 @@ ForgeKit enforces strict epistemic separation between empirical observations and
 
 - **Fast:** `120ms` (tooltips, micro-toggles)
 - **Normal:** `200ms` (dialogs, drawers, standard hovers)
-- **Slow:** `320ms` (page transitions, complex accordions)
-- **Default Easing:** `cubic-bezier(0.16, 1, 0.3, 1)`
+- **Slow:** `350ms` (page transitions, complex accordions)
+- **Default Easing:** `cubic-bezier(0.2, 0.0, 0, 1.0)`
 
 ---
 
@@ -181,15 +181,15 @@ ForgeKit enforces strict epistemic separation between empirical observations and
 
 ## 14. Accessibility & Contrast Verification
 
-- **Target Compliance:** **WCAG_AA**
-- **Focus Visible Standard:** `outline: 2px solid #6366f1; outline-offset: 2px;`
+- **Target Compliance:** **WCAG_AAA**
+- **Focus Visible Standard:** `outline: 2px solid #1c1917; outline-offset: 2px;`
 
 ### Verified Contrast Audit
 | Pair | Foreground | Background | Ratio | WCAG AA (≥4.5) | WCAG AAA (≥7.0) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Text on Background** | `#000000` | `#ffffff` | **21:1** | ✅ Pass | ✅ Pass |
 | **Text on Surface** | `#000000` | `#ffffff` | **21:1** | ✅ Pass | ✅ Pass |
-| **White on Primary CTA** | `#ffffff` | `#533afd` | **6.19:1** | ✅ Pass | ❌ Fail |
+| **Button Label on Primary CTA** | `#061b31` | `#533afd` | **2.81:1** | ❌ Fail | ❌ Fail |
 | **Primary on Background** | `#533afd` | `#ffffff` | **6.19:1** | ✅ Pass | ❌ Fail |
 
 ---
@@ -198,6 +198,6 @@ ForgeKit enforces strict epistemic separation between empirical observations and
 
 When implementing UI for this project:
 1. **Never hardcode hex values**; always reference design tokens via CSS variables or Tailwind classes.
-2. Maintain spatial consistency using multiples of **4px**.
-3. Do not invent non-standard border radii outside of **4px** and **12px**.
+2. Maintain spatial consistency using multiples of **8px**.
+3. Do not invent non-standard border radii outside of **4px** and **6px**.
 4. Honor user accessibility by wrapping transitions with `motion-safe:`.

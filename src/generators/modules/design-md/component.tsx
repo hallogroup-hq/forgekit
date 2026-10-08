@@ -1,44 +1,19 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { Download, Eye, Code, Globe, ArrowRight, Loader2, Check, FileJson, Layers, Palette, Sliders, AlertCircle } from "lucide-react";
+import { Download, Eye, Code, Globe, ArrowRight, Loader2, Check, FileJson, Layers, Palette, Sliders, AlertCircle, Camera } from "lucide-react";
 import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { downloadFile } from "@/lib/utils";
 
-function hexToRgb(hex: string): [number, number, number] {
-  const clean = hex.replace("#", "");
-  const num = parseInt(clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean, 16);
-  if (isNaN(num)) return [94, 106, 210];
-  return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
-}
-
-function rgbToHex(r: number, g: number, b: number): string {
-  return (
-    "#" +
-    [r, g, b]
-      .map((x) => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, "0"))
-      .join("")
-  );
-}
-
-function tintColor(hex: string, factor: number): string {
-  try {
-    const [r, g, b] = hexToRgb(hex);
-    return rgbToHex(r + (255 - r) * factor, g + (255 - g) * factor, b + (255 - b) * factor);
-  } catch {
-    return hex;
-  }
-}
-
-function shadeColor(hex: string, factor: number): string {
-  try {
-    const [r, g, b] = hexToRgb(hex);
-    return rgbToHex(r * (1 - factor), g * (1 - factor), b * (1 - factor));
-  } catch {
-    return hex;
-  }
-}
+import {
+  hexToRgb,
+  rgbToHex,
+  tintColor,
+  shadeColor,
+  generateDesignDoc,
+  DesignObservation,
+} from "./engine";
 
 export default function DesignMdGenerator() {
   const [urlInput, setUrlInput] = useState("");
@@ -64,6 +39,24 @@ export default function DesignMdGenerator() {
   useEffect(() => {
     setDateString(new Date().toISOString().split("T")[0]);
   }, []);
+
+  const [observation, setObservation] = useState<DesignObservation | undefined>();
+  const [screenshotName, setScreenshotName] = useState<string | null>(null);
+
+  const handleScreenshotUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setScreenshotName(file.name);
+      setObservation((prev) => ({
+        ...prev,
+        hasScreenshot: true,
+        screenshotName: file.name,
+        detectedColors: prev?.detectedColors || [],
+        detectedFonts: prev?.detectedFonts || [],
+      }));
+      confetti({ particleCount: 20, spread: 50, origin: { y: 0.8 } });
+    }
+  };
 
   const handleExtractFromUrl = async (targetUrl?: string) => {
     const raw = targetUrl || urlInput;
@@ -94,6 +87,17 @@ export default function DesignMdGenerator() {
         if (data.baseRadius) setBaseRadius(data.baseRadius);
         if (data.elevationStyle) setElevationStyle(data.elevationStyle);
 
+        setObservation({
+          sourceUrl: data.domain ? `https://${data.domain}` : undefined,
+          hasScreenshot: Boolean(screenshotName),
+          screenshotName: screenshotName || undefined,
+          observedTitle: data.observed?.title,
+          observedThemeColor: data.observed?.themeColor,
+          detectedColors: data.observed?.detectedColors || [],
+          detectedFonts: data.observed?.detectedFonts || [],
+          notes: data.notes || [],
+        });
+
         if (data.source === "curated-preset") {
           setExtractSuccess(`Loaded verified reference profile for ${data.domain}`);
         } else {
@@ -112,213 +116,45 @@ export default function DesignMdGenerator() {
     }
   };
 
-  const markdownContent = useMemo(() => {
-    return `# DESIGN.md: Design System and UI Specifications
-
-> **Project:** ${projectName}  
-> **Target Platform:** ${platform}  
-> **Brand Tone & Aesthetic:** ${brandTone}  
-> **Last Updated:** ${dateString}
-
----
-
-## 1. Design Principles & Guidelines
-1. **Clarity & Intention**: Every element serves an explicit user purpose with zero visual clutter.
-2. **Tactile Feedback**: Subtle hover transitions (150ms-200ms ease-out) and active scale feedback (98%) on interactive surfaces.
-3. **Accessibility**: All text color combinations adhere strictly to WCAG AA (minimum 4.5:1 contrast ratio).
-4. **Consistency**: Use standardized spacing scales and tokenized semantic colors across every view.
-
----
-
-## 2. Color Palette & Semantic Tokens
-
-### Brand & Accents
-- **Primary Brand**: \`${primaryColor}\` (Buttons, active states, key interactive indicators)
-- **Accent Highlight**: \`${accentColor}\` (Badges, special highlights, gradient pairings)
-- **Neutral Scale**: ${neutralType} (Borders, card surfaces, secondary text)
-
-### Functional & Semantic Colors
-- **Success**: \`#10b981\` (Green 500)
-- **Warning**: \`#f59e0b\` (Amber 500)
-- **Destructive / Error**: \`#ef4444\` (Red 500)
-- **Info**: \`#3b82f6\` (Blue 500)
-
-### Surface & Elevation Tokens
-| Token | Light Mode | Dark Mode | Usage |
-| :--- | :--- | :--- | :--- |
-| \`bg-background\` | \`#ffffff\` | \`#09090b\` | Root app canvas |
-| \`bg-card\` | \`#f8fafc\` | \`#18181b\` | Card & panel backgrounds |
-| \`border-border\` | \`#e2e8f0\` | \`#27272a\` | Subtle structural borders |
-| \`text-foreground\` | \`#0f172a\` | \`#f8fafc\` | Primary high-contrast text |
-| \`text-muted\` | \`#64748b\` | \`#a1a1aa\` | Secondary descriptions & captions |
-
----
-
-## 3. Typography Scale & Fonts
-
-- **Heading Font**: \`${headingFont}\` (Weights: 600 SemiBold, 700 Bold)
-- **Body Font**: \`${bodyFont}\` (Weights: 400 Regular, 500 Medium)
-- **Monospace Font**: \`${monoFont}\` (Code snippets, counters, hashes)
-
-### Type Hierarchy
-| Level | Font Size | Line Height | Tracking | Weight |
-| :--- | :--- | :--- | :--- | :--- |
-| **Display 1** | \`36px (2.25rem)\` | \`1.2\` | \`-0.025em\` | Bold (700) |
-| **Heading 1** | \`28px (1.75rem)\` | \`1.25\` | \`-0.02em\` | SemiBold (600) |
-| **Heading 2** | \`22px (1.375rem)\` | \`1.3\` | \`-0.015em\` | SemiBold (600) |
-| **Subheading**| \`18px (1.125rem)\` | \`1.4\` | \`-0.01em\` | Medium (500) |
-| **Body (Base)**| \`14px / 16px\` | \`1.5\` | \`normal\` | Regular (400) |
-| **Small / Caption**| \`12px (0.75rem)\` | \`1.4\` | \`+0.01em\` | Regular / Medium |
-
----
-
-## 4. Spacing, Geometry & Shadows
-
-### Spacing Scale (4px Base Grid)
-\`4px (xs)\`, \`8px (sm)\`, \`12px (md)\`, \`16px (base)\`, \`24px (lg)\`, \`32px (xl)\`, \`48px (2xl)\`
-
-### Border Radii
-- **Default Base Radius**: \`${baseRadius}\`
-- Buttons & Badges: \`8px\` - \`12px\`
-- Cards & Modals: \`16px\` - \`20px\`
-- Pills / Avatars: \`9999px (full)\`
-
-### Shadows & Elevation
-- **Elevation Style**: ${elevationStyle}
-- **Card Shadow**: \`0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)\`
-- **Dropdown / Dialog**: \`0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)\`
-
----
-
-## 5. Component Patterns & Rules
-
-### Interactive Buttons
-- Standard Height: \`36px\` (compact) / \`42px\` (default)
-- Active State: \`transform: scale(0.98)\` with \`transition: all 150ms ease\`
-- Focus Visible: \`outline: 2px solid ${primaryColor}\` with \`2px offset\`
-
-### Forms & Inputs
-- Border: 1px solid \`border-border\`, transitions to 2px focus ring in \`${primaryColor}\`
-- Padding: \`8px 12px\` for clean breathing room
-
----
-*Generated with ForgeKit Design.md Spec Studio*
-`;
-  }, [projectName, platform, brandTone, primaryColor, accentColor, neutralType, headingFont, bodyFont, monoFont, baseRadius, elevationStyle, dateString]);
-
-  const tailwindCode = useMemo(() => {
-    const rawRad = baseRadius.split(" ")[0] || "8px";
-    return `// tailwind.config.ts
-import type { Config } from "tailwindcss";
-
-const config: Config = {
-  content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
-  ],
-  theme: {
-    extend: {
-      colors: {
-        brand: {
-          50: "${tintColor(primaryColor, 0.92)}",
-          100: "${tintColor(primaryColor, 0.8)}",
-          200: "${tintColor(primaryColor, 0.6)}",
-          300: "${tintColor(primaryColor, 0.4)}",
-          400: "${tintColor(primaryColor, 0.2)}",
-          500: "${primaryColor}",
-          600: "${shadeColor(primaryColor, 0.15)}",
-          700: "${shadeColor(primaryColor, 0.3)}",
-          800: "${shadeColor(primaryColor, 0.5)}",
-          900: "${shadeColor(primaryColor, 0.7)}",
-          950: "${shadeColor(primaryColor, 0.85)}",
-        },
-        accent: {
-          500: "${accentColor}",
-          hover: "${shadeColor(accentColor, 0.15)}",
-        },
+  const designDoc = useMemo(() => {
+    return generateDesignDoc(
+      {
+        projectName,
+        platform,
+        brandTone,
+        primaryColor,
+        accentColor,
+        neutralType,
+        headingFont,
+        bodyFont,
+        monoFont,
+        baseRadius,
+        elevationStyle,
+        dateString,
       },
-      borderRadius: {
-        brand: "${rawRad}",
-      },
-      fontFamily: {
-        heading: ["'${headingFont}'", "system-ui", "sans-serif"],
-        sans: ["'${bodyFont}'", "system-ui", "sans-serif"],
-        mono: ["'${monoFont}'", "monospace"],
-      },
-    },
-  },
-  plugins: [],
-};
+      observation
+    );
+  }, [
+    projectName,
+    platform,
+    brandTone,
+    primaryColor,
+    accentColor,
+    neutralType,
+    headingFont,
+    bodyFont,
+    monoFont,
+    baseRadius,
+    elevationStyle,
+    dateString,
+    observation,
+  ]);
 
-export default config;
-`;
-  }, [primaryColor, accentColor, baseRadius, headingFont, bodyFont, monoFont]);
+  const markdownContent = designDoc.markdown;
 
-  const cssCode = useMemo(() => {
-    const rawRad = baseRadius.split(" ")[0] || "8px";
-    return `/* Design Tokens & CSS Variables */
-:root {
-  /* Typography */
-  --font-heading: '${headingFont}', system-ui, -apple-system, sans-serif;
-  --font-body: '${bodyFont}', system-ui, -apple-system, sans-serif;
-  --font-mono: '${monoFont}', monospace;
-
-  /* Brand Palette (10-step ramp) */
-  --color-brand-50: ${tintColor(primaryColor, 0.92)};
-  --color-brand-100: ${tintColor(primaryColor, 0.8)};
-  --color-brand-200: ${tintColor(primaryColor, 0.6)};
-  --color-brand-300: ${tintColor(primaryColor, 0.4)};
-  --color-brand-400: ${tintColor(primaryColor, 0.2)};
-  --color-brand-500: ${primaryColor};
-  --color-brand-600: ${shadeColor(primaryColor, 0.15)};
-  --color-brand-700: ${shadeColor(primaryColor, 0.3)};
-  --color-brand-800: ${shadeColor(primaryColor, 0.5)};
-  --color-brand-900: ${shadeColor(primaryColor, 0.7)};
-  --color-brand-950: ${shadeColor(primaryColor, 0.85)};
-
-  /* Accent Highlight */
-  --color-accent: ${accentColor};
-
-  /* Radii & Elevation */
-  --radius-brand: ${rawRad};
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
-  --shadow-overlay: 0 12px 30px -10px rgba(0, 0, 0, 0.15);
-
-  /* Transitions */
-  --ease-spring: cubic-bezier(0.23, 1, 0.32, 1);
-  --duration-interactive: 150ms;
-}
-`;
-  }, [primaryColor, accentColor, baseRadius, headingFont, bodyFont, monoFont]);
-
-  const tokensJson = useMemo(() => {
-    const rawRad = baseRadius.split(" ")[0] || "8px";
-    const data = {
-      $schema: "https://tokens.studio/schema.json",
-      name: projectName,
-      color: {
-        brand: {
-          50: { value: tintColor(primaryColor, 0.92), type: "color" },
-          100: { value: tintColor(primaryColor, 0.8), type: "color" },
-          500: { value: primaryColor, type: "color" },
-          900: { value: shadeColor(primaryColor, 0.7), type: "color" },
-        },
-        accent: {
-          500: { value: accentColor, type: "color" },
-        },
-      },
-      font: {
-        heading: { value: headingFont, type: "fontFamilies" },
-        body: { value: bodyFont, type: "fontFamilies" },
-        mono: { value: monoFont, type: "fontFamilies" },
-      },
-      radius: {
-        base: { value: rawRad, type: "borderRadius" },
-      },
-    };
-    return JSON.stringify(data, null, 2);
-  }, [projectName, primaryColor, accentColor, baseRadius, headingFont, bodyFont, monoFont]);
+  const tailwindCode = designDoc.tailwindConfig;
+  const cssCode = designDoc.cssVariables;
+  const tokensJson = designDoc.tokensJson;
 
   const handleDownload = () => {
     if (previewTab === "tailwind") {
@@ -419,6 +255,33 @@ export default config;
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Visual Screenshot Reference Uploader */}
+        <div className="p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-900/40 space-y-2">
+          <div className="flex items-center justify-between text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+            <span className="flex items-center gap-1.5">
+              <Camera className="w-3.5 h-3.5 text-blue-500" />
+              <span>Reference Screenshot (Optional)</span>
+            </span>
+            {screenshotName && (
+              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono font-bold">
+                ✓ Attached
+              </span>
+            )}
+          </div>
+          <div className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-tight">
+            Attach a design mockup or UI screenshot to record visual evidence in the specification.
+          </div>
+          <label className="flex items-center justify-center p-2 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-850 cursor-pointer text-xs font-medium text-zinc-600 dark:text-zinc-400 transition-colors">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleScreenshotUpload}
+              className="hidden"
+            />
+            {screenshotName ? `📎 ${screenshotName} (Click to change)` : "Choose UI Screenshot or Mockup..."}
+          </label>
         </div>
 
         {/* Manual Adjustments */}

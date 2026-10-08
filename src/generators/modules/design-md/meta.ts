@@ -9,4 +9,5 @@ export const meta: ToolMeta = {
   tags: ["design", "spec", "markdown", "design-system", "tokens", "typography", "colors"],
   icon: "FileCode2",
   isPopular: true,
+  lifecycle: "ready",
 };

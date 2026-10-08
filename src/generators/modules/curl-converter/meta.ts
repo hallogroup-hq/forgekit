@@ -12,4 +12,5 @@ export const meta: ToolMeta = {
   isNew: true,
   isPopular: true,
   version: "1.0.0",
+  lifecycle: "ready",
 };

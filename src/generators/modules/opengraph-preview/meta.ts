@@ -9,4 +9,5 @@ export const meta: ToolMeta = {
   tags: ["opengraph", "seo", "meta", "twitter", "linkedin", "preview", "google", "tags"],
   icon: "Share2",
   isPopular: true,
+  lifecycle: "ready",
 };

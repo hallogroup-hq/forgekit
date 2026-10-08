@@ -6,85 +6,12 @@ import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { downloadFile } from "@/lib/utils";
 
-type ShapeKind = "blob" | "wave";
-type FillType = "linear" | "radial" | "solid";
-
-function generateBlobPath(pointsCount: number, randomness: number, seed: number): string {
-  const size = 500;
-  const center = size / 2;
-  const baseRadius = 180;
-  const maxVariance = baseRadius * (randomness / 100);
-
-  // Simple deterministic PRNG from seed
-  let s = seed;
-  const random = () => {
-    s = (s * 9301 + 49297) % 233280;
-    return s / 233280;
-  };
-
-  const points: { x: number; y: number }[] = [];
-  const angleStep = (Math.PI * 2) / pointsCount;
-
-  for (let i = 0; i < pointsCount; i++) {
-    const angle = i * angleStep;
-    const offset = (random() - 0.5) * 2 * maxVariance;
-    const r = baseRadius + offset;
-    const x = center + r * Math.cos(angle);
-    const y = center + r * Math.sin(angle);
-    points.push({ x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 });
-  }
-
-  // Create smooth closed path using midpoints and quadratic curves
-  const n = points.length;
-  const midpoints: { x: number; y: number }[] = [];
-  for (let i = 0; i < n; i++) {
-    const next = points[(i + 1) % n];
-    midpoints.push({
-      x: (points[i].x + next.x) / 2,
-      y: (points[i].y + next.y) / 2,
-    });
-  }
-
-  let d = `M ${midpoints[0].x} ${midpoints[0].y}`;
-  for (let i = 0; i < n; i++) {
-    const nextPt = points[(i + 1) % n];
-    const nextMid = midpoints[(i + 1) % n];
-    d += ` Q ${nextPt.x} ${nextPt.y}, ${nextMid.x} ${nextMid.y}`;
-  }
-  d += " Z";
-  return d;
-}
-
-function generateWavePath(pointsCount: number, randomness: number, seed: number): string {
-  const width = 1200;
-  const height = 400;
-  const baseHeight = 220;
-  const maxVariance = 100 * (randomness / 100);
-
-  let s = seed;
-  const random = () => {
-    s = (s * 9301 + 49297) % 233280;
-    return s / 233280;
-  };
-
-  const step = width / (pointsCount - 1);
-  const points: { x: number; y: number }[] = [];
-
-  for (let i = 0; i < pointsCount; i++) {
-    const x = i * step;
-    const y = baseHeight + (random() - 0.5) * 2 * maxVariance;
-    points.push({ x: Math.round(x), y: Math.round(y) });
-  }
-
-  let d = `M 0 ${height} L 0 ${points[0].y}`;
-  for (let i = 0; i < points.length - 1; i++) {
-    const cpX = (points[i].x + points[i + 1].x) / 2;
-    const cpY = points[i].y;
-    d += ` Q ${cpX} ${cpY}, ${points[i + 1].x} ${points[i + 1].y}`;
-  }
-  d += ` L ${width} ${height} Z`;
-  return d;
-}
+import {
+  ShapeKind,
+  FillType,
+  generateBlobPath,
+  generateWavePath,
+} from "./engine";
 
 export default function SvgBlobGenerator() {
   const [shapeKind, setShapeKind] = useState<ShapeKind>("blob");

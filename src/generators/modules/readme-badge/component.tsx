@@ -1,21 +1,21 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
-import { Download, Plus, Trash2 } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { Download, Plus, Trash2, Code2 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { downloadFile } from "@/lib/utils";
+import {
+  BadgeStyle,
+  BadgeDefinition,
+  buildShieldsUrl,
+  buildBadgeMarkdown,
+  buildBadgeHtml,
+  generateReadmeHero,
+} from "./engine";
 
-type BadgeStyle = "flat" | "flat-square" | "for-the-badge" | "plastic";
-
-interface BadgeItem {
+interface BadgeItem extends BadgeDefinition {
   id: string;
-  label: string;
-  message: string;
-  color: string;
-  logo?: string;
-  link?: string;
-  enabled: boolean;
 }
 
 const DEFAULT_BADGES: BadgeItem[] = [
@@ -30,9 +30,11 @@ const DEFAULT_BADGES: BadgeItem[] = [
 
 export default function ReadmeBadgeGenerator() {
   const [repoName, setRepoName] = useState("forgekit");
+  const [githubUser, setGithubUser] = useState("username");
   const [repoTagline, setRepoTagline] = useState("The extensible all-in-one generator workstation for developers and creators.");
   const [badgeStyle, setBadgeStyle] = useState<BadgeStyle>("flat-square");
   const [badges, setBadges] = useState<BadgeItem[]>(DEFAULT_BADGES);
+  const [exportMode, setExportMode] = useState<"readme" | "badges-md" | "badges-html">("readme");
 
   // Custom badge inputs
   const [newLabel, setNewLabel] = useState("");
@@ -64,61 +66,26 @@ export default function ReadmeBadgeGenerator() {
     setNewLogo("");
   };
 
-  // Build Shields.io URL for a badge
-  const getBadgeUrl = useCallback(
-    (b: BadgeItem): string => {
-      const encodedLabel = encodeURIComponent(b.label.replace(/-/g, "--"));
-      const encodedMsg = encodeURIComponent(b.message.replace(/-/g, "--"));
-      let url = `https://img.shields.io/badge/${encodedLabel}-${encodedMsg}-${b.color}?style=${badgeStyle}`;
-      if (b.logo) {
-        url += `&logo=${encodeURIComponent(b.logo)}&logoColor=white`;
-      }
-      return url;
-    },
-    [badgeStyle]
-  );
-
-  // Generate README Hero Markdown
-  const readmeMarkdown = useMemo(() => {
-    const enabledBadges = badges.filter((b) => b.enabled);
-    const badgeMarkdownLines = enabledBadges.map((b) => {
-      const imgUrl = getBadgeUrl(b);
-      return `![${b.label}: ${b.message}](${imgUrl})`;
+  // Generate output depending on export mode
+  const outputContent = useMemo(() => {
+    const active = badges.filter((b) => b.enabled);
+    if (exportMode === "badges-md") {
+      return active.map((b) => buildBadgeMarkdown(b, badgeStyle)).join("\n");
+    }
+    if (exportMode === "badges-html") {
+      return active.map((b) => buildBadgeHtml(b, badgeStyle)).join("\n");
+    }
+    return generateReadmeHero({
+      repoName,
+      tagline: repoTagline,
+      githubUser,
+      badgeStyle,
+      badges,
     });
-
-    return `# ${repoName}
-
-> ${repoTagline}
-
-<p align="left">
-  ${badgeMarkdownLines.join("\n  ")}
-</p>
-
----
-
-## Features
-- Client-side execution with zero latency
-- No telemetry or external server tracking
-- Responsive across mobile and desktop
-- Modular plugin architecture
-
-## Quick Start
-
-\`\`\`bash
-# Clone the repository
-git clone https://github.com/your-username/${repoName}.git
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-\`\`\`
-`;
-  }, [repoName, repoTagline, badges, getBadgeUrl]);
+  }, [exportMode, badges, badgeStyle, repoName, repoTagline, githubUser]);
 
   const handleDownload = () => {
-    downloadFile(readmeMarkdown, "README.md", "text/markdown");
+    downloadFile(outputContent, exportMode === "readme" ? "README.md" : "badges.txt", "text/markdown");
     confetti({ particleCount: 25, spread: 50, origin: { y: 0.8 } });
   };
 
@@ -128,16 +95,29 @@ npm run dev
       <div className="lg:col-span-5 space-y-6">
         {/* Repo Info */}
         <div className="p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 shadow-2xs space-y-4">
-          <div>
-            <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
-              Repository Name
-            </label>
-            <input
-              type="text"
-              value={repoName}
-              onChange={(e) => setRepoName(e.target.value)}
-              className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
+                GitHub Username/Org
+              </label>
+              <input
+                type="text"
+                value={githubUser}
+                onChange={(e) => setGithubUser(e.target.value)}
+                className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 block mb-1">
+                Repository Name
+              </label>
+              <input
+                type="text"
+                value={repoName}
+                onChange={(e) => setRepoName(e.target.value)}
+                className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100"
+              />
+            </div>
           </div>
 
           <div>
@@ -148,7 +128,7 @@ npm run dev
               type="text"
               value={repoTagline}
               onChange={(e) => setRepoTagline(e.target.value)}
-              className="w-full px-3 py-1.5 text-xs rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-1.5 text-xs rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100"
             />
           </div>
 
@@ -181,7 +161,7 @@ npm run dev
             Active Badges ({badges.filter((b) => b.enabled).length}/{badges.length})
           </label>
 
-          <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+          <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
             {badges.map((b) => (
               <div
                 key={b.id}
@@ -272,7 +252,7 @@ npm run dev
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   key={b.id}
-                  src={getBadgeUrl(b)}
+                  src={buildShieldsUrl(b, badgeStyle)}
                   alt={`${b.label}: ${b.message}`}
                   className="inline-block"
                 />
@@ -280,25 +260,47 @@ npm run dev
           </div>
         </div>
 
-        {/* Markdown Output */}
+        {/* Output container */}
         <div className="flex-1 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs p-5 flex flex-col space-y-3">
           <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">
-            <span className="text-xs font-mono text-zinc-400">README.md Header</span>
+            <div className="flex items-center gap-1">
+              {(
+                [
+                  { id: "readme", label: "Full README.md" },
+                  { id: "badges-md", label: "Badges Markdown" },
+                  { id: "badges-html", label: "Badges HTML" },
+                ] as const
+              ).map((mode) => (
+                <button
+                  key={mode.id}
+                  type="button"
+                  onClick={() => setExportMode(mode.id)}
+                  className={`px-2.5 py-1 text-xs rounded-md font-mono transition-colors ${
+                    exportMode === mode.id
+                      ? "bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-bold"
+                      : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+                  }`}
+                >
+                  {mode.label}
+                </button>
+              ))}
+            </div>
+
             <div className="flex items-center gap-2">
-              <CopyButton text={readmeMarkdown} label="Copy Markdown" />
+              <CopyButton text={outputContent} label="Copy" />
               <button
                 type="button"
                 onClick={handleDownload}
                 className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-850 text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5 shadow-2xs transition-colors active:scale-[0.98]"
               >
                 <Download className="w-3.5 h-3.5" />
-                Download README.md
+                Download
               </button>
             </div>
           </div>
 
-          <pre className="flex-1 font-mono text-xs text-zinc-800 dark:text-zinc-200 p-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed border border-zinc-200/60 dark:border-zinc-800/60 max-h-[450px] overflow-y-auto">
-            {readmeMarkdown}
+          <pre className="flex-1 font-mono text-xs text-zinc-800 dark:text-zinc-200 p-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed border border-zinc-200/60 dark:border-zinc-800/60 max-h-[420px] overflow-y-auto">
+            {outputContent}
           </pre>
         </div>
       </div>

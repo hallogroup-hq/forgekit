@@ -9,4 +9,5 @@ export const meta: ToolMeta = {
   tags: ["cron", "crontab", "schedule", "devops", "automation", "timer", "server"],
   icon: "Clock",
   isPopular: true,
+  lifecycle: "ready",
 };

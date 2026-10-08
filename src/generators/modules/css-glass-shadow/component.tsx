@@ -3,6 +3,12 @@
 import React, { useState, useMemo } from "react";
 import { Sparkles, Sliders } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
+import {
+  hexToRgb,
+  getElevationShadow,
+  generateGlassmorphismCss,
+  generateGlassmorphismTailwind,
+} from "./engine";
 
 export default function CssGlassShadowGenerator() {
   const [blur, setBlur] = useState(16);
@@ -12,45 +18,19 @@ export default function CssGlassShadowGenerator() {
   const [surfaceColor, setSurfaceColor] = useState("#ffffff");
   const [bgType, setBgType] = useState<"gradient" | "dark" | "mesh">("gradient");
 
-  // Calculate box shadow based on elevation (multi-layered soft shadow)
-  const shadowCss = useMemo(() => {
-    switch (elevation) {
-      case 1:
-        return "0 1px 2px 0 rgba(0, 0, 0, 0.05)";
-      case 2:
-        return "0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05)";
-      case 3:
-        return "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08)";
-      case 4:
-        return "0 20px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08)";
-      case 5:
-      default:
-        return "0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)";
-    }
-  }, [elevation]);
+  const rgb = useMemo(() => hexToRgb(surfaceColor).stringVal, [surfaceColor]);
+  const shadowCss = useMemo(() => getElevationShadow(elevation), [elevation]);
 
-  // Convert hex to rgb
-  const hexToRgb = (hex: string) => {
-    const cleanHex = hex.replace("#", "");
-    const r = parseInt(cleanHex.substring(0, 2), 16) || 255;
-    const g = parseInt(cleanHex.substring(2, 4), 16) || 255;
-    const b = parseInt(cleanHex.substring(4, 6), 16) || 255;
-    return `${r}, ${g}, ${b}`;
-  };
-
-  const rgb = hexToRgb(surfaceColor);
   const bgRgba = `rgba(${rgb}, ${opacity / 100})`;
   const borderRgba = `rgba(${rgb}, ${borderOpacity / 100})`;
 
-  const cssSnippet = `/* Glassmorphism Surface with 3D Elevation */
-background: ${bgRgba};
-backdrop-filter: blur(${blur}px);
--webkit-backdrop-filter: blur(${blur}px);
-border: 1px solid ${borderRgba};
-box-shadow: ${shadowCss};
-border-radius: 16px;`;
+  const cssSnippet = useMemo(() => {
+    return generateGlassmorphismCss({ blur, opacity, borderOpacity, elevation, surfaceColor });
+  }, [blur, opacity, borderOpacity, elevation, surfaceColor]);
 
-  const tailwindSnippet = `bg-[${bgRgba}] backdrop-blur-[${blur}px] border border-[${borderRgba}] rounded-2xl shadow-[${shadowCss.replace(/\s+/g, "_")}]`;
+  const tailwindSnippet = useMemo(() => {
+    return generateGlassmorphismTailwind({ blur, opacity, borderOpacity, elevation, surfaceColor });
+  }, [blur, opacity, borderOpacity, elevation, surfaceColor]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

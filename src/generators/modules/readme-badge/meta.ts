@@ -10,4 +10,5 @@ export const meta: ToolMeta = {
   icon: "Code2",
   isPopular: true,
   isNew: true,
+  lifecycle: "ready",
 };

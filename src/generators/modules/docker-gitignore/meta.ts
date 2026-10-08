@@ -9,4 +9,5 @@ export const meta: ToolMeta = {
   tags: ["docker", "dockerfile", "gitignore", "git", "devops", "container", "nodejs", "python", "golang"],
   icon: "Container",
   isPopular: true,
+  lifecycle: "ready",
 };

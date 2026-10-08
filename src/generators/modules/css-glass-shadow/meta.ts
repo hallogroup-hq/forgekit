@@ -8,5 +8,6 @@ export const meta: ToolMeta = {
   category: "design",
   tags: ["css", "glassmorphism", "shadow", "box-shadow", "blur", "tailwind", "design"],
   icon: "Layers",
+  lifecycle: "ready",
   isPopular: true,
 };

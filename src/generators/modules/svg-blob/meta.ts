@@ -9,7 +9,7 @@ export const meta: ToolMeta = {
   category: "design",
   tags: ["svg", "blob", "wave", "design", "ui", "gradient", "vector"],
   icon: "Sparkles",
-  isNew: true,
+  lifecycle: "ready",
   isPopular: true,
   version: "1.0.0",
 };

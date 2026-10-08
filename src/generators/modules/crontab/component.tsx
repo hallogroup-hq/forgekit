@@ -1,8 +1,13 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Calendar, Info } from "lucide-react";
+import { Calendar, Info, AlertTriangle } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
+import {
+  validateCronExpression,
+  explainCron,
+  calculateNextRuns,
+} from "./engine";
 
 export default function CrontabGenerator() {
   const [minute, setMinute] = useState("*/15");
@@ -11,90 +16,25 @@ export default function CrontabGenerator() {
   const [month, setMonth] = useState("*");
   const [dayOfWeek, setDayOfWeek] = useState("*");
 
-  const cronString = `${minute} ${hour} ${dayOfMonth} ${month} ${dayOfWeek}`;
+  const cronString = `${minute.trim()} ${hour.trim()} ${dayOfMonth.trim()} ${month.trim()} ${dayOfWeek.trim()}`;
 
-  // Human readable explainer
-  const humanExplanation = useMemo(() => {
-    let desc = "Runs ";
+  const validation = useMemo(() => validateCronExpression(cronString), [cronString]);
+  const humanExplanation = useMemo(() => explainCron(cronString), [cronString]);
 
-    // Minute
-    if (minute === "*") desc += "every minute ";
-    else if (minute.startsWith("*/")) desc += `every ${minute.replace("*/", "")} minutes `;
-    else desc += `at minute ${minute} `;
-
-    // Hour
-    if (hour === "*") {
-      // every hour
-    } else if (hour.startsWith("*/")) {
-      desc += `every ${hour.replace("*/", "")} hours `;
-    } else {
-      desc += `past hour ${hour}:00 `;
-    }
-
-    // Days of month
-    if (dayOfMonth !== "*") desc += `on day ${dayOfMonth} of the month `;
-
-    // Month
-    if (month !== "*") desc += `in month ${month} `;
-
-    // Day of week
-    if (dayOfWeek === "*") {
-      // all days
-    } else if (dayOfWeek === "1-5") {
-      desc += "on every weekday (Mon-Fri)";
-    } else if (dayOfWeek === "0,6" || dayOfWeek === "6,0") {
-      desc += "on weekends (Sat-Sun)";
-    } else {
-      const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-      desc += `on ${days[Number(dayOfWeek)] || `day ${dayOfWeek}`}`;
-    }
-
-    return desc.trim() + ".";
-  }, [minute, hour, dayOfMonth, month, dayOfWeek]);
-
-  // Compute next 5 simulated upcoming execution times
-  const [nextRuns, setNextRuns] = useState<string[]>([]);
-
-  React.useEffect(() => {
-    const list: string[] = [];
-    const now = new Date();
-
-    // Simple forward simulation
-    let cur = new Date(now.getTime() + 60000);
-    cur.setSeconds(0);
-    cur.setMilliseconds(0);
-
-    let attempts = 0;
-    while (list.length < 5 && attempts < 10000) {
-      attempts++;
-      const m = cur.getMinutes();
-      const h = cur.getHours();
-      const dom = cur.getDate();
-      const mon = cur.getMonth() + 1;
-      const dow = cur.getDay();
-
-      const matchMinute = minute === "*" || (minute.startsWith("*/") && m % Number(minute.slice(2)) === 0) || Number(minute) === m;
-      const matchHour = hour === "*" || (hour.startsWith("*/") && h % Number(hour.slice(2)) === 0) || Number(hour) === h;
-      const matchDom = dayOfMonth === "*" || Number(dayOfMonth) === dom;
-      const matchMon = month === "*" || Number(month) === mon;
-      const matchDow = dayOfWeek === "*" || (dayOfWeek === "1-5" && dow >= 1 && dow <= 5) || Number(dayOfWeek) === dow;
-
-      if (matchMinute && matchHour && matchDom && matchMon && matchDow) {
-        list.push(cur.toLocaleString("en-US", {
-          weekday: "short",
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        }));
-      }
-
-      cur = new Date(cur.getTime() + 60000); // add 1 minute
-    }
-
-    setNextRuns(list);
-  }, [minute, hour, dayOfMonth, month, dayOfWeek]);
+  const nextRuns = useMemo(() => {
+    if (!validation.valid) return [];
+    const runs = calculateNextRuns(cronString, 5);
+    return runs.map((d) =>
+      d.toLocaleString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      })
+    );
+  }, [cronString, validation.valid]);
 
   const applyPreset = (m: string, h: string, dom: string, mon: string, dow: string) => {
     setMinute(m);
@@ -107,13 +47,13 @@ export default function CrontabGenerator() {
   return (
     <div className="space-y-6">
       {/* Expression Display Card */}
-      <div className="p-6 md:p-8 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm space-y-4">
+      <div className="p-6 md:p-8 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
               Cron Expression
             </span>
-            <div className="font-mono text-2xl md:text-3xl font-extrabold text-blue-600 dark:text-blue-400">
+            <div className={`font-mono text-2xl md:text-3xl font-extrabold ${validation.valid ? "text-blue-600 dark:text-blue-400" : "text-amber-500"}`}>
               {cronString}
             </div>
           </div>
@@ -130,14 +70,22 @@ export default function CrontabGenerator() {
         </div>
 
         {/* Human Language Translation Box */}
-        <div className="p-4 rounded-xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-800/40 flex items-start gap-3">
-          <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+        <div className={`p-4 rounded-xl border flex items-start gap-3 ${
+          validation.valid
+            ? "bg-blue-50/60 dark:bg-blue-950/20 border-blue-200/60 dark:border-blue-800/40"
+            : "bg-amber-50/60 dark:bg-amber-950/20 border-amber-200/60 dark:border-amber-800/40"
+        }`}>
+          {validation.valid ? (
+            <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+          ) : (
+            <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          )}
           <div>
-            <div className="text-xs font-semibold text-blue-900 dark:text-blue-300">
-              Natural Language Meaning:
+            <div className={`text-xs font-semibold ${validation.valid ? "text-blue-900 dark:text-blue-300" : "text-amber-900 dark:text-amber-300"}`}>
+              {validation.valid ? "Natural Language Schedule:" : "Invalid Expression:"}
             </div>
-            <div className="text-sm text-blue-800 dark:text-blue-200 mt-0.5 font-medium">
-              &ldquo;{humanExplanation}&rdquo;
+            <div className={`text-sm mt-0.5 font-medium ${validation.valid ? "text-blue-800 dark:text-blue-200" : "text-amber-800 dark:text-amber-200"}`}>
+              {validation.valid ? `“${humanExplanation}”` : validation.error}
             </div>
           </div>
         </div>
@@ -253,19 +201,25 @@ export default function CrontabGenerator() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2">
-          {nextRuns.map((time, idx) => (
-            <div
-              key={idx}
-              className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-center space-y-1"
-            >
-              <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
-                Run #{idx + 1}
-              </span>
-              <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 pt-1">
-                {time}
+          {nextRuns.length > 0 ? (
+            nextRuns.map((time, idx) => (
+              <div
+                key={idx}
+                className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-center space-y-1"
+              >
+                <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
+                  Run #{idx + 1}
+                </span>
+                <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 pt-1">
+                  {time}
+                </div>
               </div>
+            ))
+          ) : (
+            <div className="col-span-5 text-center py-4 text-xs text-zinc-400 italic">
+              Fix expression errors to view upcoming execution timestamps.
             </div>
-          ))}
+          )}
         </div>
       </div>
     </div>

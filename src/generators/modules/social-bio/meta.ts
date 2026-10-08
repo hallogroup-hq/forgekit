@@ -9,7 +9,7 @@ export const meta: ToolMeta = {
   category: "growth",
   tags: ["bio", "twitter", "linkedin", "github", "instagram", "tiktok", "growth", "marketing"],
   icon: "TrendingUp",
-  isNew: true,
+  lifecycle: "ready",
   isPopular: true,
   version: "1.0.0",
 };

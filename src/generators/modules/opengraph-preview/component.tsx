@@ -1,8 +1,16 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Globe, Share2 } from "lucide-react";
+import { Globe, Share2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
+import {
+  extractHostname,
+  auditOpenGraph,
+  generateHtmlMetaTags,
+  generateNextJsMetadata,
+  generateJsonLd,
+  OpenGraphInput,
+} from "./engine";
 
 function TwitterIcon({ className = "w-3.5 h-3.5" }: { className?: string }) {
   return (
@@ -20,37 +28,34 @@ export default function OpenGraphPreviewGenerator() {
   const [siteName, setSiteName] = useState("ForgeKit");
   const [twitterHandle, setTwitterHandle] = useState("@forgekit_app");
   const [previewPlatform, setPreviewPlatform] = useState<"google" | "twitter" | "linkedin">("twitter");
+  const [exportFormat, setExportFormat] = useState<"html" | "nextjs" | "jsonld">("html");
 
-  const cleanDomain = useMemo(() => {
-    try {
-      return new URL(url).hostname;
-    } catch {
-      return "example.com";
+  const ogInput: OpenGraphInput = useMemo(
+    () => ({
+      title,
+      description,
+      url,
+      imageUrl,
+      siteName,
+      twitterHandle,
+    }),
+    [title, description, url, imageUrl, siteName, twitterHandle]
+  );
+
+  const cleanDomain = useMemo(() => extractHostname(url), [url]);
+  const audit = useMemo(() => auditOpenGraph(ogInput), [ogInput]);
+
+  const outputCode = useMemo(() => {
+    switch (exportFormat) {
+      case "nextjs":
+        return generateNextJsMetadata(ogInput);
+      case "jsonld":
+        return generateJsonLd(ogInput);
+      case "html":
+      default:
+        return generateHtmlMetaTags(ogInput);
     }
-  }, [url]);
-
-  const htmlMetaTags = useMemo(() => {
-    return `<!-- Primary Meta Tags -->
-<title>${title}</title>
-<meta name="title" content="${title}">
-<meta name="description" content="${description}">
-
-<!-- Open Graph / Facebook -->
-<meta property="og:type" content="website">
-<meta property="og:url" content="${url}">
-<meta property="og:site_name" content="${siteName}">
-<meta property="og:title" content="${title}">
-<meta property="og:description" content="${description}">
-<meta property="og:image" content="${imageUrl}">
-
-<!-- Twitter / X -->
-<meta property="twitter:card" content="summary_large_image">
-<meta property="twitter:url" content="${url}">
-<meta property="twitter:title" content="${title}">
-<meta property="twitter:description" content="${description}">
-<meta property="twitter:image" content="${imageUrl}">
-<meta name="twitter:creator" content="${twitterHandle}">`;
-  }, [title, description, url, siteName, imageUrl, twitterHandle]);
+  }, [exportFormat, ogInput]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -60,34 +65,57 @@ export default function OpenGraphPreviewGenerator() {
           SEO & Social Metadata
         </h3>
 
+        {/* Audit badge */}
+        <div className={`p-3 rounded-xl border text-xs flex items-start gap-2.5 ${
+          audit.valid
+            ? "bg-emerald-50/70 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-800/60 dark:text-emerald-300"
+            : "bg-amber-50/70 border-amber-200 text-amber-800 dark:bg-amber-950/30 dark:border-amber-800/60 dark:text-amber-300"
+        }`}>
+          {audit.valid ? (
+            <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+          ) : (
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          )}
+          <div>
+            <span className="font-semibold">{audit.valid ? "SEO Best Practices Met" : "Optimization Recommendations"}</span>
+            {audit.issues.length > 0 && (
+              <ul className="list-disc pl-4 mt-1 space-y-0.5 text-[11px] opacity-90">
+                {audit.issues.map((issue, idx) => (
+                  <li key={idx}>{issue}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+
         <div className="space-y-3">
           <div>
             <div className="flex items-center justify-between text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
               <span>Page Title</span>
-              <span className={`text-[10px] ${title.length > 60 ? "text-amber-500 font-semibold" : "text-zinc-400"}`}>
-                {title.length}/60 chars
+              <span className={`text-[10px] ${audit.titleStatus !== "optimal" ? "text-amber-500 font-semibold" : "text-emerald-500 font-semibold"}`}>
+                {title.length}/60 chars ({audit.titleStatus})
               </span>
             </div>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+              className="w-full px-3 py-2 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
             <div className="flex items-center justify-between text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
               <span>Meta Description</span>
-              <span className={`text-[10px] ${description.length > 160 ? "text-amber-500 font-semibold" : "text-zinc-400"}`}>
-                {description.length}/160 chars
+              <span className={`text-[10px] ${audit.descStatus !== "optimal" ? "text-amber-500 font-semibold" : "text-emerald-500 font-semibold"}`}>
+                {description.length}/160 chars ({audit.descStatus})
               </span>
             </div>
             <textarea
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+              className="w-full px-3 py-2 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -190,7 +218,7 @@ export default function OpenGraphPreviewGenerator() {
           )}
 
           {previewPlatform === "linkedin" && (
-            <div className="w-full max-w-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-md">
+            <div className="w-full max-w-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-md overflow-hidden">
               <div className="h-44 w-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={imageUrl} alt="LinkedIn preview" className="w-full h-full object-cover" />
@@ -203,7 +231,7 @@ export default function OpenGraphPreviewGenerator() {
           )}
 
           {previewPlatform === "google" && (
-            <div className="w-full max-w-md p-4 bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-1 text-left font-sans">
+            <div className="w-full max-w-md p-4 bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-xs space-y-1 text-left font-sans">
               <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
                 <div className="w-4 h-4 rounded-full bg-blue-500/20 text-blue-600 flex items-center justify-center text-[10px] font-bold">
                   G
@@ -220,21 +248,36 @@ export default function OpenGraphPreviewGenerator() {
           )}
         </div>
 
-        {/* HTML Meta Tag Code */}
+        {/* Code Output with Format Selector */}
         <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
-            <span className="text-xs font-mono text-zinc-500">HTML &lt;head&gt; Tags</span>
+            <div className="flex items-center gap-1">
+              {(["html", "nextjs", "jsonld"] as const).map((fmt) => (
+                <button
+                  key={fmt}
+                  type="button"
+                  onClick={() => setExportFormat(fmt)}
+                  className={`px-2.5 py-1 text-xs rounded-md font-mono transition-colors ${
+                    exportFormat === fmt
+                      ? "bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-bold"
+                      : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+                  }`}
+                >
+                  {fmt === "html" ? "HTML <head>" : fmt === "nextjs" ? "Next.js Metadata" : "JSON-LD"}
+                </button>
+              ))}
+            </div>
             <CopyButton
-              text={htmlMetaTags}
-              label="Copy Meta Tags"
+              text={outputCode}
+              label={`Copy ${exportFormat.toUpperCase()}`}
               size="sm"
               variant="secondary"
               triggerConfetti
             />
           </div>
-          <div className="p-4 max-h-[160px] overflow-y-auto">
+          <div className="p-4 max-h-[180px] overflow-y-auto">
             <pre className="font-mono text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre">
-              {htmlMetaTags}
+              {outputCode}
             </pre>
           </div>
         </div>

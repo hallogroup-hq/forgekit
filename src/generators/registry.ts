@@ -112,6 +112,9 @@ import CsvCleanerGenerator from "./modules/csv-cleaner/component";
 import { meta as bulkRenamerMeta } from "./modules/bulk-filename-builder/meta";
 import BulkFilenameBuilderGenerator from "./modules/bulk-filename-builder/component";
 
+import { meta as contrastCheckerMeta } from "./modules/contrast-checker/meta";
+import ContrastCheckerGenerator from "./modules/contrast-checker/component";
+
 export const registry: GeneratorModule[] = [
   // Flagship Workstation Modules
   { meta: qrMeta, component: QrCodeGenerator },
@@ -146,6 +149,7 @@ export const registry: GeneratorModule[] = [
   { meta: tableMeta, component: MarkdownTableGenerator },
   { meta: csvCleanerMeta, component: CsvCleanerGenerator },
   { meta: bulkRenamerMeta, component: BulkFilenameBuilderGenerator },
+  { meta: contrastCheckerMeta, component: ContrastCheckerGenerator },
   { meta: ogMeta, component: OpenGraphPreviewGenerator },
   { meta: invoiceMeta, component: InvoiceReceiptGenerator },
   { meta: quotationMeta, component: QuotationGenerator },

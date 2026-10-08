@@ -6,53 +6,13 @@ import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { downloadFile } from "@/lib/utils";
 
-type PlatformId = "x" | "linkedin" | "github" | "instagram" | "tiktok";
-
-interface PlatformLimit {
-  id: PlatformId;
-  name: string;
-  maxChars: number;
-  badge: string;
-  formatNote: string;
-}
-
-const PLATFORMS: Record<PlatformId, PlatformLimit> = {
-  x: {
-    id: "x",
-    name: "X (Twitter)",
-    maxChars: 160,
-    badge: "160 chars max",
-    formatNote: "Punchy, value-led, handles & hashtags supported",
-  },
-  linkedin: {
-    id: "linkedin",
-    name: "LinkedIn Headline",
-    maxChars: 220,
-    badge: "220 chars max",
-    formatNote: "Authority title, company outcome, target audience",
-  },
-  github: {
-    id: "github",
-    name: "GitHub Bio",
-    maxChars: 160,
-    badge: "160 chars max",
-    formatNote: "Tech stack, what you build, open source passion",
-  },
-  instagram: {
-    id: "instagram",
-    name: "Instagram Bio",
-    maxChars: 150,
-    badge: "150 chars max",
-    formatNote: "Line breaks, emoji anchors, single link-in-bio prompt",
-  },
-  tiktok: {
-    id: "tiktok",
-    name: "TikTok Bio",
-    maxChars: 80,
-    badge: "80 chars max",
-    formatNote: "Hyper-compact, direct hook + emoji",
-  },
-};
+import {
+  PlatformId,
+  PlatformLimit,
+  PLATFORMS,
+  compileBio,
+  validateBioLength,
+} from "./engine";
 
 interface BioPreset {
   id: string;

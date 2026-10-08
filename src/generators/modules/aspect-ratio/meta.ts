@@ -2,12 +2,12 @@ import { ToolMeta } from "../../types";
 
 export const meta: ToolMeta = {
   slug: "aspect-ratio",
-  title: "Aspect Ratio & srcset Calculator",
+  title: "Aspect Ratio & Dimensions Calculator",
   shortTitle: "Aspect Ratio",
   description:
-    "Calculate precise aspect ratio dimensions, CSS aspect-ratio properties, padding-top hacks, and responsive srcset markup.",
+    "Mathematical ratio calculator for CSS specs, viewport dimensions, and responsive srcset. (Looking to resize actual image files? Use Batch Image Resizer).",
   category: "design",
-  tags: ["aspect-ratio", "responsive", "css", "srcset", "images", "video", "ui"],
+  tags: ["aspect-ratio", "responsive", "css", "srcset", "dimensions", "math", "ui"],
   icon: "Maximize2",
   lifecycle: "ready",
   isPopular: true,

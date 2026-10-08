@@ -82,4 +82,20 @@ describe("SSRF Security Validation", () => {
       assert.equal(directIp.safe, true);
     });
   });
+
+  describe("safeFetchWithRedirects SSRF protection", () => {
+    it("should reject initial private target before attempting network request", async () => {
+      await assert.rejects(
+        () => import("./ssrf").then((m) => m.safeFetchWithRedirects("http://127.0.0.1:8080/secret")),
+        /SSRF blocked/
+      );
+    });
+
+    it("should reject metadata target before attempting network request", async () => {
+      await assert.rejects(
+        () => import("./ssrf").then((m) => m.safeFetchWithRedirects("http://169.254.169.254/latest/meta-data")),
+        /SSRF blocked/
+      );
+    });
+  });
 });

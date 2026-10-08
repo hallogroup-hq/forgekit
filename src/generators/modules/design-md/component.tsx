@@ -43,17 +43,123 @@ export default function DesignMdGenerator() {
   const [observation, setObservation] = useState<DesignObservation | undefined>();
   const [screenshotName, setScreenshotName] = useState<string | null>(null);
 
-  const handleScreenshotUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [screenshotStatus, setScreenshotStatus] = useState<string | null>(null);
+
+  const handleScreenshotUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setScreenshotName(file.name);
-      setObservation((prev) => ({
-        ...prev,
-        hasScreenshot: true,
-        screenshotName: file.name,
-        detectedColors: prev?.detectedColors || [],
-        detectedFonts: prev?.detectedFonts || [],
-      }));
+      setScreenshotStatus("Sampling image pixels via HTML5 Canvas...");
+
+      // Client-side HTML5 canvas pixel sampling
+      try {
+        const objectUrl = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          URL.revokeObjectURL(objectUrl);
+          try {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d", { willReadFrequently: true });
+            if (!ctx) {
+              setScreenshotStatus("Attached as reference (Canvas context unavailable)");
+              return;
+            }
+            const targetDim = 64;
+            const scale = Math.min(targetDim / img.naturalWidth, targetDim / img.naturalHeight, 1);
+            const w = Math.max(1, Math.floor(img.naturalWidth * scale));
+            const h = Math.max(1, Math.floor(img.naturalHeight * scale));
+            canvas.width = w;
+            canvas.height = h;
+            ctx.drawImage(img, 0, 0, w, h);
+
+            const imgData = ctx.getImageData(0, 0, w, h);
+            const data = imgData.data;
+            const buckets = new Map<string, { r: number; g: number; b: number; count: number; sat: number }>();
+
+            for (let i = 0; i < data.length; i += 4) {
+              const a = data[i + 3];
+              if (a < 128) continue;
+              const r = data[i];
+              const g = data[i + 1];
+              const b = data[i + 2];
+
+              const brightness = (r + g + b) / 3;
+              if (brightness < 18 || brightness > 242) continue;
+
+              const qr = Math.min(255, Math.round(r / 32) * 32);
+              const qg = Math.min(255, Math.round(g / 32) * 32);
+              const qb = Math.min(255, Math.round(b / 32) * 32);
+
+              const maxC = Math.max(r, g, b);
+              const minC = Math.min(r, g, b);
+              const sat = maxC === 0 ? 0 : (maxC - minC) / maxC;
+
+              const key = `${qr},${qg},${qb}`;
+              const item = buckets.get(key);
+              if (item) {
+                item.count += 1;
+              } else {
+                buckets.set(key, { r: qr, g: qg, b: qb, count: 1, sat });
+              }
+            }
+
+            const sorted = Array.from(buckets.values()).sort((a, b) => {
+              const scoreA = a.count * (1 + a.sat * 2.5);
+              const scoreB = b.count * (1 + b.sat * 2.5);
+              return scoreB - scoreA;
+            });
+
+            const sampledPalette: string[] = [];
+            for (const item of sorted) {
+              const hex =
+                "#" +
+                [item.r, item.g, item.b]
+                  .map((x) => Math.max(0, Math.min(255, x)).toString(16).padStart(2, "0"))
+                  .join("");
+              if (!sampledPalette.includes(hex)) {
+                sampledPalette.push(hex);
+              }
+              if (sampledPalette.length >= 4) break;
+            }
+
+            if (sampledPalette.length > 0) {
+              setPrimaryColor(sampledPalette[0]);
+              if (sampledPalette.length > 1) {
+                setAccentColor(sampledPalette[1]);
+              }
+              setScreenshotStatus(`Canvas pixel analysis extracted: ${sampledPalette.join(", ")}`);
+              setObservation((prev) => ({
+                ...prev,
+                hasScreenshot: true,
+                screenshotName: file.name,
+                detectedColors: Array.from(new Set([...(prev?.detectedColors || []), ...sampledPalette])),
+                detectedFonts: prev?.detectedFonts || [],
+              }));
+            } else {
+              setScreenshotStatus("Attached as visual reference asset (neutral/grayscale image)");
+              setObservation((prev) => ({
+                ...prev,
+                hasScreenshot: true,
+                screenshotName: file.name,
+                detectedColors: prev?.detectedColors || [],
+                detectedFonts: prev?.detectedFonts || [],
+              }));
+            }
+          } catch (canvasErr) {
+            console.warn("Canvas analysis failed", canvasErr);
+            setScreenshotStatus("Attached as reference asset");
+          }
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          setScreenshotStatus("Attached as reference asset");
+        };
+        img.src = objectUrl;
+      } catch (err) {
+        console.warn("File reading failed", err);
+        setScreenshotStatus("Attached as reference asset");
+      }
+
       confetti({ particleCount: 20, spread: 50, origin: { y: 0.8 } });
     }
   };
@@ -99,7 +205,7 @@ export default function DesignMdGenerator() {
         });
 
         if (data.source === "curated-preset") {
-          setExtractSuccess(`Loaded verified reference profile for ${data.domain}`);
+          setExtractSuccess(`Loaded curated reference design tokens for ${data.domain} (pre-compiled baseline)`);
         } else {
           setExtractSuccess(`Extracted live design tokens from ${data.domain}!`);
         }
@@ -282,6 +388,11 @@ export default function DesignMdGenerator() {
             />
             {screenshotName ? `📎 ${screenshotName} (Click to change)` : "Choose UI Screenshot or Mockup..."}
           </label>
+          {screenshotStatus && (
+            <div className="text-[11px] text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800/60 rounded-lg p-2 flex items-center justify-between">
+              <span className="truncate">{screenshotStatus}</span>
+            </div>
+          )}
         </div>
 
         {/* Manual Adjustments */}

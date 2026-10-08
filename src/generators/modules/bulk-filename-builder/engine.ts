@@ -132,6 +132,17 @@ export function batchRenameFiles(
     });
 }
 
+export function escapeBashArg(arg: string): string {
+  // Wrap in single quotes and escape any single quotes
+  return "'" + arg.replace(/'/g, "'\\''") + "'";
+}
+
+export function escapeCmdArg(arg: string): string {
+  // Strip control characters and escape double quotes
+  const sanitized = arg.replace(/[\r\n]/g, "");
+  return `"${sanitized.replace(/"/g, '""')}"`;
+}
+
 /**
  * Generates an executable shell script (Bash for Mac/Linux or BAT for Windows).
  */
@@ -142,14 +153,15 @@ export function generateShellScript(
   if (format === "bat") {
     const lines = mappings
       .filter((m) => m.hasChanged)
-      .map((m) => `ren "${m.oldName}" "${m.newName}"`);
+      .map((m) => `ren ${escapeCmdArg(m.oldName)} ${escapeCmdArg(m.newName)}`);
     return `@echo off\nREM ForgeKit Batch Rename Script for Windows\n\n${lines.join("\n")}\n\necho Renamed ${lines.length} files successfully.\npause`;
   }
 
   // Default: Bash / Zsh (Mac & Linux)
+  // Uses POSIX single-quote escaping and -- separator to prevent option injection
   const lines = mappings
     .filter((m) => m.hasChanged)
-    .map((m) => `mv -n "${m.oldName}" "${m.newName}"`);
+    .map((m) => `mv -n -- ${escapeBashArg(m.oldName)} ${escapeBashArg(m.newName)}`);
 
   return `#!/usr/bin/env bash
 # ForgeKit Batch Rename Script

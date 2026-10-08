@@ -15,9 +15,12 @@ import {
   Heart,
   ArrowRight,
   Info,
+  SlidersHorizontal,
+  LayoutGrid,
+  Film,
 } from "lucide-react";
 import { registry } from "@/generators/registry";
-import { CATEGORIES } from "@/generators/types";
+import { GeneratorModule } from "@/generators/types";
 import { Icon } from "@/components/shared/Icon";
 import { usePreferences } from "@/lib/hooks/usePreferences";
 import { soundManager } from "@/lib/sound";
@@ -25,18 +28,100 @@ import { CommandPalette } from "@/components/shared/CommandPalette";
 import { getConsoleAsset } from "@/data/consoleAssets";
 
 const CATEGORY_TABS = [
-  { id: "all", label: "All" },
-  { id: "vibe-coder", label: "Vibe Coder" },
-  { id: "developer", label: "DevOps" },
-  { id: "design", label: "Design" },
-  { id: "growth", label: "Growth" },
-  { id: "content", label: "Creative" },
+  { id: "all", label: "All Utilities" },
+  { id: "productivity", label: "Productivity" },
+  { id: "sales", label: "Business & Sales" },
+  { id: "marketing", label: "Marketing & Growth" },
+  { id: "creative", label: "Creative & Design" },
+  { id: "vibe-coder", label: "Vibe Coder & DevOps" },
   { id: "pinned", label: "Favorites" },
 ];
+
+function matchesCategory(tool: GeneratorModule, categoryId: string): boolean {
+  if (categoryId === "all") return true;
+  const slug = tool.meta.slug;
+  const cat = tool.meta.category;
+
+  if (categoryId === "productivity") {
+    return [
+      "csv-cleaner",
+      "text-cleaner",
+      "bulk-filename-builder",
+      "meeting-agenda",
+      "markdown-table",
+    ].includes(slug);
+  }
+
+  if (categoryId === "sales") {
+    return [
+      "invoice-receipt",
+      "quotation-generator",
+      "email-signature",
+    ].includes(slug);
+  }
+
+  if (categoryId === "marketing") {
+    return (
+      [
+        "qr-code",
+        "whatsapp-link",
+        "utm-builder",
+        "campaign-url-qa",
+        "opengraph-preview",
+        "social-bio",
+        "copywriting-framework",
+      ].includes(slug) || cat === "growth"
+    );
+  }
+
+  if (categoryId === "creative") {
+    return (
+      [
+        "batch-image-resizer",
+        "image-converter",
+        "aspect-ratio",
+        "color-contrast",
+        "contrast-checker",
+        "design-md",
+        "mesh-gradient",
+        "svg-blob",
+        "css-glass-shadow",
+      ].includes(slug) || cat === "design"
+    );
+  }
+
+  if (categoryId === "vibe-coder") {
+    return (
+      [
+        "ai-rules",
+        "app-prd",
+        "prompt-optimizer",
+        "webhook-payload",
+        "sql-schema",
+        "curl-converter",
+        "regex-cheat",
+        "jwt-inspector",
+        "docker-gitignore",
+        "uuid-nanoid",
+        "password-passphrase",
+        "hash-secret",
+        "crontab",
+        "mock-data",
+        "character",
+        "readme-badge",
+      ].includes(slug) ||
+      cat === "vibe-coder" ||
+      cat === "developer"
+    );
+  }
+
+  return cat === categoryId;
+}
 
 export default function PS5InspiredHomePage() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const [viewMode, setViewMode] = useState<"shelf" | "grid">("shelf");
   const [isCommandOpen, setIsCommandOpen] = useState(false);
@@ -45,6 +130,7 @@ export default function PS5InspiredHomePage() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   const carouselRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const { isFavorite, toggleFavorite, favorites, isLoaded } = usePreferences();
 
   // Clock
@@ -60,18 +146,33 @@ export default function PS5InspiredHomePage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Filter tools based on category and lifecycle
+  // Filter tools based on category, search query, and lifecycle
   const visibleTools = useMemo(() => {
     const publicRegistry = registry.filter(
       (t) => !t.meta.lifecycle || t.meta.lifecycle === "ready" || t.meta.lifecycle === "qa"
     );
+
+    let tools = publicRegistry;
+
     if (selectedCategory === "pinned") {
       if (!isLoaded || favorites.length === 0) return [];
-      return publicRegistry.filter((t) => favorites.includes(t.meta.slug));
+      tools = tools.filter((t) => favorites.includes(t.meta.slug));
+    } else {
+      tools = tools.filter((t) => matchesCategory(t, selectedCategory));
     }
-    if (selectedCategory === "all") return publicRegistry;
-    return publicRegistry.filter((t) => t.meta.category === selectedCategory);
-  }, [selectedCategory, favorites, isLoaded]);
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      tools = tools.filter((t) => {
+        const titleMatch = t.meta.title.toLowerCase().includes(q);
+        const descMatch = t.meta.description.toLowerCase().includes(q);
+        const tagMatch = t.meta.tags.some((tag) => tag.toLowerCase().includes(q));
+        return titleMatch || descMatch || tagMatch;
+      });
+    }
+
+    return tools;
+  }, [selectedCategory, searchQuery, favorites, isLoaded]);
 
   // Ensure active index is bounded
   useEffect(() => {
@@ -163,6 +264,9 @@ export default function PS5InspiredHomePage() {
         e.preventDefault();
         setViewMode((prev) => (prev === "shelf" ? "grid" : "shelf"));
         soundManager.playNavigate();
+      } else if (e.key === "/") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
       }
     };
 
@@ -180,7 +284,7 @@ export default function PS5InspiredHomePage() {
           key={activeAsset.backdropImage}
           src={activeAsset.backdropImage}
           alt={activeAsset.title}
-          className="w-full h-full object-cover object-center absolute inset-0 opacity-45 scale-105 transition-all duration-700 ease-out animate-in fade-in"
+          className="w-full h-full object-cover object-center absolute inset-0 opacity-40 scale-105 transition-all duration-700 ease-out animate-in fade-in"
         />
 
         {/* Cinematic Vignette Overlays for crisp contrast and readability */}
@@ -189,11 +293,11 @@ export default function PS5InspiredHomePage() {
         <div className="absolute inset-0 bg-radial-at-c from-transparent via-[#05070b]/30 to-[#05070b]/80" />
       </div>
 
-      {/* 2. TOP HUD: CLEAN MODERN HEADER */}
-      <header className="relative z-30 pt-6 px-6 sm:px-12 flex items-center justify-between gap-4">
-        {/* Left: Brand Identity */}
-        <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-3 group">
+      {/* 2. TOP HUD: BRAND & PRIMARY CONTROLS */}
+      <header className="relative z-30 pt-6 px-6 sm:px-12 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* Left: Brand Identity & Instant Search */}
+        <div className="flex items-center gap-4 flex-wrap sm:flex-nowrap">
+          <Link href="/" className="flex items-center gap-3 group shrink-0">
             <div className="w-8 h-8 rounded-xl bg-white text-black font-black text-sm flex items-center justify-center tracking-tighter shadow-md group-hover:scale-105 transition-transform">
               FK
             </div>
@@ -207,38 +311,91 @@ export default function PS5InspiredHomePage() {
             </div>
           </Link>
 
-          <span className="hidden sm:inline-block text-xs font-mono text-white/40 border-l border-white/10 pl-4">
-            {currentTime || "21:35"}
-          </span>
-        </div>
-
-        {/* Center: Category Pills */}
-        <div className="hidden lg:flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-1.5 rounded-full border border-white/10 shadow-inner">
-          {CATEGORY_TABS.map((tab) => {
-            const active = selectedCategory === tab.id;
-            return (
+          {/* Instant Search Bar (Always visible for fast discovery) */}
+          <div className="relative flex-1 sm:w-72 md:w-80">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                if (e.target.value.trim() && viewMode !== "grid") {
+                  setViewMode("grid"); // auto-switch to grid on search for fastest discovery
+                }
+              }}
+              placeholder="Quick search 28+ tools (invoice, QR, resize)..."
+              className="w-full pl-8 pr-8 py-1.5 rounded-full bg-black/40 hover:bg-black/60 focus:bg-black/80 backdrop-blur-md border border-white/10 focus:border-white/30 text-xs text-white placeholder-white/40 focus:outline-none transition-all"
+            />
+            {searchQuery && (
               <button
-                key={tab.id}
                 type="button"
-                onClick={() => {
-                  setSelectedCategory(tab.id);
-                  setActiveIndex(0);
-                  soundManager.playNavigate();
-                }}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  active
-                    ? "bg-white text-black shadow-md scale-105"
-                    : "text-white/60 hover:text-white hover:bg-white/5"
-                }`}
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
               >
-                {tab.label}
+                <X className="w-3 h-3" />
               </button>
-            );
-          })}
+            )}
+          </div>
         </div>
 
-        {/* Right: Sound, Search & View Controls */}
-        <div className="flex items-center gap-3 text-white/80">
+        {/* Center/Right: Category Pills & View Switcher */}
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Category Tabs */}
+          <div className="flex items-center gap-1 bg-black/40 backdrop-blur-md px-1.5 py-1 rounded-full border border-white/10 shadow-inner overflow-x-auto max-w-full">
+            {CATEGORY_TABS.map((tab) => {
+              const active = selectedCategory === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategory(tab.id);
+                    setActiveIndex(0);
+                    soundManager.playNavigate();
+                  }}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                    active
+                      ? "bg-white text-black shadow-md scale-105"
+                      : "text-white/60 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* View Mode Toggle: Shelf vs Grid */}
+          <div className="flex items-center bg-black/40 backdrop-blur-md p-0.5 rounded-full border border-white/10">
+            <button
+              type="button"
+              onClick={() => {
+                setViewMode("shelf");
+                soundManager.playNavigate();
+              }}
+              className={`p-1.5 rounded-full transition-all cursor-pointer ${
+                viewMode === "shelf" ? "bg-white text-black" : "text-white/60 hover:text-white"
+              }`}
+              title="Console Shelf Mode"
+            >
+              <Film className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setViewMode("grid");
+                soundManager.playNavigate();
+              }}
+              className={`p-1.5 rounded-full transition-all cursor-pointer ${
+                viewMode === "grid" ? "bg-white text-black" : "text-white/60 hover:text-white"
+              }`}
+              title="Full Grid Mode"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
           {/* Sound Toggle */}
           <button
             type="button"
@@ -247,51 +404,24 @@ export default function PS5InspiredHomePage() {
               setSoundEnabled(res);
             }}
             className="p-2 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-colors cursor-pointer"
-            title={soundEnabled ? "Mute Audio Feedback" : "Enable Audio Feedback"}
+            title={soundEnabled ? "Mute Sound" : "Enable Sound"}
           >
             {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 text-white/40" />}
-          </button>
-
-          {/* Search Trigger */}
-          <button
-            type="button"
-            onClick={() => setIsCommandOpen(true)}
-            className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors cursor-pointer flex items-center gap-2 text-xs font-medium border border-white/10"
-            title="Search Generators (⌘K)"
-          >
-            <Search className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Search</span>
-            <kbd className="hidden sm:inline text-[10px] font-mono px-1 rounded bg-black/30 text-white/50">⌘K</kbd>
-          </button>
-
-          {/* Grid / Shelf View Toggle */}
-          <button
-            type="button"
-            onClick={() => {
-              setViewMode(viewMode === "shelf" ? "grid" : "shelf");
-              soundManager.playNavigate();
-            }}
-            className={`p-2 rounded-full transition-colors cursor-pointer ${
-              viewMode === "grid" ? "bg-white/20 text-white" : "hover:bg-white/10 text-white/70"
-            }`}
-            title="Toggle Library Grid (V)"
-          >
-            <Grid className="w-4 h-4" />
           </button>
         </div>
       </header>
 
-      {/* 3. CENTER & LOWER-MIDDLE: SHELF CAROUSEL WITH AMPLE HEADROOM */}
-      <main className="relative z-20 flex-1 px-6 sm:px-12 flex flex-col justify-end pb-4 pt-8">
+      {/* 3. MAIN WORKSTATION DISCOVERY VIEW */}
+      <main className="relative z-20 flex-1 px-6 sm:px-12 flex flex-col justify-end pb-4 pt-6">
         <div className="space-y-4">
-          {/* Active Tool Headline (Clean & Cinematic, zero AI slop) */}
-          <div className="space-y-2 max-w-3xl">
+          {/* Active Tool Headline (Clean & High Contrast) */}
+          <div className="space-y-1.5 max-w-3xl">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-mono font-bold tracking-widest uppercase px-2 py-0.5 rounded bg-white/10 text-white/70 border border-white/10">
+              <span className="text-[11px] font-mono font-bold tracking-widest uppercase px-2 py-0.5 rounded bg-white/10 text-white/80 border border-white/10">
                 {activeAsset.category}
               </span>
               <span className="text-xs font-mono text-white/40">
-                {activeIndex + 1} of {visibleTools.length}
+                Showing {visibleTools.length} {visibleTools.length === 1 ? "tool" : "tools"}
               </span>
             </div>
 
@@ -303,146 +433,173 @@ export default function PS5InspiredHomePage() {
             </p>
           </div>
 
-          {/* Carousel Navigation Bar Header */}
-          <div className="flex items-center justify-between pt-1">
-            <span className="text-xs font-mono font-bold tracking-wider uppercase text-white/40">
-              Tool Shelf
-            </span>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => handleNavigate(activeIndex - 1)}
-                disabled={activeIndex <= 0}
-                className="p-1 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-20 text-white transition-all cursor-pointer"
-                title="Previous (Left Arrow)"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => handleNavigate(activeIndex + 1)}
-                disabled={activeIndex >= visibleTools.length - 1}
-                className="p-1 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-20 text-white transition-all cursor-pointer"
-                title="Next (Right Arrow)"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* 4. THE HORIZONTAL COVER ART SHELF (WITH GENEROUS pt-10 pb-8 TO PREVENT CLIPPING) */}
+          {/* VIEW MODE 1: CONSOLE SHELF CAROUSEL */}
           {viewMode === "shelf" ? (
-            <div
-              ref={carouselRef}
-              className="flex items-center gap-5 overflow-x-auto pt-10 pb-8 scrollbar-none scroll-smooth"
-            >
-              {visibleTools.map((tool, idx) => {
-                const isSelected = idx === activeIndex;
-                const asset = getConsoleAsset(tool.meta.slug);
+            <div>
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-xs font-mono font-bold tracking-wider uppercase text-white/40">
+                  Featured Carousel ({activeIndex + 1} of {visibleTools.length})
+                </span>
 
-                return (
+                <div className="flex items-center gap-2">
                   <button
-                    key={tool.meta.slug}
                     type="button"
-                    onClick={() => {
-                      setActiveIndex(idx);
-                      soundManager.playNavigate();
-                    }}
-                    onDoubleClick={() => {
-                      soundManager.playConfirm();
-                      router.push(`/tools/${tool.meta.slug}`);
-                    }}
-                    className={`group relative shrink-0 flex flex-col items-center transition-all duration-300 cursor-pointer ${
-                      isSelected
-                        ? "-translate-y-2 scale-105 z-20"
-                        : "hover:-translate-y-1 opacity-75 hover:opacity-100"
-                    }`}
+                    onClick={() => handleNavigate(activeIndex - 1)}
+                    disabled={activeIndex <= 0}
+                    className="p-1 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-20 text-white transition-all cursor-pointer"
+                    title="Previous"
                   >
-                    {/* Game Box Poster Tile */}
-                    <div
-                      className={`w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-2xl relative overflow-hidden transition-all duration-300 ${
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleNavigate(activeIndex + 1)}
+                    disabled={activeIndex >= visibleTools.length - 1}
+                    className="p-1 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-20 text-white transition-all cursor-pointer"
+                    title="Next"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div
+                ref={carouselRef}
+                className="flex items-center gap-5 overflow-x-auto pt-8 pb-6 scrollbar-none scroll-smooth"
+              >
+                {visibleTools.map((tool, idx) => {
+                  const isSelected = idx === activeIndex;
+                  const asset = getConsoleAsset(tool.meta.slug);
+
+                  return (
+                    <button
+                      key={tool.meta.slug}
+                      type="button"
+                      onClick={() => {
+                        setActiveIndex(idx);
+                        soundManager.playNavigate();
+                      }}
+                      onDoubleClick={() => {
+                        soundManager.playConfirm();
+                        router.push(`/tools/${tool.meta.slug}`);
+                      }}
+                      className={`group relative shrink-0 flex flex-col items-center transition-all duration-300 cursor-pointer ${
                         isSelected
-                          ? "ring-2 ring-white shadow-[0_0_25px_rgba(255,255,255,0.4)] ps-active-tile"
-                          : "border border-white/10 hover:border-white/30"
+                          ? "-translate-y-2 scale-105 z-20"
+                          : "hover:-translate-y-1 opacity-75 hover:opacity-100"
                       }`}
                     >
-                      {/* Real Cover Photo */}
-                      <img
-                        src={asset.coverImage}
-                        alt={asset.title}
-                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-
-                      {/* Subtle Bottom Gradient for Poster Readability */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/20" />
-
-                      {/* Icon Pip */}
-                      <div className="absolute top-2.5 left-2.5 p-1 rounded-md bg-black/50 backdrop-blur-md text-white/90">
-                        <Icon name={tool.meta.icon} size={14} />
+                      {/* Box Tile */}
+                      <div
+                        className={`w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-2xl relative overflow-hidden transition-all duration-300 ${
+                          isSelected
+                            ? "ring-2 ring-white shadow-[0_0_25px_rgba(255,255,255,0.4)]"
+                            : "border border-white/10 hover:border-white/30"
+                        }`}
+                      >
+                        <img
+                          src={asset.coverImage}
+                          alt={asset.title}
+                          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/20" />
+                        <div className="absolute top-2.5 left-2.5 p-1 rounded-md bg-black/50 backdrop-blur-md text-white/90">
+                          <Icon name={tool.meta.icon} size={14} />
+                        </div>
+                        <span className="absolute bottom-2 left-2 right-2 text-[10px] font-bold tracking-wide uppercase text-white/95 truncate drop-shadow">
+                          {asset.title}
+                        </span>
                       </div>
 
-                      {/* Tool Title on Tile */}
-                      <span className="absolute bottom-2 left-2 right-2 text-[10px] font-bold tracking-wide uppercase text-white/95 truncate drop-shadow">
-                        {asset.title}
-                      </span>
-                    </div>
-
-                    {/* Active Pip & Title Indicator */}
-                    <div
-                      className={`mt-2 flex items-center gap-1.5 transition-all ${
-                        isSelected ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
-                      }`}
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse shrink-0" />
-                      <span className="text-[11px] font-semibold text-white/90 tracking-wide truncate max-w-[120px]">
-                        {asset.title}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
+                      <div
+                        className={`mt-2 flex items-center gap-1.5 transition-all ${
+                          isSelected ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
+                        }`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse shrink-0" />
+                        <span className="text-[11px] font-semibold text-white/90 tracking-wide truncate max-w-[120px]">
+                          {asset.title}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           ) : (
-            /* Grid View Mode */
-            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 max-h-[380px] overflow-y-auto pr-2 pb-4">
-              {visibleTools.map((tool, idx) => {
-                const isSelected = idx === activeIndex;
-                const asset = getConsoleAsset(tool.meta.slug);
-                return (
-                  <button
-                    key={tool.meta.slug}
-                    type="button"
-                    onClick={() => {
-                      setActiveIndex(idx);
-                      soundManager.playNavigate();
-                    }}
-                    className={`rounded-2xl border text-left transition-all overflow-hidden flex flex-col cursor-pointer ${
-                      isSelected
-                        ? "ring-2 ring-white scale-105"
-                        : "border-white/10 hover:border-white/30"
-                    }`}
-                  >
-                    <div className="w-full h-24 relative">
-                      <img
-                        src={asset.coverImage}
-                        alt={asset.title}
-                        className="w-full h-full object-cover"
-                      />
+            /* VIEW MODE 2: HIGH-EFFICIENCY FAST DISCOVERY GRID */
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs text-white/60">
+                <span className="font-mono font-bold uppercase tracking-wider">
+                  Full Catalog ({visibleTools.length} Utilities Available)
+                </span>
+                <span className="text-[11px]">Click any card to open directly</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5 max-h-[440px] overflow-y-auto pr-2 pb-4 scrollbar-thin">
+                {visibleTools.map((tool) => {
+                  const asset = getConsoleAsset(tool.meta.slug);
+                  const fav = isFavorite(tool.meta.slug);
+
+                  return (
+                    <div
+                      key={tool.meta.slug}
+                      className="group relative rounded-2xl border border-white/10 hover:border-white/30 bg-black/50 hover:bg-black/70 backdrop-blur-md overflow-hidden flex flex-col justify-between transition-all hover:-translate-y-1 p-3.5 space-y-3 shadow-lg"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-white/10 relative">
+                          <img
+                            src={asset.coverImage}
+                            alt={asset.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                          <div className="absolute inset-0 bg-black/20" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="text-[10px] font-mono uppercase tracking-wider text-white/50 truncate">
+                              {tool.meta.category}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFavorite(tool.meta.slug);
+                                soundManager.playConfirm();
+                              }}
+                              className="text-white/40 hover:text-rose-400 cursor-pointer"
+                            >
+                              <Heart className={`w-3.5 h-3.5 ${fav ? "fill-rose-400 text-rose-400" : ""}`} />
+                            </button>
+                          </div>
+                          <h3 className="font-bold text-sm text-white truncate leading-tight group-hover:text-blue-400 transition-colors">
+                            {tool.meta.title}
+                          </h3>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-white/60 line-clamp-2 leading-relaxed">
+                        {tool.meta.description}
+                      </p>
+
+                      <Link
+                        href={`/tools/${tool.meta.slug}`}
+                        onClick={() => soundManager.playConfirm()}
+                        className="w-full py-2 rounded-xl bg-white/10 hover:bg-white text-white hover:text-black font-bold text-xs flex items-center justify-center gap-1.5 transition-all text-center"
+                      >
+                        <span>Open Utility</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
                     </div>
-                    <div className="p-2 bg-black/70 text-xs font-bold text-white truncate w-full">
-                      {asset.title}
-                    </div>
-                  </button>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           )}
 
-          {/* 5. PRIMARY ACTION BAR & ACTIVITY CARDS */}
+          {/* 4. PRIMARY ACTION BAR & ACTIVITY CARDS */}
           <div className="pt-2 flex items-center justify-between flex-wrap gap-4">
-            {/* Clean Action Buttons */}
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -452,7 +609,7 @@ export default function PS5InspiredHomePage() {
                 }}
                 className="px-7 py-3 rounded-full bg-white hover:bg-zinc-200 text-black font-extrabold text-sm tracking-wide flex items-center gap-2.5 shadow-[0_0_25px_rgba(255,255,255,0.35)] transition-all transform active:scale-95 cursor-pointer"
               >
-                <span>Open Generator</span>
+                <span>Launch {activeAsset.title}</span>
                 <ArrowRight className="w-4 h-4" />
                 <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-black/10 text-black/70">
                   ↵
@@ -520,12 +677,12 @@ export default function PS5InspiredHomePage() {
         </div>
       </main>
 
-      {/* 6. CLEAN FOOTER & KEYBOARD HINTS */}
+      {/* 5. CLEAN FOOTER */}
       <footer className="relative z-30 py-3 px-6 sm:px-12 border-t border-white/10 bg-black/80 backdrop-blur-md flex items-center justify-between text-xs text-white/70">
         <div className="flex items-center gap-2 text-white/50">
           <span className="font-bold text-white/80">ForgeKit</span>
           <span>·</span>
-          <span>Instant client-side developer generators</span>
+          <span>Simple UI · Powerful Functionality · Real Usable Outputs</span>
         </div>
 
         <div className="flex items-center gap-5 text-white/60">
@@ -534,17 +691,21 @@ export default function PS5InspiredHomePage() {
             <span>Navigate</span>
           </span>
           <span className="hidden sm:flex items-center gap-1.5">
-            <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono text-[10px] text-white/80">Enter</kbd>
-            <span>Open</span>
+            <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono text-[10px] text-white/80">V</kbd>
+            <span>Toggle Grid</span>
+          </span>
+          <span className="hidden sm:flex items-center gap-1.5">
+            <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono text-[10px] text-white/80">/</kbd>
+            <span>Search</span>
           </span>
           <span className="flex items-center gap-1.5">
             <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono text-[10px] text-white/80">⌘K</kbd>
-            <span>Search</span>
+            <span>Palette</span>
           </span>
         </div>
       </footer>
 
-      {/* 7. QUICK DETAILS MODAL */}
+      {/* 6. QUICK DETAILS MODAL */}
       {showDetailsModal && activeTool && (
         <div
           role="dialog"
@@ -590,7 +751,7 @@ export default function PS5InspiredHomePage() {
                 <div>[Enter] : Open Generator</div>
                 <div>[F] : Toggle Favorite</div>
                 <div>[Q / E] : Switch Category</div>
-                <div>[Left / Right] : Select Tool</div>
+                <div>[V] : Toggle Grid View</div>
               </div>
             </div>
 
@@ -603,7 +764,7 @@ export default function PS5InspiredHomePage() {
                 }}
                 className="flex-1 py-3 rounded-full bg-white text-black font-extrabold text-sm tracking-wide text-center hover:bg-zinc-200 transition-colors cursor-pointer"
               >
-                Open Generator (Enter)
+                Launch Utility (Enter)
               </button>
               <button
                 type="button"

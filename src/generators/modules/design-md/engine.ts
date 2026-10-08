@@ -150,7 +150,15 @@ export function generateDesignDoc(
     observedNotes.push(`Inspected target URL: ${observation.sourceUrl}`);
   }
   if (observation?.hasScreenshot) {
-    observedNotes.push(`Analyzed visual reference screenshot: ${observation.screenshotName || "uploaded screenshot"}`);
+    if (observation?.detectedColors && observation.detectedColors.length > 0) {
+      observedNotes.push(
+        `Processed visual reference screenshot "${observation.screenshotName || "uploaded screenshot"}": extracted palette via client-side canvas pixel sampling.`
+      );
+    } else {
+      observedNotes.push(
+        `Attached visual reference screenshot "${observation.screenshotName || "uploaded screenshot"}": retained as design reference asset (no automated pixel palette extracted).`
+      );
+    }
   }
   if (observation?.observedTitle) {
     observedNotes.push(`Extracted document title: "${observation.observedTitle}"`);
@@ -159,7 +167,7 @@ export function generateDesignDoc(
     observedNotes.push(`Meta theme-color tag: ${observation.observedThemeColor}`);
   }
   if (observation?.detectedColors && observation.detectedColors.length > 0) {
-    observedNotes.push(`Extracted DOM palette samples: ${observation.detectedColors.join(", ")}`);
+    observedNotes.push(`Extracted DOM/pixel palette samples: ${observation.detectedColors.join(", ")}`);
   }
   if (observation?.detectedFonts && observation.detectedFonts.length > 0) {
     observedNotes.push(`Declared font-family stylesheets: ${observation.detectedFonts.join(", ")}`);
@@ -170,7 +178,7 @@ export function generateDesignDoc(
   }
 
   // Inferred derivations
-  inferredNotes.push(`Derived 10-step accessible primary color ladder (50 to 900) via LCH luminance curves.`);
+  inferredNotes.push(`Derived accessible primary color ladder (50 to 900) via linear RGB tint and shade scaling.`);
   inferredNotes.push(`Selected font pairings: Heading ("${spec.headingFont}"), Body ("${spec.bodyFont}"), Code ("${spec.monoFont}").`);
   inferredNotes.push(`System radius standard set to ${spec.baseRadius} with proportional child containment.`);
   inferredNotes.push(`Elevation tokens structured around ${spec.elevationStyle}.`);

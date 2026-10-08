@@ -72,7 +72,18 @@ describe("Bulk Filename Builder Engine", () => {
       assert.equal(mappings[0].hasChanged, true);
 
       const sh = generateShellScript(mappings, "sh");
-      assert.ok(sh.includes('mv -n "IMG_001.JPG" "trip_img_001.jpg"'));
+      assert.ok(sh.includes("mv -n -- 'IMG_001.JPG' 'trip_img_001.jpg'"));
+    });
+
+    it("should safely escape shell injection attempts in filenames", () => {
+      const malicious = [
+        { oldName: 'file$(whoami).txt', newName: 'safe_name.txt', hasChanged: true },
+        { oldName: "file' && rm -rf / '.txt", newName: "clean.txt", hasChanged: true },
+      ];
+      const sh = generateShellScript(malicious, "sh");
+      // Check that quotes and command substitutions are escaped
+      assert.ok(sh.includes("mv -n -- 'file$(whoami).txt' 'safe_name.txt'"));
+      assert.ok(sh.includes("'\\''")); // single quote escaped as '\'
     });
 
     it("should generate CSV mapping table", () => {

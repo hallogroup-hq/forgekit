@@ -161,9 +161,24 @@ export function ResponsiveBox({ children }: { children?: React.ReactNode }) {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-      {/* Configuration Column (Left) */}
-      <div className="lg:col-span-5 space-y-6">
+    <div className="space-y-6">
+      {/* Notice distinguishing mathematical ratio calculator from physical image resizing */}
+      <div className="p-3.5 rounded-2xl border border-blue-500/30 bg-blue-500/5 dark:bg-blue-500/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="text-zinc-600 dark:text-zinc-300">
+          <span className="font-bold text-blue-600 dark:text-blue-400">Layout & Math Calculator: </span>
+          This tool computes CSS aspect-ratios, responsive srcset specs, and viewport dimensions. Looking to resize actual image files on your computer?
+        </div>
+        <a
+          href="/tools/batch-image-resizer"
+          className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shrink-0 transition-colors text-center"
+        >
+          Launch Batch Image Resizer →
+        </a>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Configuration Column (Left) */}
+        <div className="lg:col-span-5 space-y-6">
         {/* Preset Selector */}
         <div>
           <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider block mb-2">
@@ -360,6 +375,7 @@ export function ResponsiveBox({ children }: { children?: React.ReactNode }) {
           <pre className="flex-1 font-mono text-xs text-zinc-800 dark:text-zinc-200 p-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed border border-zinc-200/60 dark:border-zinc-800/60 max-h-[600px] overflow-y-auto selection:bg-blue-500/20">
             {activeSnippet}
           </pre>
+          </div>
         </div>
       </div>
     </div>

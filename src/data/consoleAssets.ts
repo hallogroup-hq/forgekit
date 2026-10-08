@@ -633,6 +633,46 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
       },
     ],
   },
+  "batch-image-resizer": {
+    slug: "batch-image-resizer",
+    title: "Batch Image Resizer",
+    category: "DESIGN",
+    coverImage: "https://images.unsplash.com/photo-1542744094-3a31727221eb?auto=format&fit=crop&w=600&h=600&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=80",
+    tagline: "Batch resize photos and graphics to exact dimensions, aspect ratios, and ZIP export.",
+    activities: [
+      {
+        title: "Multi-file Canvas Resizing",
+        description: "Scale tens of images simultaneously with bicubic smoothing",
+        image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+      {
+        title: "Batch ZIP Export",
+        description: "Download all resized images in a single compressed package",
+        image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+    ],
+  },
+  "image-converter": {
+    slug: "image-converter",
+    title: "Image Converter & Compressor",
+    category: "DESIGN",
+    coverImage: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=600&h=600&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1920&q=80",
+    tagline: "Compress and convert images to WebP, JPEG, and PNG with real-time payload metrics.",
+    activities: [
+      {
+        title: "Modern WebP Encoding",
+        description: "Slash image payloads by up to 80% without visible quality loss",
+        image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+      {
+        title: "Batch Compression ZIP",
+        description: "Package optimized assets instantly without server upload",
+        image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+    ],
+  },
 };
 
 export function getConsoleAsset(slug: string): ConsoleAsset {

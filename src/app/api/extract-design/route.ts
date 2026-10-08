@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateSafeUrlForFetch } from "@/lib/security/ssrf";
+import { validateSafeUrlForFetch, safeFetchWithRedirects } from "@/lib/security/ssrf";
 
 interface ExtractedDesign {
   domain: string;
@@ -140,21 +140,16 @@ export async function POST(req: NextRequest) {
     const domain = parsedUrl.hostname.replace(/^www\./, "").toLowerCase();
     const preset = CURATED_PRESETS[domain];
 
-    // Live HTML/CSS fetch with strict timeout
+    // Live HTML/CSS fetch with SSRF redirect validation and timeout
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4500);
-
-      const res = await fetch(parsedUrl.toString(), {
+      const { response: res } = await safeFetchWithRedirects(parsedUrl.toString(), {
+        timeoutMs: 4500,
+        maxRedirects: 3,
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
           Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         },
-        signal: controller.signal,
-        redirect: "follow",
       });
-
-      clearTimeout(timeoutId);
 
       if (!res.ok) {
         // If live fetch returned an error (e.g. 403 bot-block or 404)
@@ -174,7 +169,7 @@ export async function POST(req: NextRequest) {
             baseRadius: preset.baseRadius || "8px",
             elevationStyle: preset.elevationStyle || "Subtle Multi-layer",
             source: "curated-preset",
-            notes: ["Live fetch blocked by target site; provided verified curated reference profile."],
+            notes: ["Live connection to target host was blocked or returned non-200. Loaded curated baseline reference profile (not live-extracted)."],
             observed: { detectedColors: [], detectedFonts: [] },
           });
         }
@@ -308,7 +303,7 @@ export async function POST(req: NextRequest) {
           baseRadius: preset.baseRadius || "8px",
           elevationStyle: preset.elevationStyle || "Subtle Multi-layer",
           source: "curated-preset",
-          notes: ["Direct network connection timed out; used verified curated reference profile."],
+          notes: ["Direct network connection timed out or blocked. Loaded curated baseline reference profile (not live-extracted from network)."],
           observed: { detectedColors: [], detectedFonts: [] },
         });
       }

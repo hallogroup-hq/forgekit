@@ -27,9 +27,12 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   }, [isOpen]);
 
   const filteredTools = useMemo(() => {
-    if (!query.trim()) return registry.slice(0, 8);
+    const publicRegistry = registry.filter(
+      (t) => !t.meta.lifecycle || t.meta.lifecycle === "ready" || t.meta.lifecycle === "qa"
+    );
+    if (!query.trim()) return publicRegistry.slice(0, 8);
     const q = query.toLowerCase();
-    return registry.filter((tool) => {
+    return publicRegistry.filter((tool) => {
       const matchTitle = tool.meta.title.toLowerCase().includes(q);
       const matchDesc = tool.meta.description.toLowerCase().includes(q);
       const matchTags = tool.meta.tags.some((tag) => tag.toLowerCase().includes(q));

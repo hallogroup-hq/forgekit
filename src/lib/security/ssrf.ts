@@ -179,3 +179,83 @@ export async function validateSafeUrlForFetch(rawUrl: string): Promise<SsrCheckR
     return { safe: false, reason: `DNS lookup failed for ${hostname}: ${msg}` };
   }
 }
+
+export interface SafeFetchOptions {
+  headers?: Record<string, string>;
+  maxRedirects?: number;
+  timeoutMs?: number;
+}
+
+export interface SafeFetchResponse {
+  response: Response;
+  finalUrl: string;
+  redirectCount: number;
+}
+
+/**
+ * Executes a fetch request with strict SSRF validation at every redirect hop.
+ * Uses redirect: "manual" to inspect each Location header, preventing
+ * open redirect-based SSRF into internal networks or cloud metadata.
+ */
+export async function safeFetchWithRedirects(
+  initialUrl: string,
+  options?: SafeFetchOptions
+): Promise<SafeFetchResponse> {
+  const maxRedirects = options?.maxRedirects ?? 3;
+  const timeoutMs = options?.timeoutMs ?? 5000;
+  let currentUrl = initialUrl;
+  let redirectCount = 0;
+
+  while (redirectCount <= maxRedirects) {
+    // 1. Validate the current URL before connecting
+    const check = await validateSafeUrlForFetch(currentUrl);
+    if (!check.safe) {
+      throw new Error(`SSRF blocked: ${check.reason || "Forbidden URL"}`);
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    let res: Response;
+    try {
+      res = await fetch(currentUrl, {
+        headers: options?.headers ?? {
+          "User-Agent": "ForgeKit-AuditBot/1.0",
+          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        },
+        signal: controller.signal,
+        redirect: "manual",
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+
+    // Check for redirect status codes (301, 302, 303, 307, 308)
+    if ([301, 302, 303, 307, 308].includes(res.status)) {
+      const location = res.headers.get("location");
+      if (!location) {
+        throw new Error(`Redirect response from ${currentUrl} missing Location header.`);
+      }
+
+      // Resolve relative redirect against current URL
+      const nextUrl = new URL(location, currentUrl).toString();
+
+      redirectCount++;
+      if (redirectCount > maxRedirects) {
+        throw new Error(`Exceeded maximum redirect limit (${maxRedirects}).`);
+      }
+
+      currentUrl = nextUrl;
+      continue;
+    }
+
+    return {
+      response: res,
+      finalUrl: currentUrl,
+      redirectCount,
+    };
+  }
+
+  throw new Error(`Exceeded maximum redirect limit (${maxRedirects}).`);
+}
+

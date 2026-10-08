@@ -115,10 +115,20 @@ import BulkFilenameBuilderGenerator from "./modules/bulk-filename-builder/compon
 import { meta as contrastCheckerMeta } from "./modules/contrast-checker/meta";
 import ContrastCheckerGenerator from "./modules/contrast-checker/component";
 
+import { meta as batchResizerMeta } from "./modules/batch-image-resizer/meta";
+import BatchImageResizerGenerator from "./modules/batch-image-resizer/component";
+
+import { meta as imageConverterMeta } from "./modules/image-converter/meta";
+import ImageConverterGenerator from "./modules/image-converter/component";
+
 export const registry: GeneratorModule[] = [
   // Flagship Workstation Modules
   { meta: qrMeta, component: QrCodeGenerator },
+  { meta: batchResizerMeta, component: BatchImageResizerGenerator },
+  { meta: imageConverterMeta, component: ImageConverterGenerator },
   { meta: textCleanerMeta, component: TextCleanerGenerator },
+  { meta: csvCleanerMeta, component: CsvCleanerGenerator },
+  { meta: bulkRenamerMeta, component: BulkFilenameBuilderGenerator },
   { meta: whatsappMeta, component: WhatsappLinkGenerator },
   { meta: campaignQaMeta, component: CampaignUrlQaGenerator },
   { meta: designMeta, component: DesignMdGenerator },
@@ -134,6 +144,7 @@ export const registry: GeneratorModule[] = [
   { meta: svgBlobMeta, component: SvgBlobGenerator },
   { meta: aspectRatioMeta, component: AspectRatioGenerator },
   { meta: colorContrastMeta, component: ColorContrastGenerator },
+  { meta: contrastCheckerMeta, component: ContrastCheckerGenerator },
   { meta: utmMeta, component: UtmBuilderGenerator },
   { meta: socialBioMeta, component: SocialBioGenerator },
   { meta: copywritingMeta, component: CopywritingFrameworkGenerator },
@@ -147,9 +158,6 @@ export const registry: GeneratorModule[] = [
   { meta: dockerMeta, component: DockerGitignoreGenerator },
   { meta: hashMeta, component: HashSecretGenerator },
   { meta: tableMeta, component: MarkdownTableGenerator },
-  { meta: csvCleanerMeta, component: CsvCleanerGenerator },
-  { meta: bulkRenamerMeta, component: BulkFilenameBuilderGenerator },
-  { meta: contrastCheckerMeta, component: ContrastCheckerGenerator },
   { meta: ogMeta, component: OpenGraphPreviewGenerator },
   { meta: invoiceMeta, component: InvoiceReceiptGenerator },
   { meta: quotationMeta, component: QuotationGenerator },

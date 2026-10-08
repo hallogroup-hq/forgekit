@@ -22,7 +22,7 @@ import {
 
 const SAMPLE_TEXT = `   ForgeKit is a collection of   practical workstation utilities.  
 
-It is inspired by 123apps.com:
+Our guiding core philosophy:
 - Simple UI
 - Powerful functionality
 - Real usable outputs

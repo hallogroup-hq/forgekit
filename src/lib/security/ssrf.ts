@@ -12,7 +12,7 @@ export interface SsrCheckResult {
 /**
  * Checks if an IPv4 address belongs to private, loopback, or reserved ranges.
  */
-export function isPrivateOrReservedIpv4(ip: string): boolean {
+export function isPrivateOrReservedIpv4(ip: string, allowLoopback = false): boolean {
   const parts = ip.split(".").map((p) => parseInt(p, 10));
   if (parts.length !== 4 || parts.some((p) => isNaN(p) || p < 0 || p > 255)) {
     return true; // Malformed IP, treat as unsafe
@@ -30,7 +30,7 @@ export function isPrivateOrReservedIpv4(ip: string): boolean {
   if (a === 100 && b >= 64 && b <= 127) return true;
 
   // 127.0.0.0/8 - Loopback
-  if (a === 127) return true;
+  if (a === 127) return !allowLoopback;
 
   // 169.254.0.0/16 - Link-local (Cloud metadata e.g. 169.254.169.254)
   if (a === 169 && b === 254) return true;
@@ -71,11 +71,11 @@ export function isPrivateOrReservedIpv4(ip: string): boolean {
 /**
  * Checks if an IPv6 address belongs to private, loopback, or reserved ranges.
  */
-export function isPrivateOrReservedIpv6(ip: string): boolean {
+export function isPrivateOrReservedIpv6(ip: string, allowLoopback = false): boolean {
   const normalized = ip.toLowerCase().trim().replace(/^\[|\]$/g, "");
 
   // ::1 loopback
-  if (normalized === "::1" || normalized === "0:0:0:0:0:0:0:1") return true;
+  if (normalized === "::1" || normalized === "0:0:0:0:0:0:0:1") return !allowLoopback;
 
   // :: unspecified
   if (normalized === "::" || normalized === "0:0:0:0:0:0:0:0") return true;
@@ -84,7 +84,7 @@ export function isPrivateOrReservedIpv6(ip: string): boolean {
   if (normalized.startsWith("::ffff:") || normalized.startsWith("0:0:0:0:0:ffff:")) {
     const lastPart = normalized.replace(/^(::ffff:|0:0:0:0:0:ffff:)/, "");
     if (lastPart.includes(".")) {
-      return isPrivateOrReservedIpv4(lastPart);
+      return isPrivateOrReservedIpv4(lastPart, allowLoopback);
     }
     // Hex IPv4-mapped (e.g. 7f00:1)
     const hexParts = lastPart.split(":");
@@ -96,7 +96,7 @@ export function isPrivateOrReservedIpv6(ip: string): boolean {
         const b2 = high & 0xff;
         const b3 = (low >> 8) & 0xff;
         const b4 = low & 0xff;
-        return isPrivateOrReservedIpv4(`${b1}.${b2}.${b3}.${b4}`);
+        return isPrivateOrReservedIpv4(`${b1}.${b2}.${b3}.${b4}`, allowLoopback);
       }
     }
     return true; // Malformed IPv4-mapped format, block
@@ -113,7 +113,7 @@ export function isPrivateOrReservedIpv6(ip: string): boolean {
         const b2 = high & 0xff;
         const b3 = (low >> 8) & 0xff;
         const b4 = low & 0xff;
-        return isPrivateOrReservedIpv4(`${b1}.${b2}.${b3}.${b4}`);
+        return isPrivateOrReservedIpv4(`${b1}.${b2}.${b3}.${b4}`, allowLoopback);
       }
     }
     return true;
@@ -138,11 +138,19 @@ export function isPrivateOrReservedIpv6(ip: string): boolean {
   return false;
 }
 
+export interface SafeUrlValidationOptions {
+  allowLoopbackForTesting?: boolean;
+  customDnsLookup?: typeof dns.lookup;
+}
+
 /**
  * Validates a URL to prevent Server-Side Request Forgery (SSRF).
  * Checks protocol whitelist, disallows loopback hostnames, and resolves DNS to verify IPs.
  */
-export async function validateSafeUrlForFetch(rawUrl: string): Promise<SsrCheckResult> {
+export async function validateSafeUrlForFetch(
+  rawUrl: string,
+  options?: SafeUrlValidationOptions
+): Promise<SsrCheckResult> {
   let parsed: URL;
   try {
     parsed = new URL(rawUrl);
@@ -156,12 +164,11 @@ export async function validateSafeUrlForFetch(rawUrl: string): Promise<SsrCheckR
   }
 
   const hostname = parsed.hostname.toLowerCase();
+  const allowLoopback = !!options?.allowLoopbackForTesting;
 
   // 2. Reject obvious loopback, internal, or cloud metadata hostname patterns
   if (
-    hostname === "localhost" ||
-    hostname.endsWith(".localhost") ||
-    hostname.endsWith(".local") ||
+    (!allowLoopback && (hostname === "localhost" || hostname.endsWith(".localhost") || hostname.endsWith(".local"))) ||
     hostname.endsWith(".internal") ||
     hostname.endsWith(".onion") ||
     hostname === "metadata.google.internal" ||
@@ -173,21 +180,22 @@ export async function validateSafeUrlForFetch(rawUrl: string): Promise<SsrCheckR
   // 3. Direct IP address in hostname
   const ipType = net.isIP(hostname);
   if (ipType === 4) {
-    if (isPrivateOrReservedIpv4(hostname)) {
+    if (isPrivateOrReservedIpv4(hostname, allowLoopback)) {
       return { safe: false, reason: `Target IP ${hostname} is in a private or reserved network range.`, resolvedIps: [hostname] };
     }
     return { safe: true, resolvedIps: [hostname] };
   }
   if (ipType === 6) {
-    if (isPrivateOrReservedIpv6(hostname)) {
+    if (isPrivateOrReservedIpv6(hostname, allowLoopback)) {
       return { safe: false, reason: `Target IPv6 ${hostname} is in a private or reserved network range.`, resolvedIps: [hostname] };
     }
     return { safe: true, resolvedIps: [hostname] };
   }
 
   // 4. DNS resolution check (resolve all records to prevent round-robin SSRF bypass)
+  const dnsLookupFn = options?.customDnsLookup || dns.lookup;
   try {
-    const records = await dns.lookup(hostname, { all: true });
+    const records = await dnsLookupFn(hostname, { all: true });
     if (!records || records.length === 0) {
       return { safe: false, reason: `Could not resolve domain: ${hostname}` };
     }
@@ -195,14 +203,14 @@ export async function validateSafeUrlForFetch(rawUrl: string): Promise<SsrCheckR
     const resolvedIps = records.map((r) => r.address);
 
     for (const record of records) {
-      if (record.family === 4 && isPrivateOrReservedIpv4(record.address)) {
+      if (record.family === 4 && isPrivateOrReservedIpv4(record.address, allowLoopback)) {
         return {
           safe: false,
           reason: `Domain ${hostname} resolves to private IPv4 address ${record.address}`,
           resolvedIps,
         };
       }
-      if (record.family === 6 && isPrivateOrReservedIpv6(record.address)) {
+      if (record.family === 6 && isPrivateOrReservedIpv6(record.address, allowLoopback)) {
         return {
           safe: false,
           reason: `Domain ${hostname} resolves to private IPv6 address ${record.address}`,
@@ -222,7 +230,7 @@ export async function validateSafeUrlForFetch(rawUrl: string): Promise<SsrCheckR
  * Custom DNS lookup handler that verifies resolved IP addresses at socket creation time.
  * This guarantees DNS-to-connection safety against TOCTOU / DNS rebinding attacks.
  */
-export function createSafeLookup(customDns?: typeof dns.lookup) {
+export function createSafeLookup(customDns?: typeof dns.lookup, allowLoopback = false) {
   const lookupFn = customDns || dns.lookup;
   return (
     hostname: string,
@@ -232,13 +240,13 @@ export function createSafeLookup(customDns?: typeof dns.lookup) {
     // If hostname is already a verified public IP
     const directIp = net.isIP(hostname);
     if (directIp === 4) {
-      if (isPrivateOrReservedIpv4(hostname)) {
+      if (isPrivateOrReservedIpv4(hostname, allowLoopback)) {
         return callback(new Error(`SSRF blocked: Direct private IPv4 address ${hostname}`));
       }
       return callback(null, hostname, 4);
     }
     if (directIp === 6) {
-      if (isPrivateOrReservedIpv6(hostname)) {
+      if (isPrivateOrReservedIpv6(hostname, allowLoopback)) {
         return callback(new Error(`SSRF blocked: Direct private IPv6 address ${hostname}`));
       }
       return callback(null, hostname, 6);
@@ -252,10 +260,10 @@ export function createSafeLookup(customDns?: typeof dns.lookup) {
         }
 
         for (const r of records) {
-          if (r.family === 4 && isPrivateOrReservedIpv4(r.address)) {
+          if (r.family === 4 && isPrivateOrReservedIpv4(r.address, allowLoopback)) {
             return callback(new Error(`SSRF blocked: DNS rebinding/private IPv4 detected: ${r.address}`));
           }
-          if (r.family === 6 && isPrivateOrReservedIpv6(r.address)) {
+          if (r.family === 6 && isPrivateOrReservedIpv6(r.address, allowLoopback)) {
             return callback(new Error(`SSRF blocked: DNS rebinding/private IPv6 detected: ${r.address}`));
           }
         }
@@ -278,6 +286,7 @@ export interface SafeFetchOptions {
   maxResponseBytes?: number;
   allowedContentTypes?: string[];
   customDnsLookup?: typeof dns.lookup;
+  allowLoopbackForTesting?: boolean;
 }
 
 export interface SafeFetchResult {
@@ -332,7 +341,10 @@ export async function safeFetchWithRedirects(
       if (timedOut) return;
 
       // 2. Pre-flight URL validation
-      const ssrfCheck = await validateSafeUrlForFetch(targetUrl);
+      const ssrfCheck = await validateSafeUrlForFetch(targetUrl, {
+        allowLoopbackForTesting: options?.allowLoopbackForTesting,
+        customDnsLookup: options?.customDnsLookup,
+      });
       if (!ssrfCheck.safe) {
         cleanup();
         return reject(new Error(`SSRF blocked: ${ssrfCheck.reason || "Forbidden URL"}`));
@@ -350,7 +362,7 @@ export async function safeFetchWithRedirects(
       const transport = isHttps ? https : http;
       const port = parsed.port ? parseInt(parsed.port, 10) : isHttps ? 443 : 80;
 
-      const safeLookup = createSafeLookup(options?.customDnsLookup);
+      const safeLookup = createSafeLookup(options?.customDnsLookup, options?.allowLoopbackForTesting);
 
       const requestOptions: https.RequestOptions = {
         hostname: parsed.hostname,

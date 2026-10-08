@@ -75,6 +75,20 @@ describe("Email Signature Engine", () => {
       assert.ok(html.includes("&lt;img src=&quot;x&quot; onerror=&quot;alert(1)&quot;&gt;"));
       assert.ok(!html.includes("<img src=\"x\""));
     });
+
+    it("should sanitize dangerous URL schemes and attribute breakout in avatarUrl and accentColor", () => {
+      const html = generateEmailSignatureHtml({
+        ...sampleData,
+        website: "javascript:alert('XSS')",
+        linkedin: "javascript:alert('XSS')",
+        avatarUrl: 'https://example.com/avatar.jpg" onerror="alert(1)',
+        accentColor: 'red; background: url("x")',
+      });
+      assert.ok(!html.includes("javascript:alert"));
+      assert.ok(!html.includes('onerror="alert(1)"'));
+      assert.ok(!html.includes('red; background: url("x")'));
+      assert.ok(html.includes("#2563eb"));
+    });
   });
 
   describe("generateEmailSignaturePlainText", () => {

@@ -353,8 +353,15 @@ export async function safeExecuteRegexIsolated(
         });
       });
     } catch {
-      // Fallback to sync execution if worker_threads unavailable
-      return safeExecuteRegex(pattern, flags, testString, { maxExecutionTimeMs: timeoutMs, maxMatches });
+      return {
+        isValid: false,
+        regexError: "Isolated worker execution unavailable in Node.js environment. Synchronous execution disabled for security.",
+        isRedosRisky: redosCheck.isRisky,
+        redosWarning: redosCheck.reason,
+        matches: [],
+        executionTimeMs: 0,
+        isTruncated: false,
+      };
     }
   }
 
@@ -475,12 +482,28 @@ export async function safeExecuteRegexIsolated(
         worker.postMessage({ pattern, flags, text: testString, maxMatches });
       });
     } catch {
-      return safeExecuteRegex(pattern, flags, testString, { maxExecutionTimeMs: timeoutMs, maxMatches });
+      return {
+        isValid: false,
+        regexError: "Isolated Web Worker execution unavailable in browser environment. Synchronous execution disabled for security.",
+        isRedosRisky: redosCheck.isRisky,
+        redosWarning: redosCheck.reason,
+        matches: [],
+        executionTimeMs: 0,
+        isTruncated: false,
+      };
     }
   }
 
-  // Fallback to sync
-  return safeExecuteRegex(pattern, flags, testString, { maxExecutionTimeMs: timeoutMs, maxMatches });
+  // Security gate: Fail safely if isolated execution environments are unavailable
+  return {
+    isValid: false,
+    regexError: "Isolated worker execution unavailable. Synchronous execution disabled for security.",
+    isRedosRisky: redosCheck.isRisky,
+    redosWarning: redosCheck.reason,
+    matches: [],
+    executionTimeMs: 0,
+    isTruncated: false,
+  };
 }
 
 export function generateJsRegexCode(pattern: string, flags: string): string {

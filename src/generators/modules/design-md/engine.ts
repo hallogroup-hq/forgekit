@@ -30,45 +30,116 @@ export function attr<T>(
   return { value, provenance, sourceRef, verificationNote, viewport, confidence, userOverridden };
 }
 
+export interface DtcgDimensionValue {
+  value: number;
+  unit: string;
+}
+
+export interface DtcgColorValue {
+  colorSpace: string;
+  channels: [number, number, number];
+  hex: string;
+  alpha?: number;
+}
+
 export interface DtcgCompositeShadow {
-  offsetX: string;
-  offsetY: string;
-  blur: string;
-  spread: string;
-  color: string;
+  offsetX: DtcgDimensionValue | string;
+  offsetY: DtcgDimensionValue | string;
+  blur: DtcgDimensionValue | string;
+  spread: DtcgDimensionValue | string;
+  color: DtcgColorValue | string;
+}
+
+export function parseDimensionToDtcg(dim: string | number): DtcgDimensionValue {
+  if (typeof dim === "number") {
+    return { value: dim, unit: "px" };
+  }
+  const str = String(dim).trim();
+  const match = str.match(/^(-?\d+(?:\.\d+)?)\s*([a-zA-Z%]*)$/);
+  if (match) {
+    return {
+      value: parseFloat(match[1]),
+      unit: match[2] || "px",
+    };
+  }
+  return { value: 0, unit: "px" };
+}
+
+export function dtcgDimensionToString(dim: DtcgDimensionValue | string | number): string {
+  if (typeof dim === "object" && dim !== null && "value" in dim && "unit" in dim) {
+    return `${dim.value}${dim.unit}`;
+  }
+  return String(dim);
+}
+
+export function hexToDtcgColor(hex: string): DtcgColorValue {
+  const [r, g, b] = hexToRgb(hex);
+  return {
+    colorSpace: "srgb",
+    channels: [r, g, b],
+    hex: hex.toLowerCase(),
+  };
+}
+
+export function dtcgColorToHex(color: DtcgColorValue | string): string {
+  if (typeof color === "object" && color !== null && "hex" in color) {
+    return color.hex;
+  }
+  if (typeof color === "string") {
+    return color;
+  }
+  return "#000000";
 }
 
 export function parseCssBoxShadowToDtcg(cssShadow: string): DtcgCompositeShadow {
   if (!cssShadow || cssShadow.trim() === "none") {
-    return { offsetX: "0px", offsetY: "0px", blur: "0px", spread: "0px", color: "transparent" };
+    return {
+      offsetX: { value: 0, unit: "px" },
+      offsetY: { value: 0, unit: "px" },
+      blur: { value: 0, unit: "px" },
+      spread: { value: 0, unit: "px" },
+      color: "transparent",
+    };
   }
 
-  let color = "rgba(0, 0, 0, 0.08)";
+  let colorStr = "rgba(0, 0, 0, 0.08)";
   let lengthsPart = cssShadow.trim();
 
   const colorMatch = lengthsPart.match(/(rgba?\([^)]+\)|hsla?\([^)]+\)|#[0-9a-fA-F]{3,8}|[a-zA-Z]+$)/);
   if (colorMatch) {
-    color = colorMatch[0];
+    colorStr = colorMatch[0];
     lengthsPart = lengthsPart.replace(colorMatch[0], "").trim();
   }
 
   const parts = lengthsPart.split(/\s+/).filter(Boolean);
-  const ensureUnit = (val: string) => {
-    if (!val) return "0px";
-    return /^-?\d+(\.\d+)?$/.test(val) ? `${val}px` : val;
-  };
 
-  const offsetX = ensureUnit(parts[0] || "0px");
-  const offsetY = ensureUnit(parts[1] || "1px");
-  const blur = ensureUnit(parts[2] || "2px");
-  const spread = ensureUnit(parts[3] || "0px");
+  const offsetX = parseDimensionToDtcg(parts[0] || "0px");
+  const offsetY = parseDimensionToDtcg(parts[1] || "1px");
+  const blur = parseDimensionToDtcg(parts[2] || "2px");
+  const spread = parseDimensionToDtcg(parts[3] || "0px");
 
-  return { offsetX, offsetY, blur, spread, color };
+  let shadowColor: DtcgColorValue | string = colorStr;
+  if (colorStr.startsWith("#")) {
+    shadowColor = hexToDtcgColor(colorStr);
+  }
+
+  return { offsetX, offsetY, blur, spread, color: shadowColor };
 }
 
 export function dtcgShadowToCss(shadow: DtcgCompositeShadow): string {
-  if (!shadow || shadow.color === "transparent") return "none";
-  return `${shadow.offsetX} ${shadow.offsetY} ${shadow.blur} ${shadow.spread} ${shadow.color}`;
+  if (!shadow) return "none";
+  const colorStr = typeof shadow.color === "object" && shadow.color !== null && "hex" in shadow.color
+    ? shadow.color.hex
+    : String(shadow.color || "");
+
+  if (colorStr === "transparent" || colorStr === "none") return "none";
+
+  const ox = dtcgDimensionToString(shadow.offsetX);
+  const oy = dtcgDimensionToString(shadow.offsetY);
+  const b = dtcgDimensionToString(shadow.blur);
+  const sp = dtcgDimensionToString(shadow.spread);
+
+  return `${ox} ${oy} ${b} ${sp} ${colorStr}`.trim();
 }
 
 export type DesignArchetype =
@@ -396,6 +467,53 @@ export function auditContrastPairs(
       usage: p.usage,
     };
   });
+}
+
+function isAttributedValue(obj: any): obj is AttributedValue<any> {
+  return obj && typeof obj === "object" && "value" in obj && "provenance" in obj;
+}
+
+/**
+ * Merges a newly extracted or newly instantiated design system onto an existing one,
+ * strictly preserving all properties that the user has manually edited (userOverridden: true).
+ */
+export function preserveUserOverrides(
+  newTarget: FullDesignSystem,
+  prevSource: FullDesignSystem
+): FullDesignSystem {
+  if (!prevSource) return newTarget;
+
+  function deepMergeOverrides(targetObj: any, sourceObj: any): any {
+    if (!targetObj || !sourceObj || typeof targetObj !== "object" || typeof sourceObj !== "object") {
+      return targetObj;
+    }
+
+    if (isAttributedValue(sourceObj)) {
+      if (sourceObj.userOverridden) {
+        return sourceObj;
+      }
+      return targetObj;
+    }
+
+    const result: any = Array.isArray(targetObj) ? [...targetObj] : { ...targetObj };
+    for (const key of Object.keys(targetObj)) {
+      if (key in sourceObj) {
+        result[key] = deepMergeOverrides(targetObj[key], sourceObj[key]);
+      }
+    }
+    return result;
+  }
+
+  const merged = deepMergeOverrides(newTarget, prevSource);
+  if (merged.colors && merged.accessibility) {
+    merged.accessibility.verifiedContrastPairs = auditContrastPairs(
+      merged.colors.primary.value,
+      merged.colors.neutrals.background.value,
+      merged.colors.neutrals.surface.value,
+      merged.colors.neutrals.text.value
+    );
+  }
+  return merged;
 }
 
 // Preset Archetype Synthesizers
@@ -1449,36 +1567,36 @@ export function generateTokensJson(system: FullDesignSystem): string {
       archetype: system.identity.archetype.value,
       color: {
         primary: {
-          50: { $value: ladder[50], $type: "color" },
-          100: { $value: ladder[100], $type: "color" },
-          200: { $value: ladder[200], $type: "color" },
-          300: { $value: ladder[300], $type: "color" },
-          400: { $value: ladder[400], $type: "color" },
-          500: { $value: system.colors.primary.value, $type: "color" },
-          600: { $value: ladder[600], $type: "color" },
-          700: { $value: ladder[700], $type: "color" },
-          800: { $value: ladder[800], $type: "color" },
-          900: { $value: ladder[900], $type: "color" },
-          950: { $value: ladder[950], $type: "color" },
+          50: { $value: hexToDtcgColor(ladder[50]), $type: "color" },
+          100: { $value: hexToDtcgColor(ladder[100]), $type: "color" },
+          200: { $value: hexToDtcgColor(ladder[200]), $type: "color" },
+          300: { $value: hexToDtcgColor(ladder[300]), $type: "color" },
+          400: { $value: hexToDtcgColor(ladder[400]), $type: "color" },
+          500: { $value: hexToDtcgColor(system.colors.primary.value), $type: "color" },
+          600: { $value: hexToDtcgColor(ladder[600]), $type: "color" },
+          700: { $value: hexToDtcgColor(ladder[700]), $type: "color" },
+          800: { $value: hexToDtcgColor(ladder[800]), $type: "color" },
+          900: { $value: hexToDtcgColor(ladder[900]), $type: "color" },
+          950: { $value: hexToDtcgColor(ladder[950]), $type: "color" },
         },
-        accent: { $value: system.colors.accent.value, $type: "color" },
+        accent: { $value: hexToDtcgColor(system.colors.accent.value), $type: "color" },
         neutral: {
-          background: { $value: system.colors.neutrals.background.value, $type: "color" },
-          surface: { $value: system.colors.neutrals.surface.value, $type: "color" },
-          border: { $value: system.colors.neutrals.border.value, $type: "color" },
-          text: { $value: system.colors.neutrals.text.value, $type: "color" },
-          mutedText: { $value: system.colors.neutrals.mutedText.value, $type: "color" },
+          background: { $value: hexToDtcgColor(system.colors.neutrals.background.value), $type: "color" },
+          surface: { $value: hexToDtcgColor(system.colors.neutrals.surface.value), $type: "color" },
+          border: { $value: hexToDtcgColor(system.colors.neutrals.border.value), $type: "color" },
+          text: { $value: hexToDtcgColor(system.colors.neutrals.text.value), $type: "color" },
+          mutedText: { $value: hexToDtcgColor(system.colors.neutrals.mutedText.value), $type: "color" },
         },
-        background: { $value: system.colors.neutrals.background.value, $type: "color" },
-        surface: { $value: system.colors.neutrals.surface.value, $type: "color" },
-        border: { $value: system.colors.neutrals.border.value, $type: "color" },
-        text: { $value: system.colors.neutrals.text.value, $type: "color" },
-        mutedText: { $value: system.colors.neutrals.mutedText.value, $type: "color" },
+        background: { $value: hexToDtcgColor(system.colors.neutrals.background.value), $type: "color" },
+        surface: { $value: hexToDtcgColor(system.colors.neutrals.surface.value), $type: "color" },
+        border: { $value: hexToDtcgColor(system.colors.neutrals.border.value), $type: "color" },
+        text: { $value: hexToDtcgColor(system.colors.neutrals.text.value), $type: "color" },
+        mutedText: { $value: hexToDtcgColor(system.colors.neutrals.mutedText.value), $type: "color" },
         semantic: {
-          success: { $value: system.colors.semantic.success.value, $type: "color" },
-          warning: { $value: system.colors.semantic.warning.value, $type: "color" },
-          error: { $value: system.colors.semantic.error.value, $type: "color" },
-          info: { $value: system.colors.semantic.info.value, $type: "color" },
+          success: { $value: hexToDtcgColor(system.colors.semantic.success.value), $type: "color" },
+          warning: { $value: hexToDtcgColor(system.colors.semantic.warning.value), $type: "color" },
+          error: { $value: hexToDtcgColor(system.colors.semantic.error.value), $type: "color" },
+          info: { $value: hexToDtcgColor(system.colors.semantic.info.value), $type: "color" },
         },
         // Semantic Token Aliases
         brand: {
@@ -1496,11 +1614,11 @@ export function generateTokensJson(system: FullDesignSystem): string {
           mono: { $value: system.typography.monoFont.value, $type: "fontFamily" },
         },
         fontSize: {
-          base: { $value: `${system.typography.baseFontSize.value}px`, $type: "dimension" },
-          h1: { $value: system.typography.headings.h1.value.size, $type: "dimension" },
-          h2: { $value: system.typography.headings.h2.value.size, $type: "dimension" },
-          h3: { $value: system.typography.headings.h3.value.size, $type: "dimension" },
-          h4: { $value: system.typography.headings.h4.value.size, $type: "dimension" },
+          base: { $value: parseDimensionToDtcg(`${system.typography.baseFontSize.value}px`), $type: "dimension" },
+          h1: { $value: parseDimensionToDtcg(system.typography.headings.h1.value.size), $type: "dimension" },
+          h2: { $value: parseDimensionToDtcg(system.typography.headings.h2.value.size), $type: "dimension" },
+          h3: { $value: parseDimensionToDtcg(system.typography.headings.h3.value.size), $type: "dimension" },
+          h4: { $value: parseDimensionToDtcg(system.typography.headings.h4.value.size), $type: "dimension" },
         },
         fontWeight: {
           h1: { $value: system.typography.headings.h1.value.weight, $type: "fontWeight" },
@@ -1508,17 +1626,17 @@ export function generateTokensJson(system: FullDesignSystem): string {
           h3: { $value: system.typography.headings.h3.value.weight, $type: "fontWeight" },
           h4: { $value: system.typography.headings.h4.value.weight, $type: "fontWeight" },
         },
-        baseFontSize: { $value: `${system.typography.baseFontSize.value}px`, $type: "dimension" },
+        baseFontSize: { $value: parseDimensionToDtcg(`${system.typography.baseFontSize.value}px`), $type: "dimension" },
       },
       dimension: {
         radius: {
-          base: { $value: system.surfaces.baseRadius.value, $type: "dimension" },
-          card: { $value: system.surfaces.cardRadius.value, $type: "dimension" },
+          base: { $value: parseDimensionToDtcg(system.surfaces.baseRadius.value), $type: "dimension" },
+          card: { $value: parseDimensionToDtcg(system.surfaces.cardRadius.value), $type: "dimension" },
         },
-        containerMaxWidth: { $value: system.layout.containerMaxWidth.value, $type: "dimension" },
-        navbarHeight: { $value: system.navigation.navbarHeight.value, $type: "dimension" },
+        containerMaxWidth: { $value: parseDimensionToDtcg(system.layout.containerMaxWidth.value), $type: "dimension" },
+        navbarHeight: { $value: parseDimensionToDtcg(system.navigation.navbarHeight.value), $type: "dimension" },
         spacing: Object.fromEntries(
-          Object.entries(system.spacing.scale.value).map(([k, v]) => [k, { $value: v, $type: "dimension" }])
+          Object.entries(system.spacing.scale.value).map(([k, v]) => [k, { $value: parseDimensionToDtcg(v), $type: "dimension" }])
         ),
       },
       // Composite DTCG Shadow Tokens
@@ -1755,11 +1873,116 @@ export interface DtcgImportResult {
   importedTokens: number;
   unsupportedFields: string[];
   warnings: string[];
+  unresolvedAliases: string[];
+}
+
+export function resolveDtcgAlias(
+  val: any,
+  root: any,
+  unresolved: string[],
+  visited = new Set<string>()
+): any {
+  if (typeof val !== "string" || !val.startsWith("{") || !val.endsWith("}")) {
+    return val;
+  }
+  const aliasRef = val.slice(1, -1).trim();
+  if (visited.has(aliasRef)) {
+    const circularMsg = `{${aliasRef}} (circular reference)`;
+    if (!unresolved.includes(circularMsg)) unresolved.push(circularMsg);
+    return undefined;
+  }
+  visited.add(aliasRef);
+
+  const parts = aliasRef.split(".");
+  let current: any = root;
+  for (const part of parts) {
+    if (current && typeof current === "object" && part in current) {
+      current = current[part];
+    } else {
+      const missingMsg = `{${aliasRef}}`;
+      if (!unresolved.includes(missingMsg)) unresolved.push(missingMsg);
+      return undefined;
+    }
+  }
+
+  if (current && typeof current === "object" && "$value" in current) {
+    return resolveDtcgAlias(current.$value, root, unresolved, visited);
+  }
+  return current;
+}
+
+export interface DtcgValidationResult {
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
+  tokenCount: number;
+}
+
+export function validateDtcgTokenTree(jsonObj: any): DtcgValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  let tokenCount = 0;
+
+  function walk(node: any, path: string) {
+    if (!node || typeof node !== "object") return;
+
+    if ("$value" in node) {
+      tokenCount++;
+      const val = node.$value;
+      const type = node.$type;
+
+      if (val === undefined || val === null) {
+        errors.push(`Token at ${path} has missing or null $value`);
+      }
+
+      const validTypes = new Set([
+        "color",
+        "dimension",
+        "fontFamily",
+        "fontWeight",
+        "duration",
+        "cubicBezier",
+        "shadow",
+        "border",
+        "typography",
+        "number",
+        "string",
+      ]);
+
+      if (type && !validTypes.has(type)) {
+        warnings.push(`Token at ${path} has non-standard $type: ${type}`);
+      }
+
+      if (typeof val === "string" && val.startsWith("{") && val.endsWith("}")) {
+        const dummyUnresolved: string[] = [];
+        const resolved = resolveDtcgAlias(val, jsonObj, dummyUnresolved);
+        if (resolved === undefined) {
+          errors.push(`Token at ${path} references unresolved alias ${val}`);
+        }
+      }
+      return;
+    }
+
+    for (const [key, child] of Object.entries(node)) {
+      if (key.startsWith("$")) continue;
+      walk(child, path ? `${path}.${key}` : key);
+    }
+  }
+
+  walk(jsonObj, "");
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings,
+    tokenCount,
+  };
 }
 
 export function parseDtcgTokens(jsonText: string): DtcgImportResult {
   const unsupportedFields: string[] = [];
   const warnings: string[] = [];
+  const unresolvedAliases: string[] = [];
   let importedTokens = 0;
   const result: any = {
     colors: { neutrals: {}, semantic: {} },
@@ -1790,80 +2013,109 @@ export function parseDtcgTokens(jsonText: string): DtcgImportResult {
       }
     }
 
+    const extractColor = (token: any): string | undefined => {
+      if (!token || !("$value" in token)) return undefined;
+      const resolved = resolveDtcgAlias(token.$value, parsed, unresolvedAliases);
+      if (resolved === undefined) return undefined;
+      return dtcgColorToHex(resolved);
+    };
+
+    const extractDim = (token: any): string | undefined => {
+      if (!token || !("$value" in token)) return undefined;
+      const resolved = resolveDtcgAlias(token.$value, parsed, unresolvedAliases);
+      if (resolved === undefined) return undefined;
+      return dtcgDimensionToString(resolved);
+    };
+
+    const extractString = (token: any): string | undefined => {
+      if (!token || !("$value" in token)) return undefined;
+      const resolved = resolveDtcgAlias(token.$value, parsed, unresolvedAliases);
+      if (resolved === undefined) return undefined;
+      return String(resolved);
+    };
+
     // 1. Parse Colors
-    if (parsed.color?.primary?.$value) {
-      result.colors.primary = attr(parsed.color.primary.$value, "observed");
-      importedTokens++;
-    } else if (parsed.color?.primary?.["500"]?.$value) {
-      result.colors.primary = attr(parsed.color.primary["500"].$value, "observed");
+    const primaryVal = extractColor(parsed.color?.primary) || extractColor(parsed.color?.primary?.["500"]);
+    if (primaryVal) {
+      result.colors.primary = attr(primaryVal, "observed");
       importedTokens++;
     }
 
-    if (parsed.color?.accent?.$value) {
-      result.colors.accent = attr(parsed.color.accent.$value, "observed");
+    const accentVal = extractColor(parsed.color?.accent);
+    if (accentVal) {
+      result.colors.accent = attr(accentVal, "observed");
       importedTokens++;
     }
 
-    const bgVal = parsed.color?.neutral?.background?.$value || parsed.color?.background?.$value;
+    const bgVal = extractColor(parsed.color?.neutral?.background) || extractColor(parsed.color?.background);
     if (bgVal) {
       result.colors.neutrals.background = attr(bgVal, "observed");
       importedTokens++;
     }
 
-    const surfaceVal = parsed.color?.neutral?.surface?.$value || parsed.color?.surface?.$value;
+    const surfaceVal = extractColor(parsed.color?.neutral?.surface) || extractColor(parsed.color?.surface);
     if (surfaceVal) {
       result.colors.neutrals.surface = attr(surfaceVal, "observed");
       importedTokens++;
     }
 
-    const borderVal = parsed.color?.neutral?.border?.$value || parsed.color?.border?.$value;
+    const borderVal = extractColor(parsed.color?.neutral?.border) || extractColor(parsed.color?.border);
     if (borderVal) {
       result.colors.neutrals.border = attr(borderVal, "observed");
       importedTokens++;
     }
 
-    const textVal = parsed.color?.neutral?.text?.$value || parsed.color?.text?.$value;
+    const textVal = extractColor(parsed.color?.neutral?.text) || extractColor(parsed.color?.text);
     if (textVal) {
       result.colors.neutrals.text = attr(textVal, "observed");
       importedTokens++;
     }
 
+    const mutedTextVal = extractColor(parsed.color?.neutral?.mutedText) || extractColor(parsed.color?.mutedText);
+    if (mutedTextVal) {
+      result.colors.neutrals.mutedText = attr(mutedTextVal, "observed");
+      importedTokens++;
+    }
+
     // 2. Parse Typography
     const headingFont =
-      parsed.typography?.fontFamily?.heading?.$value ||
-      parsed.typography?.heading?.$value;
+      extractString(parsed.typography?.fontFamily?.heading) ||
+      extractString(parsed.typography?.heading);
     if (headingFont) {
-      const val = typeof headingFont === "string" && headingFont.startsWith("{")
-        ? "Inter Display, sans-serif"
-        : headingFont;
-      result.typography.headingFont = attr(val, "observed");
+      result.typography.headingFont = attr(headingFont, "observed");
       importedTokens++;
     }
 
     const bodyFont =
-      parsed.typography?.fontFamily?.body?.$value ||
-      parsed.typography?.body?.$value;
+      extractString(parsed.typography?.fontFamily?.body) ||
+      extractString(parsed.typography?.body);
     if (bodyFont) {
-      const val = typeof bodyFont === "string" && bodyFont.startsWith("{")
-        ? "Inter, sans-serif"
-        : bodyFont;
-      result.typography.bodyFont = attr(val, "observed");
+      result.typography.bodyFont = attr(bodyFont, "observed");
+      importedTokens++;
+    }
+
+    const monoFont =
+      extractString(parsed.typography?.fontFamily?.mono) ||
+      extractString(parsed.typography?.mono);
+    if (monoFont) {
+      result.typography.monoFont = attr(monoFont, "observed");
       importedTokens++;
     }
 
     // 3. Parse Dimensions & Radii
-    const baseRadius = parsed.dimension?.radius?.base?.$value;
+    const baseRadius = extractDim(parsed.dimension?.radius?.base);
     if (baseRadius) {
       result.surfaces.baseRadius = attr(baseRadius, "observed");
       importedTokens++;
     }
-    const cardRadius = parsed.dimension?.radius?.card?.$value;
+
+    const cardRadius = extractDim(parsed.dimension?.radius?.card);
     if (cardRadius) {
       result.surfaces.cardRadius = attr(cardRadius, "observed");
       importedTokens++;
     }
 
-    const containerMaxWidth = parsed.dimension?.containerMaxWidth?.$value || parsed.dimension?.layout?.containerMaxWidth?.$value;
+    const containerMaxWidth = extractDim(parsed.dimension?.containerMaxWidth) || extractDim(parsed.dimension?.layout?.containerMaxWidth);
     if (containerMaxWidth) {
       result.layout.containerMaxWidth = attr(containerMaxWidth, "observed");
       importedTokens++;
@@ -1871,28 +2123,38 @@ export function parseDtcgTokens(jsonText: string): DtcgImportResult {
 
     // 4. Parse Shadows (composite or string)
     if (parsed.shadow?.subtle?.$value) {
-      const val = parsed.shadow.subtle.$value;
-      const cssVal = typeof val === "object" ? dtcgShadowToCss(val) : String(val);
-      result.surfaces.shadows.subtle = attr(cssVal, "observed");
-      importedTokens++;
+      const resolved = resolveDtcgAlias(parsed.shadow.subtle.$value, parsed, unresolvedAliases);
+      if (resolved !== undefined) {
+        const cssVal = typeof resolved === "object" ? dtcgShadowToCss(resolved) : String(resolved);
+        result.surfaces.shadows.subtle = attr(cssVal, "observed");
+        importedTokens++;
+      }
     }
     if (parsed.shadow?.medium?.$value) {
-      const val = parsed.shadow.medium.$value;
-      const cssVal = typeof val === "object" ? dtcgShadowToCss(val) : String(val);
-      result.surfaces.shadows.medium = attr(cssVal, "observed");
-      importedTokens++;
+      const resolved = resolveDtcgAlias(parsed.shadow.medium.$value, parsed, unresolvedAliases);
+      if (resolved !== undefined) {
+        const cssVal = typeof resolved === "object" ? dtcgShadowToCss(resolved) : String(resolved);
+        result.surfaces.shadows.medium = attr(cssVal, "observed");
+        importedTokens++;
+      }
     }
     if (parsed.shadow?.elevated?.$value) {
-      const val = parsed.shadow.elevated.$value;
-      const cssVal = typeof val === "object" ? dtcgShadowToCss(val) : String(val);
-      result.surfaces.shadows.elevated = attr(cssVal, "observed");
-      importedTokens++;
+      const resolved = resolveDtcgAlias(parsed.shadow.elevated.$value, parsed, unresolvedAliases);
+      if (resolved !== undefined) {
+        const cssVal = typeof resolved === "object" ? dtcgShadowToCss(resolved) : String(resolved);
+        result.surfaces.shadows.elevated = attr(cssVal, "observed");
+        importedTokens++;
+      }
     }
 
-    return { system: result, importedTokens, unsupportedFields, warnings };
+    if (unresolvedAliases.length > 0) {
+      warnings.push(`Unresolved alias references: ${unresolvedAliases.join(", ")}`);
+    }
+
+    return { system: result, importedTokens, unsupportedFields, warnings, unresolvedAliases };
   } catch (err: any) {
     warnings.push(`JSON parsing error: ${err?.message || "Invalid JSON syntax"}`);
-    return { system: {}, importedTokens: 0, unsupportedFields: [], warnings };
+    return { system: {}, importedTokens: 0, unsupportedFields: [], warnings, unresolvedAliases: [] };
   }
 }
 
@@ -1963,9 +2225,19 @@ export function parseCssTokens(cssText: string): Partial<FullDesignSystem> & { u
  * Generates a complete, responsive, dependency-free HTML document with embedded custom properties.
  */
 export function generateComponentsCheatsheetHtml(system: FullDesignSystem): string {
+  const escapeCheatsheetHtml = (str: string) =>
+    str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
   const ladder = system.colors.primaryLadder.value;
-  const project = system.identity.projectName.value;
+  const project = escapeCheatsheetHtml(system.identity.projectName.value);
+  const brandTone = escapeCheatsheetHtml(system.identity.brandTone.value);
   const arch = ARCHETYPES[system.identity.archetype.value];
+  const archName = escapeCheatsheetHtml(arch?.name || "System");
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -2287,9 +2559,9 @@ export function generateComponentsCheatsheetHtml(system: FullDesignSystem): stri
   <div class="container">
     <!-- Hero Section -->
     <section class="hero">
-      <span class="badge">${arch.name}</span>
+      <span class="badge">${archName}</span>
       <h1 class="hero-h1">${project} Design System</h1>
-      <p class="hero-lead">${system.identity.brandTone.value}</p>
+      <p class="hero-lead">${brandTone}</p>
       <div class="hero-actions">
         <button class="btn btn-primary">Primary Action</button>
         <button class="btn btn-secondary">Documentation</button>

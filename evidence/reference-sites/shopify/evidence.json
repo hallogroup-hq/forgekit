@@ -1,0 +1,113 @@
+{
+  "siteKey": "shopify",
+  "url": "https://shopify.com",
+  "name": "Shopify",
+  "archetype": "ecommerce",
+  "timestamp": "2026-10-08T20:26:43.524Z",
+  "inspectionMethod": "headless-chrome",
+  "viewports": {
+    "desktop": {
+      "width": 1440,
+      "height": 900
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  "meta": {
+    "title": "Shopify: Your Commerce Platform to Start, Run & Grow - Shopify Indonesia",
+    "description": "Try Shopify free. Build or grow your business fast with AI. Get more than ecommerce software with tools to manage every part of your business."
+  },
+  "metrics": {
+    "body": {
+      "fontFamily": "Shopify-Inter, Helvetica, Arial, sans-serif",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "lineHeight": "24px",
+      "letterSpacing": "normal",
+      "color": "rgb(0, 0, 0)",
+      "backgroundColor": "rgb(0, 0, 0)",
+      "width": 1440,
+      "height": 9959,
+      "padding": "0px"
+    },
+    "h1": {
+      "fontFamily": "Shopify-Inter, Helvetica, Arial, sans-serif",
+      "fontSize": "96px",
+      "fontWeight": "300",
+      "lineHeight": "103.68px",
+      "letterSpacing": "-1.92px",
+      "color": "rgb(255, 255, 255)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "width": 1,
+      "height": 207,
+      "padding": "0px"
+    },
+    "h2": {
+      "fontFamily": "Shopify-Inter, Helvetica, Arial, sans-serif",
+      "fontSize": "96px",
+      "fontWeight": "300",
+      "lineHeight": "103.68px",
+      "letterSpacing": "-1.92px",
+      "color": "rgb(255, 255, 255)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "width": 1260,
+      "height": 104,
+      "padding": "0px"
+    },
+    "p": {
+      "fontFamily": "Shopify-Inter, Helvetica, Arial, sans-serif",
+      "fontSize": "16px",
+      "fontWeight": "420",
+      "lineHeight": "24px",
+      "letterSpacing": "normal",
+      "color": "rgb(255, 255, 255)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "width": 275,
+      "height": 24,
+      "padding": "0px"
+    },
+    "primaryButton": {
+      "fontFamily": "Shopify-Inter, Helvetica, Arial, sans-serif",
+      "fontSize": "16px",
+      "fontWeight": "550",
+      "lineHeight": "24px",
+      "letterSpacing": "normal",
+      "color": "rgb(0, 0, 0)",
+      "backgroundColor": "rgb(255, 255, 255)",
+      "borderRadius": "9999px",
+      "width": 162,
+      "height": 44,
+      "padding": "8px 20px"
+    },
+    "card": {
+      "fontFamily": "Shopify-Inter, Helvetica, Arial, sans-serif",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "lineHeight": "24px",
+      "letterSpacing": "normal",
+      "color": "rgb(255, 255, 255)",
+      "backgroundColor": "rgb(2, 9, 10)",
+      "width": 1440,
+      "height": 847,
+      "padding": "72px 0px 0px"
+    },
+    "containerMaxWidth": "1440px",
+    "isDark": true
+  },
+  "extractedPalette": [
+    "#000000",
+    "#ffffff",
+    "#a1a1aa",
+    "#36f4a4"
+  ],
+  "extractedFonts": [
+    "Shopify-Inter"
+  ],
+  "screenshots": {
+    "desktopPath": "/Users/akmalirsyadpermana/.gemini/antigravity/scratch/forgekit/evidence/reference-sites/shopify/desktop.png",
+    "mobilePath": "/Users/akmalirsyadpermana/.gemini/antigravity/scratch/forgekit/evidence/reference-sites/shopify/mobile.png"
+  },
+  "fidelityReport": "Inspected Shopify via headless Chrome (1440x900 desktop & 390x844 mobile). Extracted 4 colors and 1 rendered fonts. Body: #000000 on #000000. Primary CTA: #ffffff."
+}

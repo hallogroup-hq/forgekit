@@ -27,6 +27,22 @@ describe("CSV Cleaner Engine", () => {
       const reserialized = serializeCsv(rows, ",");
       assert.ok(reserialized.includes('"123 Main St, Apt 4"'));
     });
+
+    it("should handle RFC 4180 doubled quotes and multiline fields without corruption", () => {
+      const complexCsv = 'id,notes\n1,"Said: ""Hello, World!"""\n2,"Line 1\nLine 2"';
+      const { rows } = parseRawCsv(complexCsv);
+      assert.equal(rows.length, 3);
+      assert.equal(rows[1][1], 'Said: "Hello, World!"');
+      assert.equal(rows[2][1], 'Line 1\nLine 2');
+
+      const reOutput = serializeCsv(rows, ",");
+      assert.ok(reOutput.includes('""Hello, World!""'));
+      assert.ok(reOutput.includes('"Line 1\nLine 2"'));
+
+      // Round-trip back through parser
+      const { rows: roundTripRows } = parseRawCsv(reOutput);
+      assert.deepEqual(roundTripRows, rows);
+    });
   });
 
   describe("formatHeaderField", () => {

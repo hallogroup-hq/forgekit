@@ -1,0 +1,115 @@
+{
+  "siteKey": "aesop",
+  "url": "https://www.aesop.com",
+  "name": "Aesop",
+  "archetype": "luxury",
+  "timestamp": "2026-10-08T20:26:50.867Z",
+  "inspectionMethod": "headless-chrome",
+  "viewports": {
+    "desktop": {
+      "width": 1440,
+      "height": 900
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  "meta": {
+    "title": "Aesop USA | Formulations for Skin, Hair & Body",
+    "themeColor": "#e9e9e9",
+    "description": "Aesop offers skin, hair and body care formulations, and personal and home fragrances created with meticulous attention to detail. Browse the range online."
+  },
+  "metrics": {
+    "body": {
+      "fontFamily": "SuisseIntl, sans-serif",
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "lineHeight": "18px",
+      "letterSpacing": "normal",
+      "color": "rgb(51, 51, 51)",
+      "backgroundColor": "rgb(255, 254, 242)",
+      "width": 1440,
+      "height": 7721,
+      "padding": "0px"
+    },
+    "h1": {
+      "fontFamily": "SuisseIntl, sans-serif",
+      "fontSize": "36px",
+      "fontWeight": "400",
+      "lineHeight": "50.4px",
+      "letterSpacing": "normal",
+      "color": "rgb(51, 51, 51)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "width": 1,
+      "height": 1,
+      "padding": "0px"
+    },
+    "h2": {
+      "fontFamily": "SuisseIntl, sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "400",
+      "lineHeight": "39.9px",
+      "letterSpacing": "normal",
+      "color": "rgb(255, 254, 242)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "width": 1170,
+      "height": 41,
+      "padding": "0px"
+    },
+    "p": {
+      "fontFamily": "SuisseIntl-Medium, sans-serif",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "lineHeight": "21px",
+      "letterSpacing": "normal",
+      "color": "rgb(51, 51, 51)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "width": 0,
+      "height": 0,
+      "padding": "0px"
+    },
+    "primaryButton": {
+      "fontFamily": "SuisseIntl, sans-serif",
+      "fontSize": "0px",
+      "fontWeight": "400",
+      "lineHeight": "normal",
+      "letterSpacing": "normal",
+      "color": "rgb(0, 0, 0)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "width": 16,
+      "height": 16,
+      "padding": "0px"
+    },
+    "card": {
+      "fontFamily": "SuisseIntl, sans-serif",
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "lineHeight": "18px",
+      "letterSpacing": "normal",
+      "color": "rgb(255, 254, 242)",
+      "backgroundColor": "rgb(51, 51, 51)",
+      "width": 1440,
+      "height": 0,
+      "padding": "0px"
+    },
+    "containerMaxWidth": "1440px",
+    "isDark": false
+  },
+  "extractedPalette": [
+    "#fffef2",
+    "#666666",
+    "#333333",
+    "#000000",
+    "#252525"
+  ],
+  "extractedFonts": [
+    "SuisseIntl",
+    "SuisseIntl-Medium"
+  ],
+  "screenshots": {
+    "desktopPath": "/Users/akmalirsyadpermana/.gemini/antigravity/scratch/forgekit/evidence/reference-sites/aesop/desktop.png",
+    "mobilePath": "/Users/akmalirsyadpermana/.gemini/antigravity/scratch/forgekit/evidence/reference-sites/aesop/mobile.png"
+  },
+  "fidelityReport": "Inspected Aesop via headless Chrome (1440x900 desktop & 390x844 mobile). Extracted 5 colors and 2 rendered fonts. Body: #333333 on #fffef2. Primary CTA: #000000."
+}

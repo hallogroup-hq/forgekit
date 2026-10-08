@@ -1,0 +1,109 @@
+{
+  "siteKey": "the-atlantic",
+  "url": "https://www.theatlantic.com",
+  "name": "The Atlantic",
+  "archetype": "editorial",
+  "timestamp": "2026-10-08T20:26:38.730Z",
+  "inspectionMethod": "headless-chrome",
+  "viewports": {
+    "desktop": {
+      "width": 1440,
+      "height": 900
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  "meta": {
+    "title": "World Edition - The Atlantic",
+    "description": "The Atlantic covers news, politics, culture, technology, health, and more, through its articles, podcasts, videos, and flagship magazine."
+  },
+  "metrics": {
+    "body": {
+      "fontFamily": "Times",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "lineHeight": "18.4px",
+      "letterSpacing": "normal",
+      "color": "rgb(0, 0, 0)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "width": 1440,
+      "height": 8452,
+      "padding": "0px"
+    },
+    "h1": {
+      "fontFamily": "sans-serif",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "lineHeight": "1.5",
+      "letterSpacing": "normal",
+      "color": "#000000",
+      "backgroundColor": "#ffffff"
+    },
+    "h2": {
+      "fontFamily": "Graphik, -apple-system, blinkmacsystemfont, roboto, \"helvetica neue\", \"segoe ui\", arial, sans-serif",
+      "fontSize": "24px",
+      "fontWeight": "700",
+      "lineHeight": "27.6px",
+      "letterSpacing": "normal",
+      "color": "rgb(0, 0, 0)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "width": 1,
+      "height": 1,
+      "padding": "0px"
+    },
+    "p": {
+      "fontFamily": "AGaramondPro, \"Adobe Garamond Pro\", garamond, Times, serif",
+      "fontSize": "20px",
+      "fontWeight": "400",
+      "lineHeight": "28px",
+      "letterSpacing": "normal",
+      "color": "rgb(0, 0, 0)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "width": 624,
+      "height": 28,
+      "padding": "0px"
+    },
+    "primaryButton": {
+      "fontFamily": "Graphik, -apple-system, blinkmacsystemfont, roboto, \"helvetica neue\", \"segoe ui\", arial, sans-serif",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "lineHeight": "16.1px",
+      "letterSpacing": "normal",
+      "color": "rgb(0, 0, 0)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "width": 28,
+      "height": 23,
+      "padding": "4px"
+    },
+    "card": {
+      "fontFamily": "Graphik, -apple-system, blinkmacsystemfont, roboto, \"helvetica neue\", \"segoe ui\", arial, sans-serif",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "lineHeight": "16.1px",
+      "letterSpacing": "normal",
+      "color": "rgb(0, 0, 0)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "width": 20,
+      "height": 15,
+      "padding": "0px"
+    },
+    "containerMaxWidth": "1440px",
+    "isDark": true
+  },
+  "extractedPalette": [
+    "#000000",
+    "#ffffff",
+    "#e7131a",
+    "#0000ee"
+  ],
+  "extractedFonts": [
+    "Graphik"
+  ],
+  "screenshots": {
+    "desktopPath": "/Users/akmalirsyadpermana/.gemini/antigravity/scratch/forgekit/evidence/reference-sites/the-atlantic/desktop.png",
+    "mobilePath": "/Users/akmalirsyadpermana/.gemini/antigravity/scratch/forgekit/evidence/reference-sites/the-atlantic/mobile.png"
+  },
+  "fidelityReport": "Inspected The Atlantic via headless Chrome (1440x900 desktop & 390x844 mobile). Extracted 4 colors and 1 rendered fonts. Body: #000000 on #000000. Primary CTA: #000000."
+}

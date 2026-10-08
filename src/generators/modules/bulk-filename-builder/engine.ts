@@ -1,3 +1,5 @@
+import JSZip from "jszip";
+
 /**
  * Bulk Filename Renamer & Rule Builder Engine
  * Generates structured, slugified, zero-padded filenames,
@@ -223,3 +225,17 @@ export function generateMappingCsv(mappings: RenameMapping[]): string {
   );
   return `${header}\n${rows.join("\n")}`;
 }
+
+/**
+ * Creates a valid ZIP binary archive from an array of files.
+ */
+export async function createRenamedZip(
+  files: Array<{ name: string; content: string | Uint8Array | Buffer }>
+): Promise<Uint8Array> {
+  const zip = new JSZip();
+  for (const file of files) {
+    zip.file(file.name, file.content);
+  }
+  return await zip.generateAsync({ type: "uint8array" });
+}
+

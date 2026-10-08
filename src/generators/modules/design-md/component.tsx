@@ -52,6 +52,8 @@ import {
   DesignObservation,
   REFERENCE_SITES,
   createReferenceSiteDesignSystem,
+  generateColorLadder,
+  preserveUserOverrides,
 } from "./engine";
 
 export default function DesignMdGenerator() {
@@ -123,7 +125,7 @@ export default function DesignMdGenerator() {
       projectName: system.identity.projectName.value,
       observation: undefined, // Clear observation in Quick Archetype mode
     });
-    setSystem(newSystem);
+    setSystem((prev) => preserveUserOverrides(newSystem, prev));
     confetti({ particleCount: 20, spread: 50, origin: { y: 0.8 } });
   };
 
@@ -133,7 +135,7 @@ export default function DesignMdGenerator() {
     if (!ref) return;
 
     const newSystem = createReferenceSiteDesignSystem(siteKey);
-    setSystem(newSystem);
+    setSystem((prev) => preserveUserOverrides(newSystem, prev));
     setUrlInput(ref.url);
     setSelectedArchetype(ref.archetype);
 
@@ -183,22 +185,22 @@ export default function DesignMdGenerator() {
 
         setSystem((prev) => {
           const updated = { ...prev };
-          if (data.projectName) {
+          if (data.projectName && !prev.identity.projectName.userOverridden) {
             updated.identity.projectName = attr(data.projectName, "observed", data.domain);
           }
-          if (data.brandTone) {
+          if (data.brandTone && !prev.identity.brandTone.userOverridden) {
             updated.identity.brandTone = attr(data.brandTone, "inferred", data.domain);
           }
-          if (data.primaryColor) {
+          if (data.primaryColor && !prev.colors.primary.userOverridden) {
             updated.colors.primary = attr(data.primaryColor, "observed", data.domain);
           }
-          if (data.accentColor) {
+          if (data.accentColor && !prev.colors.accent.userOverridden) {
             updated.colors.accent = attr(data.accentColor, "observed", data.domain);
           }
-          if (data.headingFont) {
+          if (data.headingFont && !prev.typography.headingFont.userOverridden) {
             updated.typography.headingFont = attr(data.headingFont, "observed", data.domain);
           }
-          if (data.bodyFont) {
+          if (data.bodyFont && !prev.typography.bodyFont.userOverridden) {
             updated.typography.bodyFont = attr(data.bodyFont, "observed", data.domain);
           }
           return updated;
@@ -650,6 +652,29 @@ export default function DesignMdGenerator() {
                       />
                     </div>
                   </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Archetype</label>
+                      <select
+                        value={system.identity.archetype.value}
+                        onChange={(e) => updateSystemProp("identity", (sec) => ({ ...sec, archetype: attr(e.target.value as DesignArchetype, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                      >
+                        {Object.entries(ARCHETYPES).map(([k, meta]) => (
+                          <option key={k} value={k}>{meta.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Version</label>
+                      <input
+                        type="text"
+                        value={system.identity.version.value}
+                        onChange={(e) => updateSystemProp("identity", (sec) => ({ ...sec, version: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
+                      />
+                    </div>
+                  </div>
                   <div>
                     <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Brand Tone & Philosophy</label>
                     <input
@@ -678,27 +703,58 @@ export default function DesignMdGenerator() {
               </button>
               {expandedSection === 2 && (
                 <div className="p-4 space-y-3.5 border-t border-zinc-200 dark:border-zinc-800">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-2.5">
                     <div>
                       <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Primary Color</label>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         <input
                           type="color"
                           value={system.colors.primary.value}
-                          onChange={(e) => updateSystemProp("colors", (sec) => ({ ...sec, primary: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            updateSystemProp("colors", (sec) => ({
+                              ...sec,
+                              primary: attr(val, "user-provided", undefined, undefined, undefined, 1, true),
+                              primaryLadder: attr(generateColorLadder(val), "inferred"),
+                            }));
+                          }}
                           className="w-7 h-7 rounded border border-zinc-300 dark:border-zinc-700 cursor-pointer"
                         />
                         <input
                           type="text"
                           value={system.colors.primary.value}
-                          onChange={(e) => updateSystemProp("colors", (sec) => ({ ...sec, primary: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
-                          className="flex-1 px-2.5 py-1 text-xs font-mono rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            updateSystemProp("colors", (sec) => ({
+                              ...sec,
+                              primary: attr(val, "user-provided", undefined, undefined, undefined, 1, true),
+                              primaryLadder: attr(generateColorLadder(val), "inferred"),
+                            }));
+                          }}
+                          className="flex-1 px-2 py-1 text-xs font-mono rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Accent Color</label>
-                      <div className="flex items-center gap-2">
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Secondary</label>
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="color"
+                          value={system.colors.secondary.value}
+                          onChange={(e) => updateSystemProp("colors", (sec) => ({ ...sec, secondary: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                          className="w-7 h-7 rounded border border-zinc-300 dark:border-zinc-700 cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          value={system.colors.secondary.value}
+                          onChange={(e) => updateSystemProp("colors", (sec) => ({ ...sec, secondary: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                          className="flex-1 px-2 py-1 text-xs font-mono rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Accent</label>
+                      <div className="flex items-center gap-1.5">
                         <input
                           type="color"
                           value={system.colors.accent.value}
@@ -709,44 +765,109 @@ export default function DesignMdGenerator() {
                           type="text"
                           value={system.colors.accent.value}
                           onChange={(e) => updateSystemProp("colors", (sec) => ({ ...sec, accent: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
-                          className="flex-1 px-2.5 py-1 text-xs font-mono rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                          className="flex-1 px-2 py-1 text-xs font-mono rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
                         />
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <label className="block text-[10px] text-zinc-500 mb-1">Background</label>
-                      <input
-                        type="text"
-                        value={system.colors.neutrals.background.value}
-                        onChange={(e) => updateSystemProp("colors", (sec) => ({ ...sec, neutrals: { ...sec.neutrals, background: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) } }))}
-                        className="w-full px-2 py-1 text-[11px] font-mono rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
-                      />
+                  {/* Neutrals (5 keys) */}
+                  <div className="space-y-1.5 pt-1">
+                    <span className="text-[10px] uppercase font-mono text-zinc-400">Neutrals & Surfaces</span>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      <div>
+                        <label className="block text-[10px] text-zinc-500 mb-0.5">Background</label>
+                        <input
+                          type="text"
+                          value={system.colors.neutrals.background.value}
+                          onChange={(e) => updateSystemProp("colors", (sec) => ({ ...sec, neutrals: { ...sec.neutrals, background: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) } }))}
+                          className="w-full px-2 py-1 text-[11px] font-mono rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-zinc-500 mb-0.5">Surface</label>
+                        <input
+                          type="text"
+                          value={system.colors.neutrals.surface.value}
+                          onChange={(e) => updateSystemProp("colors", (sec) => ({ ...sec, neutrals: { ...sec.neutrals, surface: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) } }))}
+                          className="w-full px-2 py-1 text-[11px] font-mono rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-zinc-500 mb-0.5">Border</label>
+                        <input
+                          type="text"
+                          value={system.colors.neutrals.border.value}
+                          onChange={(e) => updateSystemProp("colors", (sec) => ({ ...sec, neutrals: { ...sec.neutrals, border: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) } }))}
+                          className="w-full px-2 py-1 text-[11px] font-mono rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-zinc-500 mb-0.5">Text Body</label>
+                        <input
+                          type="text"
+                          value={system.colors.neutrals.text.value}
+                          onChange={(e) => updateSystemProp("colors", (sec) => ({ ...sec, neutrals: { ...sec.neutrals, text: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) } }))}
+                          className="w-full px-2 py-1 text-[11px] font-mono rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-zinc-500 mb-0.5">Muted Text</label>
+                        <input
+                          type="text"
+                          value={system.colors.neutrals.mutedText.value}
+                          onChange={(e) => updateSystemProp("colors", (sec) => ({ ...sec, neutrals: { ...sec.neutrals, mutedText: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) } }))}
+                          className="w-full px-2 py-1 text-[11px] font-mono rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-[10px] text-zinc-500 mb-1">Surface</label>
-                      <input
-                        type="text"
-                        value={system.colors.neutrals.surface.value}
-                        onChange={(e) => updateSystemProp("colors", (sec) => ({ ...sec, neutrals: { ...sec.neutrals, surface: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) } }))}
-                        className="w-full px-2 py-1 text-[11px] font-mono rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] text-zinc-500 mb-1">Border</label>
-                      <input
-                        type="text"
-                        value={system.colors.neutrals.border.value}
-                        onChange={(e) => updateSystemProp("colors", (sec) => ({ ...sec, neutrals: { ...sec.neutrals, border: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) } }))}
-                        className="w-full px-2 py-1 text-[11px] font-mono rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
-                      />
+                  </div>
+
+                  {/* Semantic States (4 keys) */}
+                  <div className="space-y-1.5 pt-1">
+                    <span className="text-[10px] uppercase font-mono text-zinc-400">Semantic States</span>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <div>
+                        <label className="block text-[10px] text-zinc-500 mb-0.5">Success</label>
+                        <input
+                          type="text"
+                          value={system.colors.semantic.success.value}
+                          onChange={(e) => updateSystemProp("colors", (sec) => ({ ...sec, semantic: { ...sec.semantic, success: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) } }))}
+                          className="w-full px-2 py-1 text-[11px] font-mono rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-zinc-500 mb-0.5">Warning</label>
+                        <input
+                          type="text"
+                          value={system.colors.semantic.warning.value}
+                          onChange={(e) => updateSystemProp("colors", (sec) => ({ ...sec, semantic: { ...sec.semantic, warning: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) } }))}
+                          className="w-full px-2 py-1 text-[11px] font-mono rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-zinc-500 mb-0.5">Error</label>
+                        <input
+                          type="text"
+                          value={system.colors.semantic.error.value}
+                          onChange={(e) => updateSystemProp("colors", (sec) => ({ ...sec, semantic: { ...sec.semantic, error: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) } }))}
+                          className="w-full px-2 py-1 text-[11px] font-mono rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-zinc-500 mb-0.5">Info</label>
+                        <input
+                          type="text"
+                          value={system.colors.semantic.info.value}
+                          onChange={(e) => updateSystemProp("colors", (sec) => ({ ...sec, semantic: { ...sec.semantic, info: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) } }))}
+                          className="w-full px-2 py-1 text-[11px] font-mono rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        />
+                      </div>
                     </div>
                   </div>
 
                   {/* 11-step Color Ladder */}
-                  <div className="space-y-1">
+                  <div className="space-y-1 pt-1">
                     <span className="text-[10px] uppercase font-mono text-zinc-400">11-Step Ladder (50 - 950)</span>
                     <div className="flex h-5 rounded-md overflow-hidden border border-zinc-200 dark:border-zinc-800">
                       {Object.entries(system.colors.primaryLadder.value).map(([step, hex]) => (
@@ -772,8 +893,8 @@ export default function DesignMdGenerator() {
                 {expandedSection === 3 ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
               </button>
               {expandedSection === 3 && (
-                <div className="p-4 space-y-3 border-t border-zinc-200 dark:border-zinc-800">
-                  <div className="grid grid-cols-2 gap-3">
+                <div className="p-4 space-y-3.5 border-t border-zinc-200 dark:border-zinc-800">
+                  <div className="grid grid-cols-3 gap-2.5">
                     <div>
                       <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Heading Font</label>
                       <input
@@ -792,7 +913,17 @@ export default function DesignMdGenerator() {
                         className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
                       />
                     </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Mono Font</label>
+                      <input
+                        type="text"
+                        value={system.typography.monoFont.value}
+                        onChange={(e) => updateSystemProp("typography", (sec) => ({ ...sec, monoFont: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
+                      />
+                    </div>
                   </div>
+
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Base Font Size (px)</label>
@@ -804,22 +935,60 @@ export default function DesignMdGenerator() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">H1 Size & Tracking</label>
-                      <div className="flex gap-2">
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Scale Ratio</label>
+                      <select
+                        value={system.typography.scaleRatio.value}
+                        onChange={(e) => updateSystemProp("typography", (sec) => ({ ...sec, scaleRatio: attr(Number(e.target.value), "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                      >
+                        <option value={1.2}>1.200 (Minor Third)</option>
+                        <option value={1.25}>1.250 (Major Third)</option>
+                        <option value={1.333}>1.333 (Perfect Fourth)</option>
+                        <option value={1.414}>1.414 (Augmented Fourth)</option>
+                        <option value={1.5}>1.500 (Perfect Fifth)</option>
+                        <option value={1.618}>1.618 (Golden Ratio)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Heading hierarchy editors: H1 - H4 */}
+                  <div className="space-y-2 pt-1">
+                    <span className="text-[10px] uppercase font-mono text-zinc-400">Headings Hierarchy (Size, Weight, Tracking, Line Height)</span>
+                    {(["h1", "h2", "h3", "h4"] as const).map((level) => (
+                      <div key={level} className="grid grid-cols-4 gap-2 items-center bg-zinc-50 dark:bg-zinc-800/40 p-2 rounded-lg text-xs">
+                        <span className="font-bold uppercase text-[10px] text-zinc-500">{level}</span>
                         <input
                           type="text"
-                          value={system.typography.headings.h1.value.size}
-                          onChange={(e) => updateSystemProp("typography", (sec) => ({ ...sec, headings: { ...sec.headings, h1: attr({ ...sec.headings.h1.value, size: e.target.value }, "user-provided") } }))}
-                          className="w-1/2 px-2 py-1 text-xs rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                          value={system.typography.headings[level].value.size}
+                          onChange={(e) => updateSystemProp("typography", (sec) => ({
+                            ...sec,
+                            headings: { ...sec.headings, [level]: attr({ ...sec.headings[level].value, size: e.target.value }, "user-provided", undefined, undefined, undefined, 1, true) },
+                          }))}
+                          className="px-2 py-1 text-xs rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                          placeholder="Size"
                         />
                         <input
                           type="text"
-                          value={system.typography.headings.h1.value.tracking}
-                          onChange={(e) => updateSystemProp("typography", (sec) => ({ ...sec, headings: { ...sec.headings, h1: attr({ ...sec.headings.h1.value, tracking: e.target.value }, "user-provided") } }))}
-                          className="w-1/2 px-2 py-1 text-xs rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                          value={system.typography.headings[level].value.weight}
+                          onChange={(e) => updateSystemProp("typography", (sec) => ({
+                            ...sec,
+                            headings: { ...sec.headings, [level]: attr({ ...sec.headings[level].value, weight: e.target.value }, "user-provided", undefined, undefined, undefined, 1, true) },
+                          }))}
+                          className="px-2 py-1 text-xs rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                          placeholder="Weight"
+                        />
+                        <input
+                          type="text"
+                          value={system.typography.headings[level].value.tracking}
+                          onChange={(e) => updateSystemProp("typography", (sec) => ({
+                            ...sec,
+                            headings: { ...sec.headings, [level]: attr({ ...sec.headings[level].value, tracking: e.target.value }, "user-provided", undefined, undefined, undefined, 1, true) },
+                          }))}
+                          className="px-2 py-1 text-xs rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
+                          placeholder="Tracking"
                         />
                       </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -846,7 +1015,29 @@ export default function DesignMdGenerator() {
                       <input
                         type="text"
                         value={system.layout.containerMaxWidth.value}
-                        onChange={(e) => updateSystemProp("layout", (sec) => ({ ...sec, containerMaxWidth: attr(e.target.value, "user-provided") }))}
+                        onChange={(e) => updateSystemProp("layout", (sec) => ({ ...sec, containerMaxWidth: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Container Padding</label>
+                      <input
+                        type="text"
+                        value={system.layout.containerPadding.value}
+                        onChange={(e) => updateSystemProp("layout", (sec) => ({ ...sec, containerPadding: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Grid Columns</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="24"
+                        value={system.layout.gridColumns.value}
+                        onChange={(e) => updateSystemProp("layout", (sec) => ({ ...sec, gridColumns: attr(Number(e.target.value), "user-provided", undefined, undefined, undefined, 1, true) }))}
                         className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
                       />
                     </div>
@@ -855,8 +1046,8 @@ export default function DesignMdGenerator() {
                       <input
                         type="text"
                         value={system.layout.gutterWidth.value}
-                        onChange={(e) => updateSystemProp("layout", (sec) => ({ ...sec, gutterWidth: attr(e.target.value, "user-provided") }))}
-                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        onChange={(e) => updateSystemProp("layout", (sec) => ({ ...sec, gutterWidth: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
                       />
                     </div>
                   </div>
@@ -878,13 +1069,13 @@ export default function DesignMdGenerator() {
                 {expandedSection === 5 ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
               </button>
               {expandedSection === 5 && (
-                <div className="p-4 space-y-3 border-t border-zinc-200 dark:border-zinc-800">
+                <div className="p-4 space-y-3.5 border-t border-zinc-200 dark:border-zinc-800">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Base Unit (px)</label>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Base Unit</label>
                       <select
                         value={system.spacing.baseUnit.value}
-                        onChange={(e) => updateSystemProp("spacing", (sec) => ({ ...sec, baseUnit: attr(Number(e.target.value), "user-provided") }))}
+                        onChange={(e) => updateSystemProp("spacing", (sec) => ({ ...sec, baseUnit: attr(Number(e.target.value), "user-provided", undefined, undefined, undefined, 1, true) }))}
                         className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
                       >
                         <option value={4}>4px (Micro-grid)</option>
@@ -895,13 +1086,24 @@ export default function DesignMdGenerator() {
                       <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Density Mode</label>
                       <select
                         value={system.spacing.densityMode.value}
-                        onChange={(e) => updateSystemProp("spacing", (sec) => ({ ...sec, densityMode: attr(e.target.value as any, "user-provided") }))}
+                        onChange={(e) => updateSystemProp("spacing", (sec) => ({ ...sec, densityMode: attr(e.target.value as any, "user-provided", undefined, undefined, undefined, 1, true) }))}
                         className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
                       >
                         <option value="compact">Compact (Dev Tools)</option>
                         <option value="normal">Normal (SaaS / Web)</option>
                         <option value="comfortable">Comfortable (Editorial)</option>
                       </select>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase font-mono text-zinc-400">Spacing Step Scale</span>
+                    <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5 text-center font-mono text-[11px]">
+                      {Object.entries(system.spacing.scale.value).map(([k, val]) => (
+                        <div key={k} className="p-1 rounded bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700">
+                          <span className="text-[9px] text-zinc-400 block">{k}</span>
+                          <span className="font-semibold">{val}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -922,15 +1124,15 @@ export default function DesignMdGenerator() {
                 {expandedSection === 6 ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
               </button>
               {expandedSection === 6 && (
-                <div className="p-4 space-y-3 border-t border-zinc-200 dark:border-zinc-800">
-                  <div className="grid grid-cols-2 gap-3">
+                <div className="p-4 space-y-3.5 border-t border-zinc-200 dark:border-zinc-800">
+                  <div className="grid grid-cols-3 gap-2.5">
                     <div>
                       <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Base Radius</label>
                       <input
                         type="text"
                         value={system.surfaces.baseRadius.value}
-                        onChange={(e) => updateSystemProp("surfaces", (sec) => ({ ...sec, baseRadius: attr(e.target.value, "user-provided") }))}
-                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        onChange={(e) => updateSystemProp("surfaces", (sec) => ({ ...sec, baseRadius: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
                       />
                     </div>
                     <div>
@@ -938,19 +1140,89 @@ export default function DesignMdGenerator() {
                       <input
                         type="text"
                         value={system.surfaces.cardRadius.value}
-                        onChange={(e) => updateSystemProp("surfaces", (sec) => ({ ...sec, cardRadius: attr(e.target.value, "user-provided") }))}
-                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        onChange={(e) => updateSystemProp("surfaces", (sec) => ({ ...sec, cardRadius: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Border Width</label>
+                      <input
+                        type="text"
+                        value={system.surfaces.borderWidth.value}
+                        onChange={(e) => updateSystemProp("surfaces", (sec) => ({ ...sec, borderWidth: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
                       />
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Medium Elevation Shadow</label>
-                    <input
-                      type="text"
-                      value={system.surfaces.shadows.medium.value}
-                      onChange={(e) => updateSystemProp("surfaces", (sec) => ({ ...sec, shadows: { ...sec.shadows, medium: attr(e.target.value, "user-provided") } }))}
-                      className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
-                    />
+
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] uppercase font-mono text-zinc-400">Box Shadow Elevations</span>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="block text-[10px] text-zinc-500 mb-0.5">Subtle</label>
+                        <input
+                          type="text"
+                          value={system.surfaces.shadows.subtle.value}
+                          onChange={(e) => updateSystemProp("surfaces", (sec) => ({ ...sec, shadows: { ...sec.shadows, subtle: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) } }))}
+                          className="w-full px-2 py-1 text-[11px] font-mono rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-zinc-500 mb-0.5">Medium</label>
+                        <input
+                          type="text"
+                          value={system.surfaces.shadows.medium.value}
+                          onChange={(e) => updateSystemProp("surfaces", (sec) => ({ ...sec, shadows: { ...sec.shadows, medium: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) } }))}
+                          className="w-full px-2 py-1 text-[11px] font-mono rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-zinc-500 mb-0.5">Elevated</label>
+                        <input
+                          type="text"
+                          value={system.surfaces.shadows.elevated.value}
+                          onChange={(e) => updateSystemProp("surfaces", (sec) => ({ ...sec, shadows: { ...sec.shadows, elevated: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) } }))}
+                          className="w-full px-2 py-1 text-[11px] font-mono rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-850/50 flex items-center justify-between text-xs">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={system.surfaces.glassmorphism.value.enabled}
+                        onChange={(e) => updateSystemProp("surfaces", (sec) => ({
+                          ...sec,
+                          glassmorphism: attr({ ...sec.glassmorphism.value, enabled: e.target.checked }, "user-provided", undefined, undefined, undefined, 1, true),
+                        }))}
+                        className="rounded text-blue-600 w-4 h-4"
+                      />
+                      <span className="font-medium text-zinc-700 dark:text-zinc-300">Glassmorphism Frosted Glass</span>
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={system.surfaces.glassmorphism.value.blur}
+                        onChange={(e) => updateSystemProp("surfaces", (sec) => ({
+                          ...sec,
+                          glassmorphism: attr({ ...sec.glassmorphism.value, blur: e.target.value }, "user-provided", undefined, undefined, undefined, 1, true),
+                        }))}
+                        className="w-16 px-1.5 py-0.5 text-[11px] font-mono rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-center"
+                        placeholder="Blur"
+                      />
+                      <input
+                        type="text"
+                        value={system.surfaces.glassmorphism.value.opacity}
+                        onChange={(e) => updateSystemProp("surfaces", (sec) => ({
+                          ...sec,
+                          glassmorphism: attr({ ...sec.glassmorphism.value, opacity: e.target.value }, "user-provided", undefined, undefined, undefined, 1, true),
+                        }))}
+                        className="w-16 px-1.5 py-0.5 text-[11px] font-mono rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-center"
+                        placeholder="Opacity"
+                      />
+                    </div>
                   </div>
                 </div>
               )}
@@ -970,24 +1242,56 @@ export default function DesignMdGenerator() {
                 {expandedSection === 7 ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
               </button>
               {expandedSection === 7 && (
-                <div className="p-4 space-y-3 border-t border-zinc-200 dark:border-zinc-800">
+                <div className="p-4 space-y-3.5 border-t border-zinc-200 dark:border-zinc-800">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Primary Button Radius</label>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Primary CTA Background</label>
                       <input
                         type="text"
-                        value={system.buttons.primary.value.radius}
-                        onChange={(e) => updateSystemProp("buttons", (sec) => ({ ...sec, primary: attr({ ...sec.primary.value, radius: e.target.value }, "user-provided") }))}
-                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        value={system.buttons.primary.value.bg}
+                        onChange={(e) => updateSystemProp("buttons", (sec) => ({
+                          ...sec,
+                          primary: attr({ ...sec.primary.value, bg: e.target.value }, "user-provided", undefined, undefined, undefined, 1, true),
+                        }))}
+                        className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">MD Button Height</label>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Primary Button Text Color</label>
+                      <input
+                        type="text"
+                        value={system.buttons.primary.value.text}
+                        onChange={(e) => updateSystemProp("buttons", (sec) => ({
+                          ...sec,
+                          primary: attr({ ...sec.primary.value, text: e.target.value }, "user-provided", undefined, undefined, undefined, 1, true),
+                        }))}
+                        className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Primary Radius</label>
+                      <input
+                        type="text"
+                        value={system.buttons.primary.value.radius}
+                        onChange={(e) => updateSystemProp("buttons", (sec) => ({
+                          ...sec,
+                          primary: attr({ ...sec.primary.value, radius: e.target.value }, "user-provided", undefined, undefined, undefined, 1, true),
+                        }))}
+                        className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">MD Height</label>
                       <input
                         type="text"
                         value={system.buttons.sizes.value.md.height}
-                        onChange={(e) => updateSystemProp("buttons", (sec) => ({ ...sec, sizes: attr({ ...sec.sizes.value, md: { ...sec.sizes.value.md, height: e.target.value } }, "user-provided") }))}
-                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        onChange={(e) => updateSystemProp("buttons", (sec) => ({
+                          ...sec,
+                          sizes: attr({ ...sec.sizes.value, md: { ...sec.sizes.value.md, height: e.target.value } }, "user-provided", undefined, undefined, undefined, 1, true),
+                        }))}
+                        className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
                       />
                     </div>
                   </div>
@@ -1016,8 +1320,8 @@ export default function DesignMdGenerator() {
                       <input
                         type="text"
                         value={system.forms.inputHeight.value}
-                        onChange={(e) => updateSystemProp("forms", (sec) => ({ ...sec, inputHeight: attr(e.target.value, "user-provided") }))}
-                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        onChange={(e) => updateSystemProp("forms", (sec) => ({ ...sec, inputHeight: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
                       />
                     </div>
                     <div>
@@ -1025,10 +1329,19 @@ export default function DesignMdGenerator() {
                       <input
                         type="text"
                         value={system.forms.inputRadius.value}
-                        onChange={(e) => updateSystemProp("forms", (sec) => ({ ...sec, inputRadius: attr(e.target.value, "user-provided") }))}
-                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        onChange={(e) => updateSystemProp("forms", (sec) => ({ ...sec, inputRadius: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
                       />
                     </div>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Focus Ring Style</label>
+                    <input
+                      type="text"
+                      value={system.forms.focusRingStyle.value}
+                      onChange={(e) => updateSystemProp("forms", (sec) => ({ ...sec, focusRingStyle: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
+                    />
                   </div>
                 </div>
               )}
@@ -1049,21 +1362,30 @@ export default function DesignMdGenerator() {
               </button>
               {expandedSection === 9 && (
                 <div className="p-4 space-y-3 border-t border-zinc-200 dark:border-zinc-800">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-2.5">
                     <div>
                       <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Navbar Height</label>
                       <input
                         type="text"
                         value={system.navigation.navbarHeight.value}
-                        onChange={(e) => updateSystemProp("navigation", (sec) => ({ ...sec, navbarHeight: attr(e.target.value, "user-provided") }))}
-                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        onChange={(e) => updateSystemProp("navigation", (sec) => ({ ...sec, navbarHeight: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Sidebar Width</label>
+                      <input
+                        type="text"
+                        value={system.navigation.sidebarWidth.value}
+                        onChange={(e) => updateSystemProp("navigation", (sec) => ({ ...sec, sidebarWidth: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
                       />
                     </div>
                     <div>
                       <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Nav Style</label>
                       <select
                         value={system.navigation.navStyle.value}
-                        onChange={(e) => updateSystemProp("navigation", (sec) => ({ ...sec, navStyle: attr(e.target.value as any, "user-provided") }))}
+                        onChange={(e) => updateSystemProp("navigation", (sec) => ({ ...sec, navStyle: attr(e.target.value as any, "user-provided", undefined, undefined, undefined, 1, true) }))}
                         className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
                       >
                         <option value="sticky">Sticky Topbar</option>
@@ -1092,14 +1414,45 @@ export default function DesignMdGenerator() {
               </button>
               {expandedSection === 10 && (
                 <div className="p-4 space-y-3 border-t border-zinc-200 dark:border-zinc-800">
-                  <div>
-                    <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Card Component Archetype</label>
-                    <input
-                      type="text"
-                      value={system.components.cardStyle.value}
-                      onChange={(e) => updateSystemProp("components", (sec) => ({ ...sec, cardStyle: attr(e.target.value, "user-provided") }))}
-                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Card Style</label>
+                      <input
+                        type="text"
+                        value={system.components.cardStyle.value}
+                        onChange={(e) => updateSystemProp("components", (sec) => ({ ...sec, cardStyle: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Badge Style</label>
+                      <input
+                        type="text"
+                        value={system.components.badgeStyle.value}
+                        onChange={(e) => updateSystemProp("components", (sec) => ({ ...sec, badgeStyle: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Modal Backdrop</label>
+                      <input
+                        type="text"
+                        value={system.components.modalBackdrop.value}
+                        onChange={(e) => updateSystemProp("components", (sec) => ({ ...sec, modalBackdrop: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Tooltip Style</label>
+                      <input
+                        type="text"
+                        value={system.components.tooltipStyle.value}
+                        onChange={(e) => updateSystemProp("components", (sec) => ({ ...sec, tooltipStyle: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
+                      />
+                    </div>
                   </div>
                 </div>
               )}
@@ -1120,13 +1473,13 @@ export default function DesignMdGenerator() {
               </button>
               {expandedSection === 11 && (
                 <div className="p-4 space-y-3 border-t border-zinc-200 dark:border-zinc-800">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-2.5">
                     <div>
                       <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Icon Library</label>
                       <input
                         type="text"
                         value={system.media.iconSet.value}
-                        onChange={(e) => updateSystemProp("media", (sec) => ({ ...sec, iconSet: attr(e.target.value, "user-provided") }))}
+                        onChange={(e) => updateSystemProp("media", (sec) => ({ ...sec, iconSet: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
                         className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
                       />
                     </div>
@@ -1135,8 +1488,17 @@ export default function DesignMdGenerator() {
                       <input
                         type="text"
                         value={system.media.avatarRadius.value}
-                        onChange={(e) => updateSystemProp("media", (sec) => ({ ...sec, avatarRadius: attr(e.target.value, "user-provided") }))}
-                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        onChange={(e) => updateSystemProp("media", (sec) => ({ ...sec, avatarRadius: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Aspect Ratio</label>
+                      <input
+                        type="text"
+                        value={system.media.defaultAspectRatio.value}
+                        onChange={(e) => updateSystemProp("media", (sec) => ({ ...sec, defaultAspectRatio: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
                       />
                     </div>
                   </div>
@@ -1159,25 +1521,43 @@ export default function DesignMdGenerator() {
               </button>
               {expandedSection === 12 && (
                 <div className="p-4 space-y-3 border-t border-zinc-200 dark:border-zinc-800">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-2.5">
                     <div>
-                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Standard Duration</label>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Fast (150ms)</label>
+                      <input
+                        type="text"
+                        value={system.motion.durationFast.value}
+                        onChange={(e) => updateSystemProp("motion", (sec) => ({ ...sec, durationFast: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Normal (250ms)</label>
                       <input
                         type="text"
                         value={system.motion.durationNormal.value}
-                        onChange={(e) => updateSystemProp("motion", (sec) => ({ ...sec, durationNormal: attr(e.target.value, "user-provided") }))}
-                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        onChange={(e) => updateSystemProp("motion", (sec) => ({ ...sec, durationNormal: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Default Easing Curve</label>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Slow (400ms)</label>
                       <input
                         type="text"
-                        value={system.motion.easingDefault.value}
-                        onChange={(e) => updateSystemProp("motion", (sec) => ({ ...sec, easingDefault: attr(e.target.value, "user-provided") }))}
-                        className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                        value={system.motion.durationSlow.value}
+                        onChange={(e) => updateSystemProp("motion", (sec) => ({ ...sec, durationSlow: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
                       />
                     </div>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Default Easing Curve</label>
+                    <input
+                      type="text"
+                      value={system.motion.easingDefault.value}
+                      onChange={(e) => updateSystemProp("motion", (sec) => ({ ...sec, easingDefault: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                      className="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                    />
                   </div>
                 </div>
               )}
@@ -1198,13 +1578,13 @@ export default function DesignMdGenerator() {
               </button>
               {expandedSection === 13 && (
                 <div className="p-4 space-y-3 border-t border-zinc-200 dark:border-zinc-800">
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                     <div>
                       <label className="block text-[10px] text-zinc-500 mb-1">sm</label>
                       <input
                         type="text"
                         value={system.breakpoints.sm.value}
-                        onChange={(e) => updateSystemProp("breakpoints", (sec) => ({ ...sec, sm: attr(e.target.value, "user-provided") }))}
+                        onChange={(e) => updateSystemProp("breakpoints", (sec) => ({ ...sec, sm: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
                         className="w-full px-2 py-1 text-xs font-mono rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
                       />
                     </div>
@@ -1213,7 +1593,7 @@ export default function DesignMdGenerator() {
                       <input
                         type="text"
                         value={system.breakpoints.md.value}
-                        onChange={(e) => updateSystemProp("breakpoints", (sec) => ({ ...sec, md: attr(e.target.value, "user-provided") }))}
+                        onChange={(e) => updateSystemProp("breakpoints", (sec) => ({ ...sec, md: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
                         className="w-full px-2 py-1 text-xs font-mono rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
                       />
                     </div>
@@ -1222,7 +1602,25 @@ export default function DesignMdGenerator() {
                       <input
                         type="text"
                         value={system.breakpoints.lg.value}
-                        onChange={(e) => updateSystemProp("breakpoints", (sec) => ({ ...sec, lg: attr(e.target.value, "user-provided") }))}
+                        onChange={(e) => updateSystemProp("breakpoints", (sec) => ({ ...sec, lg: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2 py-1 text-xs font-mono rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-zinc-500 mb-1">xl</label>
+                      <input
+                        type="text"
+                        value={system.breakpoints.xl.value}
+                        onChange={(e) => updateSystemProp("breakpoints", (sec) => ({ ...sec, xl: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2 py-1 text-xs font-mono rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-zinc-500 mb-1">2xl</label>
+                      <input
+                        type="text"
+                        value={system.breakpoints["2xl"].value}
+                        onChange={(e) => updateSystemProp("breakpoints", (sec) => ({ ...sec, "2xl": attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
                         className="w-full px-2 py-1 text-xs font-mono rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
                       />
                     </div>
@@ -1249,11 +1647,27 @@ export default function DesignMdGenerator() {
               </button>
               {expandedSection === 14 && (
                 <div className="p-4 space-y-3 border-t border-zinc-200 dark:border-zinc-800">
-                  <div className="flex items-center justify-between text-xs pb-1">
-                    <span className="text-zinc-500">Target Standard:</span>
-                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                      {system.accessibility.targetLevel.value}
-                    </span>
+                  <div className="grid grid-cols-2 gap-3 pb-1">
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Target WCAG Standard</label>
+                      <select
+                        value={system.accessibility.targetLevel.value}
+                        onChange={(e) => updateSystemProp("accessibility", (sec) => ({ ...sec, targetLevel: attr(e.target.value as any, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                      >
+                        <option value="WCAG_AA">WCAG 2.1 AA (4.5:1 text, 3:1 UI)</option>
+                        <option value="WCAG_AAA">WCAG 2.1 AAA (7:1 text, 4.5:1 UI)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">Focus Visible Rule</label>
+                      <input
+                        type="text"
+                        value={system.accessibility.focusVisibleRule.value}
+                        onChange={(e) => updateSystemProp("accessibility", (sec) => ({ ...sec, focusVisibleRule: attr(e.target.value, "user-provided", undefined, undefined, undefined, 1, true) }))}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 font-mono"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     {system.accessibility.verifiedContrastPairs.map((pair, idx) => (

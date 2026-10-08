@@ -16,11 +16,14 @@ import {
   parseCssTokens,
   parseTokensJson,
   parseDtcgTokens,
+  validateDtcgTokenTree,
   parseCssBoxShadowToDtcg,
   dtcgShadowToCss,
   auditContrastPairs,
   REFERENCE_SITES,
   createReferenceSiteDesignSystem,
+  preserveUserOverrides,
+  attr,
 } from "./engine";
 
 describe("Design.md 3-Layer Strategic Engine", () => {
@@ -130,10 +133,13 @@ describe("Design.md 3-Layer Strategic Engine", () => {
 
       assert.equal(parsed.name, "Atlas UI");
       assert.equal(parsed.archetype, "modern-saas");
-      assert.equal(parsed.color.primary["500"].$value, "#4f46e5");
+      assert.equal(parsed.color.primary["500"].$value.hex, "#4f46e5");
+      assert.equal(parsed.color.primary["500"].$value.colorSpace, "srgb");
       assert.equal(parsed.color.primary["500"].$type, "color");
       assert.ok(parsed.typography.heading.$value.includes("Inter Display"));
       assert.equal(parsed.dimension.radius.base.$type, "dimension");
+      assert.equal(parsed.dimension.radius.base.$value.value, 8);
+      assert.equal(parsed.dimension.radius.base.$value.unit, "px");
     });
 
     it("should generate standard CSS Custom Properties (:root)", () => {
@@ -236,10 +242,10 @@ describe("Design.md 3-Layer Strategic Engine", () => {
   describe("DTCG 2025.10 Token Specification & Composite Shadows", () => {
     it("should parse CSS box-shadow into structured DTCG composite shadow object", () => {
       const shadow = parseCssBoxShadowToDtcg("0 4px 12px rgba(0, 0, 0, 0.15)");
-      assert.equal(shadow.offsetX, "0px");
-      assert.equal(shadow.offsetY, "4px");
-      assert.equal(shadow.blur, "12px");
-      assert.equal(shadow.spread, "0px");
+      assert.deepEqual(shadow.offsetX, { value: 0, unit: "px" });
+      assert.deepEqual(shadow.offsetY, { value: 4, unit: "px" });
+      assert.deepEqual(shadow.blur, { value: 12, unit: "px" });
+      assert.deepEqual(shadow.spread, { value: 0, unit: "px" });
       assert.equal(shadow.color, "rgba(0, 0, 0, 0.15)");
 
       const cssRoundtrip = dtcgShadowToCss(shadow);
@@ -258,7 +264,7 @@ describe("Design.md 3-Layer Strategic Engine", () => {
 
       // Official type definitions
       assert.equal(parsed.color.primary["500"].$type, "color");
-      assert.equal(parsed.color.primary["500"].$value, "#5e6ad2");
+      assert.equal(parsed.color.primary["500"].$value.hex, "#5e6ad2");
       assert.equal(parsed.dimension.radius.base.$type, "dimension");
       assert.equal(parsed.shadow.subtle.$type, "shadow");
 
@@ -311,6 +317,60 @@ describe("Design.md 3-Layer Strategic Engine", () => {
       assert.ok(result.unsupportedFields.includes("experimentalSoundFX"));
       assert.ok(result.unsupportedFields.includes("proprietaryFigmaPluginMeta"));
     });
+
+    it("should validate DTCG token tree and flag syntax or unresolved aliases", () => {
+      const validPayload = {
+        color: {
+          brand: { $value: "#4f46e5", $type: "color" },
+          button: { $value: "{color.brand}", $type: "color" },
+        },
+      };
+      const validation1 = validateDtcgTokenTree(validPayload);
+      assert.equal(validation1.valid, true);
+      assert.equal(validation1.errors.length, 0);
+
+      const invalidPayload = {
+        color: {
+          button: { $value: "{color.missing}", $type: "color" },
+        },
+      };
+      const validation2 = validateDtcgTokenTree(invalidPayload);
+      assert.equal(validation2.valid, false);
+      assert.ok(validation2.errors.some((e) => e.includes("{color.missing}")));
+    });
+
+    it("should perform lossless round-trip export, parse, and alias resolution", () => {
+      const baseSystem = createArchetypeDesignSystem("modern-saas", {
+        projectName: "Roundtrip Test",
+        primaryColor: "#2563eb",
+      });
+
+      const exportedJson = generateTokensJson(baseSystem);
+      const parseResult = parseDtcgTokens(exportedJson);
+
+      assert.equal(parseResult.unresolvedAliases.length, 0);
+      assert.ok(parseResult.importedTokens > 5);
+      assert.equal(parseResult.system.colors?.primary?.value, "#2563eb");
+      assert.equal(parseResult.system.surfaces?.baseRadius?.value, "8px");
+
+      const treeValidation = validateDtcgTokenTree(JSON.parse(exportedJson));
+      assert.equal(treeValidation.valid, true);
+    });
+
+    it("should refuse to silently default when token alias cannot be resolved", () => {
+      const brokenAliasPayload = JSON.stringify({
+        typography: {
+          fontFamily: {
+            heading: { $value: "{typography.nonExistentFont}", $type: "fontFamily" },
+          },
+        },
+      });
+
+      const parseResult = parseDtcgTokens(brokenAliasPayload);
+      assert.ok(parseResult.unresolvedAliases.includes("{typography.nonExistentFont}"));
+      assert.equal(parseResult.system.typography?.headingFont, undefined);
+      assert.ok(parseResult.warnings.some((w) => w.includes("{typography.nonExistentFont}")));
+    });
   });
 
   describe("HTML Component Cheatsheet Generator", () => {
@@ -333,6 +393,19 @@ describe("Design.md 3-Layer Strategic Engine", () => {
       assert.ok(html.includes("class=\"modal-preview\""));
       assert.ok(html.includes("@media (max-width: 768px)"));
       assert.ok(html.includes("</html>"));
+    });
+
+    it("should safely escape HTML injection payloads in project name and brand tone", () => {
+      const maliciousSystem = createArchetypeDesignSystem("modern-saas", {
+        projectName: '<script>alert("XSS")</script>',
+        brandTone: 'Precision & <img src="x" onerror="alert(1)">',
+      });
+
+      const html = generateComponentsCheatsheetHtml(maliciousSystem);
+      assert.ok(!html.includes('<script>alert("XSS")</script>'));
+      assert.ok(html.includes("&lt;script&gt;alert(&quot;XSS&quot;)&lt;/script&gt;"));
+      assert.ok(!html.includes('<img src="x"'));
+      assert.ok(html.includes("&lt;img src=&quot;x&quot; onerror=&quot;alert(1)&quot;&gt;"));
     });
   });
 
@@ -401,6 +474,40 @@ describe("Design.md 3-Layer Strategic Engine", () => {
       assert.ok(theAtlantic.typography.headingFont.value.includes("Newsreader"));
       assert.ok(aesop.typography.headingFont.value.includes("Suisse Works"));
       assert.ok(pitch.typography.headingFont.value.includes("Space Grotesk"));
+    });
+  });
+
+  describe("preserveUserOverrides (State Persistence Across Presets & Tabs)", () => {
+    it("should retain user-overridden fields when switching archetypes or loading reference sites", () => {
+      const baseSaas = createArchetypeDesignSystem("modern-saas");
+
+      // User customizes primary color and H1 tracking
+      baseSaas.colors.primary = attr("#ff0055", "user-provided", undefined, "Custom brand color", undefined, 1, true);
+      baseSaas.typography.headings.h1 = attr(
+        { size: "3.5rem", weight: "800", lineHeight: "1.1", tracking: "-0.05em" },
+        "user-provided",
+        undefined,
+        "Custom H1",
+        undefined,
+        1,
+        true
+      );
+
+      // System loads reference site (e.g. Linear)
+      const linear = createReferenceSiteDesignSystem("linear");
+
+      // Merge linear with baseSaas user overrides
+      const merged = preserveUserOverrides(linear, baseSaas);
+
+      // Overridden fields must remain as user set them
+      assert.equal(merged.colors.primary.value, "#ff0055");
+      assert.equal(merged.colors.primary.userOverridden, true);
+      assert.equal(merged.typography.headings.h1.value.tracking, "-0.05em");
+      assert.equal(merged.typography.headings.h1.userOverridden, true);
+
+      // Non-overridden fields must adopt new reference site's values
+      assert.equal(merged.surfaces.cardRadius.value, linear.surfaces.cardRadius.value);
+      assert.equal(merged.colors.neutrals.background.value, linear.colors.neutrals.background.value);
     });
   });
 });

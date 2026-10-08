@@ -64,5 +64,16 @@ describe("WhatsApp Link Builder Engine", () => {
       assert.ok(html.includes("Chat with Us"));
       assert.ok(html.includes("<svg"));
     });
+
+    it("should escape HTML injection payloads in buttonText and URL", () => {
+      const maliciousHtml = generateHtmlButtonCode(
+        'https://wa.me/6281234567890" onclick="alert(1)',
+        '<script>alert("XSS")</script>'
+      );
+      assert.ok(!maliciousHtml.includes("<script>"));
+      assert.ok(maliciousHtml.includes("&lt;script&gt;alert(&quot;XSS&quot;)&lt;/script&gt;"));
+      assert.ok(!maliciousHtml.includes('" onclick="'));
+      assert.ok(maliciousHtml.includes("&quot; onclick=&quot;"));
+    });
   });
 });

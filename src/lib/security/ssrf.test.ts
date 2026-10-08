@@ -183,6 +183,198 @@ describe("SSRF Security Validation", () => {
     });
   });
 
+  describe("safeFetchWithRedirects Integration & Redirect Security", () => {
+    it("should block redirect targeting cloud metadata 169.254.169.254", async () => {
+      const server = http.createServer((req, res) => {
+        res.writeHead(302, { Location: "http://169.254.169.254/latest/meta-data/" });
+        res.end();
+      });
+      await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+      const port = (server.address() as any).port;
+
+      try {
+        await assert.rejects(
+          () =>
+            safeFetchWithRedirects(`http://127.0.0.1:${port}`, {
+              allowLoopbackForTesting: true,
+            }),
+          /SSRF blocked.*169\.254\.169\.254/
+        );
+      } finally {
+        server.close();
+      }
+    });
+
+    it("should block redirect targeting private RFC 1918 10.0.0.1", async () => {
+      const server = http.createServer((req, res) => {
+        res.writeHead(302, { Location: "http://10.0.0.1/admin" });
+        res.end();
+      });
+      await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+      const port = (server.address() as any).port;
+
+      try {
+        await assert.rejects(
+          () =>
+            safeFetchWithRedirects(`http://127.0.0.1:${port}`, {
+              allowLoopbackForTesting: true,
+            }),
+          /SSRF blocked: Target IP 10\.0\.0\.1 is in a private or reserved network range/
+        );
+      } finally {
+        server.close();
+      }
+    });
+
+    it("should block redirect targeting metadata.google.internal", async () => {
+      const server = http.createServer((req, res) => {
+        res.writeHead(302, { Location: "http://metadata.google.internal/computeMetadata/v1/" });
+        res.end();
+      });
+      await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+      const port = (server.address() as any).port;
+
+      try {
+        await assert.rejects(
+          () =>
+            safeFetchWithRedirects(`http://127.0.0.1:${port}`, {
+              allowLoopbackForTesting: true,
+            }),
+          /SSRF blocked: Internal, metadata, or loopback hostname is forbidden/
+        );
+      } finally {
+        server.close();
+      }
+    });
+
+    it("should abort when redirect chain exceeds maxRedirects", async () => {
+      let hops = 0;
+      const server = http.createServer((req, res) => {
+        hops++;
+        res.writeHead(302, { Location: `/hop-${hops}` });
+        res.end();
+      });
+      await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+      const port = (server.address() as any).port;
+
+      try {
+        await assert.rejects(
+          () =>
+            safeFetchWithRedirects(`http://127.0.0.1:${port}/start`, {
+              allowLoopbackForTesting: true,
+              maxRedirects: 2,
+            }),
+          /Exceeded maximum redirect limit \(2\)/
+        );
+      } finally {
+        server.close();
+      }
+    });
+
+    it("should reject disallowed content types like application/octet-stream", async () => {
+      const server = http.createServer((req, res) => {
+        res.writeHead(200, { "Content-Type": "application/octet-stream" });
+        res.end("binary-data");
+      });
+      await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+      const port = (server.address() as any).port;
+
+      try {
+        await assert.rejects(
+          () =>
+            safeFetchWithRedirects(`http://127.0.0.1:${port}`, {
+              allowLoopbackForTesting: true,
+            }),
+          /Forbidden response content-type: application\/octet-stream/
+        );
+      } finally {
+        server.close();
+      }
+    });
+
+    it("should successfully follow valid relative and absolute redirects to safe destination", async () => {
+      const server = http.createServer((req, res) => {
+        if (req.url === "/first") {
+          res.writeHead(302, { Location: "/final-landing" });
+          res.end();
+        } else if (req.url === "/final-landing") {
+          res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+          res.end("<!DOCTYPE html><html><body><h1>Safe Destination</h1></body></html>");
+        } else {
+          res.writeHead(404);
+          res.end();
+        }
+      });
+      await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+      const port = (server.address() as any).port;
+
+      try {
+        const result = await safeFetchWithRedirects(`http://127.0.0.1:${port}/first`, {
+          allowLoopbackForTesting: true,
+        });
+        assert.equal(result.statusCode, 200);
+        assert.equal(result.redirectCount, 1);
+        assert.match(result.finalUrl, /\/final-landing$/);
+        assert.match(result.responseText, /Safe Destination/);
+      } finally {
+        server.close();
+      }
+    });
+
+    it("should abort streaming response when payload exceeds maxResponseBytes", async () => {
+      const server = http.createServer((req, res) => {
+        res.writeHead(200, { "Content-Type": "text/html" });
+        // Stream 150KB while limit is 50KB
+        const chunk = Buffer.alloc(10 * 1024, "X");
+        for (let i = 0; i < 15; i++) {
+          res.write(chunk);
+        }
+        res.end();
+      });
+      await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+      const port = (server.address() as any).port;
+
+      try {
+        await assert.rejects(
+          () =>
+            safeFetchWithRedirects(`http://127.0.0.1:${port}`, {
+              allowLoopbackForTesting: true,
+              maxResponseBytes: 50 * 1024,
+            }),
+          /Response payload exceeded maximum allowed size of 51200 bytes/
+        );
+      } finally {
+        server.close();
+      }
+    });
+
+    it("should trigger cumulative timeout when response is delayed", async () => {
+      const server = http.createServer((req, res) => {
+        setTimeout(() => {
+          if (!res.writableEnded) {
+            res.writeHead(200, { "Content-Type": "text/html" });
+            res.end("Too late");
+          }
+        }, 500);
+      });
+      await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+      const port = (server.address() as any).port;
+
+      try {
+        await assert.rejects(
+          () =>
+            safeFetchWithRedirects(`http://127.0.0.1:${port}`, {
+              allowLoopbackForTesting: true,
+              timeoutMs: 150,
+            }),
+          /Request timed out after 150ms/
+        );
+      } finally {
+        server.close();
+      }
+    });
+  });
+
   describe("readSafeResponseBody", () => {
     it("should read string body within limit", async () => {
       const text = await readSafeResponseBody({ responseText: "Valid HTML" }, 1024);

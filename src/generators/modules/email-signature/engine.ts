@@ -34,13 +34,14 @@ export function escapeHtml(str: string): string {
 }
 
 /**
- * Cleans web links and handles missing schemes.
+ * Cleans web links and handles missing schemes while blocking dangerous protocols.
  */
 export function cleanUrl(url: string): string {
   const trimmed = url.trim();
   if (!trimmed) return "";
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  return `https://${trimmed}`;
+  if (/^(javascript|data|vbscript):/i.test(trimmed)) return "#";
+  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  return escapeHtml(withProtocol);
 }
 
 /**
@@ -57,7 +58,8 @@ export function generateEmailSignatureHtml(
   data: EmailSignatureData,
   layout: SignatureLayout = "modern-split"
 ): string {
-  const accent = data.accentColor || "#2563eb";
+  const rawAccent = data.accentColor?.trim() || "#2563eb";
+  const accent = /^#[0-9a-fA-F]{3,8}$|^rgb\([^)]+\)$/.test(rawAccent) ? rawAccent : "#2563eb";
   const name = escapeHtml(data.fullName || "Your Name");
   const title = escapeHtml(data.jobTitle || "Your Title");
   const company = escapeHtml(data.company || "Company Name");
@@ -65,7 +67,8 @@ export function generateEmailSignatureHtml(
   const phone = escapeHtml(data.phone || "");
   const website = cleanUrl(data.website || "");
   const displayWebsite = escapeHtml(formatDisplayUrl(website));
-  const avatar = data.avatarUrl?.trim() || "";
+  const rawAvatar = data.avatarUrl?.trim() || "";
+  const avatar = rawAvatar ? cleanUrl(rawAvatar) : "";
 
   const fontStack =
     "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";

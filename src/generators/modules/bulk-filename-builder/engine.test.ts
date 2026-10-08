@@ -6,7 +6,9 @@ import {
   batchRenameFiles,
   generateShellScript,
   generateMappingCsv,
+  createRenamedZip,
 } from "./engine";
+import JSZip from "jszip";
 
 describe("Bulk Filename Builder Engine", () => {
   describe("splitFilename", () => {
@@ -120,6 +122,33 @@ describe("Bulk Filename Builder Engine", () => {
       ];
       const csv = generateMappingCsv(mappings);
       assert.ok(csv.includes("old.png,new.png,true"));
+    });
+
+    it("should generate valid ZIP binary archive with PK magic bytes", async () => {
+      const files = [
+        { name: "photo_001.jpg", content: "JPEG_IMAGE_DATA_1" },
+        { name: "photo_002.jpg", content: "JPEG_IMAGE_DATA_2" },
+      ];
+      const zipBytes = await createRenamedZip(files);
+      assert.ok(zipBytes.length > 0, "Zip output should not be empty");
+
+      // Verify standard ZIP magic bytes: PK\x03\x04 (0x50, 0x4B, 0x03, 0x04)
+      assert.equal(zipBytes[0], 0x50, "Magic byte 0 should be 'P'");
+      assert.equal(zipBytes[1], 0x4b, "Magic byte 1 should be 'K'");
+      assert.equal(zipBytes[2], 0x03, "Magic byte 2 should be 0x03");
+      assert.equal(zipBytes[3], 0x04, "Magic byte 3 should be 0x04");
+
+      // Verify unpack round-trip with JSZip
+      const loaded = await JSZip.loadAsync(zipBytes);
+      const file1 = loaded.file("photo_001.jpg");
+      assert.ok(file1 !== null, "File 1 should exist in archive");
+      const content1 = await file1.async("string");
+      assert.equal(content1, "JPEG_IMAGE_DATA_1");
+
+      const file2 = loaded.file("photo_002.jpg");
+      assert.ok(file2 !== null, "File 2 should exist in archive");
+      const content2 = await file2.async("string");
+      assert.equal(content2, "JPEG_IMAGE_DATA_2");
     });
   });
 });

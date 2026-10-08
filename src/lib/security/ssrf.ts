@@ -184,6 +184,8 @@ export interface SafeFetchOptions {
   headers?: Record<string, string>;
   maxRedirects?: number;
   timeoutMs?: number;
+  maxResponseBytes?: number;
+  allowedContentTypes?: string[];
 }
 
 export interface SafeFetchResponse {
@@ -193,9 +195,50 @@ export interface SafeFetchResponse {
 }
 
 /**
+ * Reads a response stream up to maxBytes, aborting if the payload exceeds the limit.
+ */
+export async function readSafeResponseBody(
+  response: Response,
+  maxBytes: number = 2 * 1024 * 1024 // 2MB default
+): Promise<string> {
+  const contentLength = response.headers.get("content-length");
+  if (contentLength && parseInt(contentLength, 10) > maxBytes) {
+    throw new Error(`Response payload exceeds maximum allowed size of ${maxBytes} bytes.`);
+  }
+
+  if (!response.body) {
+    return "";
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder("utf-8");
+  let totalBytes = 0;
+  let text = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (value) {
+      totalBytes += value.byteLength;
+      if (totalBytes > maxBytes) {
+        try {
+          await reader.cancel();
+        } catch {
+          // ignore
+        }
+        throw new Error(`Response payload exceeded maximum allowed size of ${maxBytes} bytes.`);
+      }
+      text += decoder.decode(value, { stream: true });
+    }
+  }
+  text += decoder.decode();
+  return text;
+}
+
+/**
  * Executes a fetch request with strict SSRF validation at every redirect hop.
- * Uses redirect: "manual" to inspect each Location header, preventing
- * open redirect-based SSRF into internal networks or cloud metadata.
+ * Uses a cumulative timeout across all redirects, inspects content-type,
+ * and restricts destination IPs.
  */
 export async function safeFetchWithRedirects(
   initialUrl: string,
@@ -203,59 +246,88 @@ export async function safeFetchWithRedirects(
 ): Promise<SafeFetchResponse> {
   const maxRedirects = options?.maxRedirects ?? 3;
   const timeoutMs = options?.timeoutMs ?? 5000;
+  const maxResponseBytes = options?.maxResponseBytes ?? 2 * 1024 * 1024;
+  const allowedContentTypes = options?.allowedContentTypes ?? [
+    "text/html",
+    "application/xhtml+xml",
+    "text/plain",
+    "application/xml",
+  ];
+
   let currentUrl = initialUrl;
   let redirectCount = 0;
 
-  while (redirectCount <= maxRedirects) {
-    // 1. Validate the current URL before connecting
-    const check = await validateSafeUrlForFetch(currentUrl);
-    if (!check.safe) {
-      throw new Error(`SSRF blocked: ${check.reason || "Forbidden URL"}`);
-    }
+  // Single cumulative abort controller across all redirects
+  const controller = new AbortController();
+  const globalTimer = setTimeout(() => controller.abort(), timeoutMs);
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-    let res: Response;
-    try {
-      res = await fetch(currentUrl, {
-        headers: options?.headers ?? {
-          "User-Agent": "ForgeKit-AuditBot/1.0",
-          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        },
-        signal: controller.signal,
-        redirect: "manual",
-      });
-    } finally {
-      clearTimeout(timer);
-    }
-
-    // Check for redirect status codes (301, 302, 303, 307, 308)
-    if ([301, 302, 303, 307, 308].includes(res.status)) {
-      const location = res.headers.get("location");
-      if (!location) {
-        throw new Error(`Redirect response from ${currentUrl} missing Location header.`);
+  try {
+    while (redirectCount <= maxRedirects) {
+      // 1. Validate the current URL before connecting
+      const check = await validateSafeUrlForFetch(currentUrl);
+      if (!check.safe) {
+        throw new Error(`SSRF blocked: ${check.reason || "Forbidden URL"}`);
       }
 
-      // Resolve relative redirect against current URL
-      const nextUrl = new URL(location, currentUrl).toString();
-
-      redirectCount++;
-      if (redirectCount > maxRedirects) {
-        throw new Error(`Exceeded maximum redirect limit (${maxRedirects}).`);
+      let res: Response;
+      try {
+        res = await fetch(currentUrl, {
+          headers: options?.headers ?? {
+            "User-Agent": "ForgeKit-AuditBot/1.0",
+            Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          },
+          signal: controller.signal,
+          redirect: "manual",
+        });
+      } catch (fetchErr: unknown) {
+        if (controller.signal.aborted) {
+          throw new Error(`Request timed out after ${timeoutMs}ms.`);
+        }
+        throw fetchErr;
       }
 
-      currentUrl = nextUrl;
-      continue;
+      // Check for redirect status codes (301, 302, 303, 307, 308)
+      if ([301, 302, 303, 307, 308].includes(res.status)) {
+        const location = res.headers.get("location");
+        if (!location) {
+          throw new Error(`Redirect response from ${currentUrl} missing Location header.`);
+        }
+
+        // Resolve relative redirect against current URL
+        const nextUrl = new URL(location, currentUrl).toString();
+
+        redirectCount++;
+        if (redirectCount > maxRedirects) {
+          throw new Error(`Exceeded maximum redirect limit (${maxRedirects}).`);
+        }
+
+        currentUrl = nextUrl;
+        continue;
+      }
+
+      // Check content-type header on final non-redirect response
+      const contentType = res.headers.get("content-type")?.toLowerCase() || "";
+      const isAllowedType = allowedContentTypes.some((type) => contentType.includes(type));
+      if (res.ok && contentType && !isAllowedType) {
+        throw new Error(`Forbidden response content-type: ${contentType}. Expected HTML or text.`);
+      }
+
+      // Check content-length header
+      const contentLength = res.headers.get("content-length");
+      if (contentLength && parseInt(contentLength, 10) > maxResponseBytes) {
+        throw new Error(`Response length (${contentLength} bytes) exceeds limit of ${maxResponseBytes} bytes.`);
+      }
+
+      return {
+        response: res,
+        finalUrl: currentUrl,
+        redirectCount,
+      };
     }
 
-    return {
-      response: res,
-      finalUrl: currentUrl,
-      redirectCount,
-    };
+    throw new Error(`Exceeded maximum redirect limit (${maxRedirects}).`);
+  } finally {
+    clearTimeout(globalTimer);
   }
-
-  throw new Error(`Exceeded maximum redirect limit (${maxRedirects}).`);
 }
 

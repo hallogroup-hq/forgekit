@@ -98,4 +98,46 @@ describe("SSRF Security Validation", () => {
       );
     });
   });
+
+  describe("readSafeResponseBody", () => {
+    it("should read stream body within max limit", async () => {
+      const { readSafeResponseBody } = await import("./ssrf");
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode("Hello World!"));
+          controller.close();
+        },
+      });
+      const res = new Response(stream);
+      const text = await readSafeResponseBody(res, 1024);
+      assert.equal(text, "Hello World!");
+    });
+
+    it("should abort and reject when stream body exceeds byte limit", async () => {
+      const { readSafeResponseBody } = await import("./ssrf");
+      const largeData = new Uint8Array(2000).fill(65); // 2000 bytes of 'A'
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(largeData);
+          controller.close();
+        },
+      });
+      const res = new Response(stream);
+      await assert.rejects(
+        () => readSafeResponseBody(res, 500),
+        /exceeded maximum allowed size/
+      );
+    });
+
+    it("should reject when content-length header exceeds limit", async () => {
+      const { readSafeResponseBody } = await import("./ssrf");
+      const res = new Response("short", {
+        headers: { "content-length": "5000000" }, // 5MB
+      });
+      await assert.rejects(
+        () => readSafeResponseBody(res, 1024 * 1024),
+        /exceeds maximum allowed size/
+      );
+    });
+  });
 });

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateSafeUrlForFetch, safeFetchWithRedirects } from "@/lib/security/ssrf";
+import { validateSafeUrlForFetch, safeFetchWithRedirects, readSafeResponseBody } from "@/lib/security/ssrf";
 
 interface ExtractedDesign {
   domain: string;
@@ -183,7 +183,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const html = await res.text();
+      const html = await readSafeResponseBody(res);
       const detectedColors: string[] = [];
       const detectedFonts: string[] = [];
       const notes: string[] = [];

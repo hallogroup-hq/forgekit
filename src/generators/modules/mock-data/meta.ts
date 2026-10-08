@@ -8,5 +8,6 @@ export const meta: ToolMeta = {
   category: "developer",
   tags: ["mock", "json", "data", "schema", "dummy", "csv", "testing"],
   icon: "Database",
+  lifecycle: "ready",
   isPopular: true,
 };

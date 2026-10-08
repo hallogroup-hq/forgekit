@@ -5,6 +5,7 @@ import { Download, Terminal, CheckCircle2, AlertCircle, Code, Layers } from "luc
 import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { downloadFile } from "@/lib/utils";
+import { safeExecuteRegex } from "./engine";
 
 interface RegexPreset {
   id: string;
@@ -87,44 +88,8 @@ export default function RegexCheatGenerator() {
     confetti({ particleCount: 20, spread: 45, origin: { y: 0.8 } });
   };
 
-  const { isValid, regexError, matches } = useMemo(() => {
-    try {
-      const reg = new RegExp(pattern, flags);
-      const results: { match: string; index: number; groups: string[] }[] = [];
-
-      if (flags.includes("g")) {
-        let match: RegExpExecArray | null;
-        let safetyLoop = 0;
-        while ((match = reg.exec(testString)) !== null && safetyLoop < 500) {
-          safetyLoop++;
-          results.push({
-            match: match[0],
-            index: match.index,
-            groups: match.slice(1),
-          });
-          if (match[0].length === 0) {
-            reg.lastIndex++;
-          }
-        }
-      } else {
-        const match = reg.exec(testString);
-        if (match) {
-          results.push({
-            match: match[0],
-            index: match.index,
-            groups: match.slice(1),
-          });
-        }
-      }
-
-      return { isValid: true, regexError: null, matches: results };
-    } catch (err: unknown) {
-      return {
-        isValid: false,
-        regexError: err instanceof Error ? err.message : "Invalid Regular Expression",
-        matches: [],
-      };
-    }
+  const { isValid, regexError, matches, redosWarning } = useMemo(() => {
+    return safeExecuteRegex(pattern, flags, testString);
   }, [pattern, flags, testString]);
 
   const jsSnippet = useMemo(() => {
@@ -243,6 +208,9 @@ func main() {
             </div>
             {regexError && (
               <p className="text-[11px] text-rose-500 mt-1.5 font-mono">{regexError}</p>
+            )}
+            {redosWarning && !regexError && (
+              <p className="text-[11px] text-amber-500 mt-1.5 font-mono">⚠️ {redosWarning}</p>
             )}
           </div>
 

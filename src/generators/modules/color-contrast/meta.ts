@@ -2,12 +2,14 @@ import { ToolMeta } from "../../types";
 
 export const meta: ToolMeta = {
   slug: "color-contrast",
-  title: "WCAG AAA Color Contrast & Accessible Palette Studio",
-  shortTitle: "Color Contrast Studio",
-  description: "Test WCAG 2.1 AA/AAA contrast ratios, simulate color blindness, and auto-tune colors to passing accessible standards.",
+  title: "Accessible Palette Auto-Tuner & Vision Simulator",
+  shortTitle: "Palette Auto-Tuner",
+  description: "Auto-tune foreground/background colors to meet WCAG standards and preview how colors look with color vision deficiencies.",
   category: "design",
-  tags: ["contrast", "wcag", "accessibility", "a11y", "color", "palette", "ui", "design"],
+  tags: ["contrast", "wcag", "accessibility", "a11y", "color", "palette", "vision-simulator", "ui"],
   icon: "Eye",
+  lifecycle: "ready",
   isPopular: true,
   isNew: true,
 };
+

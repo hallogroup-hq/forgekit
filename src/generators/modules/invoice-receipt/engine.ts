@@ -81,13 +81,22 @@ export function calculateInvoiceTotals(
   };
 }
 
+export const ZERO_DECIMAL_CURRENCIES = new Set(["JPY", "¥", "IDR", "RP", "KRW", "₩", "VND", "₫"]);
+
+export function isZeroDecimalCurrency(symbolOrCode: string): boolean {
+  const norm = symbolOrCode.trim().toUpperCase();
+  return ZERO_DECIMAL_CURRENCIES.has(norm) || ZERO_DECIMAL_CURRENCIES.has(symbolOrCode.trim());
+}
+
 /**
- * Formats a numeric amount with the chosen currency symbol and 2 decimal places.
+ * Formats a numeric amount with the chosen currency symbol, adhering to standard decimal conventions.
  */
 export function formatCurrencyAmount(amount: number, symbol: string = "$"): string {
+  const isZeroDec = isZeroDecimalCurrency(symbol);
+  const decimals = isZeroDec ? 0 : 2;
   const formatted = amount.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   });
   return `${symbol}${formatted}`;
 }

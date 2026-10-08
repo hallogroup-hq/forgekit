@@ -48,9 +48,15 @@ describe("Invoice & Receipt Engine", () => {
   });
 
   describe("formatCurrencyAmount", () => {
-    it("should format currency with commas and 2 decimals", () => {
+    it("should format currency with commas and 2 decimals for standard currencies", () => {
       assert.equal(formatCurrencyAmount(1234.5, "$"), "$1,234.50");
       assert.equal(formatCurrencyAmount(0, "€"), "€0.00");
+    });
+
+    it("should format zero-decimal currencies without fractional cents", () => {
+      assert.equal(formatCurrencyAmount(150000, "¥"), "¥150,000");
+      assert.equal(formatCurrencyAmount(2500000, "Rp"), "Rp2,500,000");
+      assert.equal(formatCurrencyAmount(50000, "JPY"), "JPY50,000");
     });
   });
 

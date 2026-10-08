@@ -11,6 +11,16 @@ export interface ParsedCurl {
   body: string | null;
 }
 
+export function encodeBase64(str: string): string {
+  if (typeof btoa === "function") {
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+  if (typeof Buffer !== "undefined") {
+    return Buffer.from(str, "utf-8").toString("base64");
+  }
+  return "";
+}
+
 export function parseCurl(raw: string): ParsedCurl {
   const clean = raw.replace(/\\\r?\n/g, " ").trim();
 
@@ -63,7 +73,7 @@ export function parseCurl(raw: string): ParsedCurl {
   if (authMatch) {
     const authVal = authMatch[1] || authMatch[2] || authMatch[3];
     if (authVal) {
-      const b64 = Buffer.from(authVal).toString("base64");
+      const b64 = encodeBase64(authVal);
       headers["Authorization"] = `Basic ${b64}`;
     }
   }

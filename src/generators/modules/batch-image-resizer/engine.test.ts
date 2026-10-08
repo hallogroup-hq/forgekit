@@ -81,7 +81,7 @@ describe("Batch Image Resizer Engine", () => {
   });
 
   describe("Preset Resizing", () => {
-    it("should fit within social landscape box without distortion", () => {
+    it("should fit within social landscape box without distortion when fitMode is not set", () => {
       const res = calculateNewDimensions(1920, 1080, {
         mode: "preset",
         preset: "social-landscape",
@@ -89,9 +89,52 @@ describe("Batch Image Resizer Engine", () => {
       });
       assert.ok(res.width <= 1200);
       assert.ok(res.height <= 630);
-      // 16:9 ratio in 1200x630 -> width 1120, height 630
       assert.equal(res.height, 630);
       assert.equal(res.width, 1120);
+    });
+
+    it("should return exact preset dimensions when fitMode is specified", () => {
+      const resCover = calculateNewDimensions(1920, 1080, {
+        mode: "preset",
+        preset: "social-landscape",
+        maintainAspectRatio: true,
+        fitMode: "crop-to-fill",
+      });
+      assert.equal(resCover.width, 1200);
+      assert.equal(resCover.height, 630);
+
+      const resPadding = calculateNewDimensions(1920, 1080, {
+        mode: "preset",
+        preset: "social-landscape",
+        maintainAspectRatio: true,
+        fitMode: "fit-with-padding",
+      });
+      assert.equal(resPadding.width, 1200);
+      assert.equal(resPadding.height, 630);
+    });
+  });
+
+  describe("computeCanvasDrawParams", () => {
+    it("should compute centered crop coordinates for Crop to Fill (Cover)", async () => {
+      const { computeCanvasDrawParams } = await import("./engine");
+      const params = computeCanvasDrawParams(1920, 1080, 1200, 630, "crop-to-fill");
+      assert.equal(params.canvasWidth, 1200);
+      assert.equal(params.canvasHeight, 630);
+      // For 16:9 source in ~1.90:1 target:
+      assert.ok(params.drawWidth >= 1200);
+      assert.ok(params.drawHeight >= 630);
+    });
+
+    it("should compute padded contain coordinates for Fit with Padding (Contain)", async () => {
+      const { computeCanvasDrawParams } = await import("./engine");
+      const params = computeCanvasDrawParams(1920, 1080, 1200, 630, "fit-with-padding", "#ffffff");
+      assert.equal(params.canvasWidth, 1200);
+      assert.equal(params.canvasHeight, 630);
+      assert.equal(params.backgroundColor, "#ffffff");
+      assert.equal(params.drawHeight, 630);
+      assert.equal(params.drawWidth, 1120);
+      assert.equal(params.drawX, 40); // (1200 - 1120) / 2
+      assert.equal(params.drawY, 0);
     });
   });
 });

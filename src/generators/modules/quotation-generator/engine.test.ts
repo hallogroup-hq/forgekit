@@ -41,9 +41,37 @@ describe("Quotation & Cost Estimate Engine", () => {
   });
 
   describe("formatPrice", () => {
-    it("should format dollar and other currency symbols", () => {
+    it("should format dollar and other currency symbols with 2 decimals", () => {
       assert.equal(formatPrice(5000, "$"), "$5,000.00");
       assert.equal(formatPrice(250.75, "€"), "€250.75");
+    });
+
+    it("should format zero-decimal currencies cleanly without cents", () => {
+      assert.equal(formatPrice(350000, "¥"), "¥350,000");
+      assert.equal(formatPrice(15000000, "Rp"), "Rp15,000,000");
+    });
+  });
+
+  describe("validateMilestones", () => {
+    it("should flag when milestones exceed 100%", async () => {
+      const { validateMilestones } = await import("./engine");
+      const check = validateMilestones([
+        { id: "1", name: "Upfront", percentage: 60 },
+        { id: "2", name: "Delivery", percentage: 50 },
+      ]);
+      assert.equal(check.isValid, false);
+      assert.equal(check.totalPercentage, 110);
+      assert.ok(check.warning?.includes("exceeds 100%"));
+    });
+
+    it("should validate when milestones sum up correctly", async () => {
+      const { validateMilestones } = await import("./engine");
+      const check = validateMilestones([
+        { id: "1", name: "Deposit", percentage: 50 },
+        { id: "2", name: "Final", percentage: 50 },
+      ]);
+      assert.equal(check.isValid, true);
+      assert.equal(check.totalPercentage, 100);
     });
   });
 

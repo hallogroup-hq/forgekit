@@ -9,15 +9,110 @@ export interface ResizeDimensions {
 }
 
 export type ResizeMode = "dimensions" | "percentage" | "fit-box" | "preset";
+export type AspectFitMode = "crop-to-fill" | "fit-with-padding" | "stretch";
 
 export interface ResizeOptions {
   mode: ResizeMode;
   targetWidth?: number;
   targetHeight?: number;
   maintainAspectRatio: boolean;
+  fitMode?: AspectFitMode;
+  paddingBackground?: string;
   percentage?: number;
   maxFitDimension?: number;
   preset?: string;
+}
+
+export interface CanvasDrawParams {
+  canvasWidth: number;
+  canvasHeight: number;
+  drawX: number;
+  drawY: number;
+  drawWidth: number;
+  drawHeight: number;
+  backgroundColor: string;
+}
+
+/**
+ * Computes exact canvas dimensions and drawImage positioning for Crop to Fill,
+ * Fit with Padding, and Stretch modes.
+ */
+export function computeCanvasDrawParams(
+  sourceWidth: number,
+  sourceHeight: number,
+  targetWidth: number,
+  targetHeight: number,
+  fitMode: AspectFitMode = "fit-with-padding",
+  bgColor: string = "transparent"
+): CanvasDrawParams {
+  if (fitMode === "stretch") {
+    return {
+      canvasWidth: targetWidth,
+      canvasHeight: targetHeight,
+      drawX: 0,
+      drawY: 0,
+      drawWidth: targetWidth,
+      drawHeight: targetHeight,
+      backgroundColor: bgColor,
+    };
+  }
+
+  const srcAspect = sourceWidth / sourceHeight;
+  const targetAspect = targetWidth / targetHeight;
+
+  if (fitMode === "crop-to-fill") {
+    // Cover: scale image so it completely fills the target canvas, centered
+    let drawWidth: number;
+    let drawHeight: number;
+
+    if (srcAspect > targetAspect) {
+      // Source is wider: match height, crop width sides
+      drawHeight = targetHeight;
+      drawWidth = Math.round(targetHeight * srcAspect);
+    } else {
+      // Source is taller: match width, crop height top/bottom
+      drawWidth = targetWidth;
+      drawHeight = Math.round(targetWidth / srcAspect);
+    }
+
+    const drawX = Math.round((targetWidth - drawWidth) / 2);
+    const drawY = Math.round((targetHeight - drawHeight) / 2);
+
+    return {
+      canvasWidth: targetWidth,
+      canvasHeight: targetHeight,
+      drawX,
+      drawY,
+      drawWidth,
+      drawHeight,
+      backgroundColor: bgColor,
+    };
+  }
+
+  // fit-with-padding (Contain): scale to fit inside, letterbox/pillarbox
+  let drawWidth: number;
+  let drawHeight: number;
+
+  if (srcAspect > targetAspect) {
+    drawWidth = targetWidth;
+    drawHeight = Math.round(targetWidth / srcAspect);
+  } else {
+    drawHeight = targetHeight;
+    drawWidth = Math.round(targetHeight * srcAspect);
+  }
+
+  const drawX = Math.round((targetWidth - drawWidth) / 2);
+  const drawY = Math.round((targetHeight - drawHeight) / 2);
+
+  return {
+    canvasWidth: targetWidth,
+    canvasHeight: targetHeight,
+    drawX,
+    drawY,
+    drawWidth,
+    drawHeight,
+    backgroundColor: bgColor,
+  };
 }
 
 export const RESIZE_PRESETS: Record<string, { label: string; width: number; height: number }> = {
@@ -71,6 +166,13 @@ export function calculateNewDimensions(
     case "preset": {
       const preset = options.preset ? RESIZE_PRESETS[options.preset] : null;
       if (!preset) return { width: originalWidth, height: originalHeight };
+
+      // If user selected explicit fit mode (Crop to Fill or Fit with Padding or Stretch),
+      // the canvas must match the exact preset dimensions!
+      if (options.fitMode) {
+        return { width: preset.width, height: preset.height };
+      }
+
       if (options.maintainAspectRatio) {
         const scaleW = preset.width / originalWidth;
         const scaleH = preset.height / originalHeight;

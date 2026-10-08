@@ -63,11 +63,25 @@ describe("OpenGraph & SEO Social Meta Studio Engine", () => {
   describe("generateHtmlMetaTags", () => {
     it("should generate complete HTML head tags with og and twitter metadata", () => {
       const tags = generateHtmlMetaTags(sampleInput);
-      assert.ok(tags.includes("<title>ForgeKit - Developer & Creator Studio</title>"));
-      assert.ok(tags.includes('<meta property="og:title" content="ForgeKit - Developer & Creator Studio">'));
+      assert.ok(tags.includes("<title>ForgeKit - Developer &amp; Creator Studio</title>"));
+      assert.ok(tags.includes('<meta property="og:title" content="ForgeKit - Developer &amp; Creator Studio">'));
       assert.ok(tags.includes('<meta property="og:image" content="https://forgekit.dev/og.png">'));
       assert.ok(tags.includes('<meta name="twitter:creator" content="@forgekit_dev">'));
       assert.ok(tags.includes('name="twitter:card" content="summary_large_image"'));
+    });
+
+    it("should safely escape quotes and HTML tags in user values", () => {
+      const maliciousInput: OpenGraphInput = {
+        title: 'Title with "Quotes" & <script>alert(1)</script>',
+        description: 'Description with "nested" \'quotes\' & symbols',
+        url: 'https://example.com/test?a=1&b=2',
+        siteName: 'My "Site"',
+      };
+      const tags = generateHtmlMetaTags(maliciousInput);
+      assert.ok(tags.includes('&quot;Quotes&quot; &amp; &lt;script&gt;'));
+      assert.ok(!tags.includes('<script>'));
+      assert.ok(tags.includes('&quot;nested&quot; &#39;quotes&#39;'));
+      assert.ok(tags.includes('content="My &quot;Site&quot;"'));
     });
   });
 

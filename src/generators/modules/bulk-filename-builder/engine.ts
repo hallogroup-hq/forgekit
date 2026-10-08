@@ -114,13 +114,42 @@ export function buildRenamedFilename(
 }
 
 /**
+ * Resolves duplicate target filenames by appending (1), (2), etc. before the extension
+ * to guarantee that no files are overwritten in ZIP archives or shell scripts.
+ */
+export function resolveFilenameCollisions(mappings: RenameMapping[]): RenameMapping[] {
+  const seenCounts = new Map<string, number>();
+
+  return mappings.map((m) => {
+    const rawTarget = m.newName;
+    const count = seenCounts.get(rawTarget) || 0;
+    seenCounts.set(rawTarget, count + 1);
+
+    if (count === 0) {
+      return m;
+    }
+
+    const { base, ext } = splitFilename(rawTarget);
+    const deduplicatedName = `${base} (${count})${ext}`;
+
+    return {
+      oldName: m.oldName,
+      newName: deduplicatedName,
+      hasChanged: true,
+    };
+  });
+}
+
+/**
  * Batches an array of filenames through the renamer.
+ * Resolves duplicate collisions by default to preserve all files in ZIP archives.
  */
 export function batchRenameFiles(
   filenames: string[],
-  options: RenameRuleOptions
+  options: RenameRuleOptions,
+  resolveCollisions = true
 ): RenameMapping[] {
-  return filenames
+  const rawMappings = filenames
     .filter((f) => f.trim().length > 0)
     .map((oldName, idx) => {
       const newName = buildRenamedFilename(oldName, idx, options);
@@ -130,6 +159,8 @@ export function batchRenameFiles(
         hasChanged: oldName.trim() !== newName,
       };
     });
+
+  return resolveCollisions ? resolveFilenameCollisions(rawMappings) : rawMappings;
 }
 
 export function escapeBashArg(arg: string): string {

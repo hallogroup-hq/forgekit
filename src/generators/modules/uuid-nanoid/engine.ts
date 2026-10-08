@@ -26,14 +26,24 @@ export function getCrypto(): Crypto {
   throw new Error("Cryptographically Secure Pseudorandom Number Generator is unavailable.");
 }
 
+let lastTimestampV7 = -1;
+let sequenceCounterV7 = 0;
+
+export function resetUuidV7State(): void {
+  lastTimestampV7 = -1;
+  sequenceCounterV7 = 0;
+}
+
 /**
  * Generates an RFC 9562 compliant UUID Version 7.
+ * Adheres to Section 6.2 (Monotonicity and Counters Method 1) to guarantee
+ * that successive IDs generated within the same millisecond remain strictly ordered.
  * Layout:
- * - unix_ts_ms: 48 bits (6 bytes)
- * - ver: 4 bits (0111)
- * - rand_a: 12 bits
- * - var: 2 bits (10)
- * - rand_b: 62 bits
+ * - unix_ts_ms: 48 bits (bytes 0-5)
+ * - ver: 4 bits (0111) (byte 6 top 4 bits)
+ * - rand_a (monotonic sequence counter): 12 bits (byte 6 bottom 4 bits + byte 7)
+ * - var: 2 bits (10) (byte 8 top 2 bits)
+ * - rand_b: 62 bits (bytes 8-15)
  */
 export function generateUuidV7(customTimestamp?: number, cryptoInstance: Crypto = getCrypto()): string {
   const ts = customTimestamp !== undefined ? customTimestamp : Date.now();
@@ -42,7 +52,16 @@ export function generateUuidV7(customTimestamp?: number, cryptoInstance: Crypto 
   // 1. Fill random bytes
   cryptoInstance.getRandomValues(bytes);
 
-  // 2. Set 48-bit timestamp in big-endian (bytes 0-5)
+  // 2. Monotonic sequence counter for rand_a (12 bits)
+  if (ts === lastTimestampV7) {
+    sequenceCounterV7 = (sequenceCounterV7 + 1) & 0x0fff;
+  } else {
+    lastTimestampV7 = ts;
+    // Reseed counter with cryptographically random 12 bits
+    sequenceCounterV7 = ((bytes[6] & 0x0f) << 8) | bytes[7];
+  }
+
+  // 3. Set 48-bit timestamp in big-endian (bytes 0-5)
   bytes[0] = Math.floor(ts / 2 ** 40) & 0xff;
   bytes[1] = Math.floor(ts / 2 ** 32) & 0xff;
   bytes[2] = Math.floor(ts / 2 ** 24) & 0xff;
@@ -50,10 +69,12 @@ export function generateUuidV7(customTimestamp?: number, cryptoInstance: Crypto 
   bytes[4] = Math.floor(ts / 2 ** 8) & 0xff;
   bytes[5] = ts & 0xff;
 
-  // 3. Set version 7 (0b0111) in top 4 bits of byte 6
-  bytes[6] = 0x70 | (bytes[6] & 0x0f);
+  // 4. Set version 7 (0b0111) in top 4 bits of byte 6, plus top 4 bits of sequence counter
+  bytes[6] = 0x70 | ((sequenceCounterV7 >> 8) & 0x0f);
+  // Bottom 8 bits of sequence counter in byte 7
+  bytes[7] = sequenceCounterV7 & 0xff;
 
-  // 4. Set variant 10 (0b10) in top 2 bits of byte 8
+  // 5. Set variant 10 (0b10) in top 2 bits of byte 8
   bytes[8] = 0x80 | (bytes[8] & 0x3f);
 
   // Convert to canonical 8-4-4-4-12 hex string

@@ -33,6 +33,21 @@ describe("UUID & NanoID CSPRNG Engine", () => {
       const u2 = generateUuidV7(t2);
       assert.ok(u1 < u2, `Expected ${u1} to be lexicographically smaller than ${u2}`);
     });
+
+    it("should guarantee monotonic ordering for successive UUIDv7s within same millisecond (RFC 9562 §6.2)", () => {
+      const fixedTs = 1775654321000;
+      const ids: string[] = [];
+      for (let i = 0; i < 20; i++) {
+        ids.push(generateUuidV7(fixedTs));
+      }
+
+      for (let i = 0; i < ids.length - 1; i++) {
+        assert.ok(
+          ids[i] < ids[i + 1],
+          `Expected id[${i}] (${ids[i]}) to be < id[${i + 1}] (${ids[i + 1]})`
+        );
+      }
+    });
   });
 
   describe("generateNanoId", () => {

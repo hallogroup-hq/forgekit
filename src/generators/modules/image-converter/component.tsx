@@ -160,16 +160,54 @@ export default function ImageConverterGenerator() {
     confetti({ particleCount: 20, spread: 45, origin: { y: 0.8 } });
   };
 
+  const [zipError, setZipError] = useState<string | null>(null);
+
   const handleDownloadAllZip = async () => {
     if (items.length === 0) return;
+
+    // Check if any items are still in progress
+    const stillConverting = items.some((item) => item.isConverting);
+    if (stillConverting) {
+      alert("Please wait for all images to finish converting before downloading ZIP.");
+      return;
+    }
+
+    const failedItems = items.filter((item) => !item.convertedBlob || !item.convertedFilename);
+    if (failedItems.length === items.length) {
+      alert("All image conversions failed. Cannot create ZIP archive.");
+      return;
+    }
+
+    if (failedItems.length > 0) {
+      const confirmProceed = confirm(
+        `${failedItems.length} image(s) could not be converted and will be omitted from the archive. Continue downloading the ${items.length - failedItems.length} successfully converted files?`
+      );
+      if (!confirmProceed) return;
+    }
+
     setIsZipping(true);
+    setZipError(null);
     try {
       const zip = new JSZip();
+      const seenNames = new Map<string, number>();
+
       for (const item of items) {
         if (item.convertedBlob && item.convertedFilename) {
-          zip.file(item.convertedFilename, item.convertedBlob);
+          let targetName = item.convertedFilename;
+          const count = seenNames.get(targetName) || 0;
+          seenNames.set(targetName, count + 1);
+
+          if (count > 0) {
+            const lastDot = targetName.lastIndexOf(".");
+            const base = lastDot > 0 ? targetName.slice(0, lastDot) : targetName;
+            const ext = lastDot > 0 ? targetName.slice(lastDot) : "";
+            targetName = `${base} (${count})${ext}`;
+          }
+
+          zip.file(targetName, item.convertedBlob);
         }
       }
+
       const zipBlob = await zip.generateAsync({ type: "blob" });
       const url = URL.createObjectURL(zipBlob);
       const a = document.createElement("a");
@@ -180,8 +218,9 @@ export default function ImageConverterGenerator() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       confetti({ particleCount: 40, spread: 60, origin: { y: 0.8 } });
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("ZIP creation failed", err);
+      setZipError("Failed to generate ZIP archive. Please download files individually.");
     } finally {
       setIsZipping(false);
     }

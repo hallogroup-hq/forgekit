@@ -9,6 +9,7 @@ export const meta: ToolMeta = {
   category: "developer",
   tags: ["regex", "regexp", "developer", "tester", "pattern", "javascript", "python"],
   icon: "Code2",
+  lifecycle: "ready",
   isNew: true,
   isPopular: true,
   version: "1.0.0",

@@ -107,5 +107,19 @@ describe("QR Code Studio Engine", () => {
       assert.ok(composite.includes("<circle"));
       assert.ok(composite.includes("<image href="));
     });
+
+    it("should escape XML special characters in frameText to prevent SVG corruption", () => {
+      const rawSvg = `<svg><path d="M0 0h10v10H0z"/></svg>`;
+      const composite = composeCompositeSvg({
+        baseQrSvg: rawSvg,
+        size: 400,
+        frameText: "SCAN & PAY <NOW> 'DEAL'",
+        fgColor: "#000000",
+        bgColor: "#ffffff",
+      });
+
+      assert.ok(composite.includes("SCAN &amp; PAY &lt;NOW&gt; &apos;DEAL&apos;"));
+      assert.ok(!composite.includes("<NOW>"));
+    });
   });
 });

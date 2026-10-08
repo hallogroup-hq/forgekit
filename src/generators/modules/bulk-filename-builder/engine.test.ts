@@ -86,6 +86,34 @@ describe("Bulk Filename Builder Engine", () => {
       assert.ok(sh.includes("'\\''")); // single quote escaped as '\'
     });
 
+    it("should resolve duplicate target filenames to prevent ZIP overwrite", () => {
+      // Both files with static find/replace would become photo.jpg without deduplication
+      const duplicateTargets = ["image1.jpg", "image2.jpg", "image3.jpg"];
+      const mappings = batchRenameFiles(duplicateTargets, {
+        findText: "image",
+        replaceText: "photo",
+        slugify: false,
+      });
+
+      assert.equal(mappings[0].newName, "photo1.jpg");
+      // If rule produces identical names:
+      const identicalInput = ["fileA.png", "fileB.png"];
+      const collMappings = batchRenameFiles(identicalInput, {
+        prefix: "document",
+        suffix: "",
+        findText: "fileA",
+        replaceText: "",
+      });
+      // fileA -> document.png
+      // If user replaces fileB with empty string -> document.png as well
+      const testDedupe = batchRenameFiles(["a.txt", "b.txt"], {
+        findText: "b",
+        replaceText: "a", // both become a.txt
+      });
+      assert.equal(testDedupe[0].newName, "a.txt");
+      assert.equal(testDedupe[1].newName, "a (1).txt");
+    });
+
     it("should generate CSV mapping table", () => {
       const mappings = [
         { oldName: "old.png", newName: "new.png", hasChanged: true },

@@ -20,6 +20,8 @@ import { formatFileSize } from "@/lib/utils";
 import {
   calculateNewDimensions,
   ResizeMode,
+  AspectFitMode,
+  computeCanvasDrawParams,
   RESIZE_PRESETS,
   ResizeOptions,
 } from "./engine";
@@ -37,6 +39,8 @@ interface ImageItem {
 export default function BatchImageResizerGenerator() {
   const [items, setItems] = useState<ImageItem[]>([]);
   const [mode, setMode] = useState<ResizeMode>("dimensions");
+  const [fitMode, setFitMode] = useState<AspectFitMode>("fit-with-padding");
+  const [paddingBg, setPaddingBg] = useState<string>("transparent");
   const [targetWidth, setTargetWidth] = useState<number>(1200);
   const [targetHeight, setTargetHeight] = useState<number>(800);
   const [maintainAspect, setMaintainAspect] = useState(true);
@@ -53,11 +57,13 @@ export default function BatchImageResizerGenerator() {
       targetWidth,
       targetHeight,
       maintainAspectRatio: maintainAspect,
+      fitMode: mode === "preset" || (mode === "dimensions" && targetWidth && targetHeight) ? fitMode : undefined,
+      paddingBackground: paddingBg,
       percentage,
       maxFitDimension: maxFitDim,
       preset: presetKey,
     }),
-    [mode, targetWidth, targetHeight, maintainAspect, percentage, maxFitDim, presetKey]
+    [mode, fitMode, paddingBg, targetWidth, targetHeight, maintainAspect, percentage, maxFitDim, presetKey]
   );
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,15 +104,35 @@ export default function BatchImageResizerGenerator() {
       const img = new Image();
       img.onload = () => {
         const dims = calculateNewDimensions(item.originalWidth, item.originalHeight, options);
+        const activeFitMode = options.fitMode || (maintainAspect ? "fit-with-padding" : "stretch");
+        const drawParams = computeCanvasDrawParams(
+          item.originalWidth,
+          item.originalHeight,
+          dims.width,
+          dims.height,
+          activeFitMode,
+          paddingBg
+        );
+
         const canvas = document.createElement("canvas");
-        canvas.width = dims.width;
-        canvas.height = dims.height;
+        canvas.width = drawParams.canvasWidth;
+        canvas.height = drawParams.canvasHeight;
         const ctx = canvas.getContext("2d");
         if (!ctx) return reject(new Error("Canvas context failed"));
 
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = "high";
-        ctx.drawImage(img, 0, 0, dims.width, dims.height);
+
+        // Handle background color for padded regions or JPEG opacity
+        if (drawParams.backgroundColor && drawParams.backgroundColor !== "transparent") {
+          ctx.fillStyle = drawParams.backgroundColor;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        } else if (format === "image/jpeg") {
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        ctx.drawImage(img, drawParams.drawX, drawParams.drawY, drawParams.drawWidth, drawParams.drawHeight);
 
         let mimeType = item.file.type || "image/png";
         let ext = item.name.split(".").pop() || "png";
@@ -123,7 +149,7 @@ export default function BatchImageResizerGenerator() {
         }
 
         const baseName = item.name.substring(0, item.name.lastIndexOf(".")) || item.name;
-        const filename = `${baseName}-${dims.width}x${dims.height}.${ext}`;
+        const filename = `${baseName}-${drawParams.canvasWidth}x${drawParams.canvasHeight}.${ext}`;
 
         canvas.toBlob(
           (blob) => {
@@ -405,6 +431,40 @@ export default function BatchImageResizerGenerator() {
                     {p.label}
                   </option>
                 ))}
+              </select>
+            </div>
+          )}
+
+          {(mode === "preset" || (mode === "dimensions" && maintainAspect)) && (
+            <div>
+              <label className="block text-zinc-600 dark:text-zinc-400 text-[11px] mb-1 font-medium">
+                Fit Strategy
+              </label>
+              <select
+                value={fitMode}
+                onChange={(e) => setFitMode(e.target.value as any)}
+                className="w-full px-2.5 py-1.5 text-xs rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200"
+              >
+                <option value="fit-with-padding">Fit with Padding (Contain)</option>
+                <option value="crop-to-fill">Crop to Fill (Cover)</option>
+                <option value="stretch">Stretch to Fit</option>
+              </select>
+            </div>
+          )}
+
+          {fitMode === "fit-with-padding" && (mode === "preset" || mode === "dimensions") && (
+            <div>
+              <label className="block text-zinc-600 dark:text-zinc-400 text-[11px] mb-1 font-medium">
+                Padding Background
+              </label>
+              <select
+                value={paddingBg}
+                onChange={(e) => setPaddingBg(e.target.value)}
+                className="w-full px-2.5 py-1.5 text-xs rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200"
+              >
+                <option value="transparent">Transparent (PNG / WebP)</option>
+                <option value="#ffffff">White (#ffffff)</option>
+                <option value="#000000">Black (#000000)</option>
               </select>
             </div>
           )}

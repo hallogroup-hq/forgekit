@@ -77,6 +77,15 @@ export interface SvgCompositeOptions {
  * Composes a full vector SVG containing QR code, center logo, and optional frame banner.
  * Ensures SVG export parity with PNG canvas export!
  */
+export function escapeXml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
 export function composeCompositeSvg(opts: SvgCompositeOptions): string {
   const { baseQrSvg, frameText, fgColor, bgColor, logoSvgUri } = opts;
   const qrSize = opts.size || 400;
@@ -92,6 +101,7 @@ export function composeCompositeSvg(opts: SvgCompositeOptions): string {
 
   let logoElements = "";
   if (logoSvgUri) {
+    // Keep logo strictly within 22% of QR size to preserve Level H error correction
     const logoSize = Math.round(qrSize * 0.22);
     const logoX = Math.round((qrSize - logoSize) / 2);
     const logoY = Math.round((qrSize - logoSize) / 2);
@@ -103,7 +113,7 @@ export function composeCompositeSvg(opts: SvgCompositeOptions): string {
   <!-- Center Logo Badge Background -->
   <circle cx="${centerX}" cy="${centerY}" r="${badgeRadius}" fill="${bgColor}" stroke="${fgColor}" stroke-width="2"/>
   <!-- Logo Content -->
-  <image href="${logoSvgUri}" x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" preserveAspectRatio="xMidYMid meet" />`;
+  <image href="${escapeXml(logoSvgUri)}" x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" preserveAspectRatio="xMidYMid meet" />`;
   }
 
   let frameElements = "";
@@ -114,13 +124,14 @@ export function composeCompositeSvg(opts: SvgCompositeOptions): string {
     const barY = qrSize;
     const textY = barY + Math.round(barHeight / 2);
     const fontSize = Math.max(12, Math.round(qrSize * 0.045));
+    const safeText = escapeXml(frameText.trim().toUpperCase());
 
     frameElements = `
   <!-- Frame Banner Container -->
   <rect x="${barPadding}" y="${barY}" width="${barWidth}" height="${barHeight}" rx="8" fill="${fgColor}" />
   <!-- Frame Banner Text -->
   <text x="${Math.round(totalWidth / 2)}" y="${textY}" fill="${bgColor}" font-family="system-ui, -apple-system, sans-serif" font-weight="bold" font-size="${fontSize}" text-anchor="middle" dominant-baseline="central">
-    ${frameText.trim().toUpperCase()}
+    ${safeText}
   </text>`;
   }
 

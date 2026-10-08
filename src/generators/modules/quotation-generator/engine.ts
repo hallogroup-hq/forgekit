@@ -53,12 +53,37 @@ export function roundPrice(val: number): number {
   return Math.round((val + Number.EPSILON) * 100) / 100;
 }
 
+export const ZERO_DECIMAL_CURRENCIES = new Set(["JPY", "¥", "IDR", "RP", "KRW", "₩", "VND", "₫"]);
+
+export function isZeroDecimalCurrency(symbolOrCode: string): boolean {
+  const norm = symbolOrCode.trim().toUpperCase();
+  return ZERO_DECIMAL_CURRENCIES.has(norm) || ZERO_DECIMAL_CURRENCIES.has(symbolOrCode.trim());
+}
+
 export function formatPrice(amount: number, symbol: string = "$"): string {
+  const isZeroDec = isZeroDecimalCurrency(symbol);
+  const decimals = isZeroDec ? 0 : 2;
   const formatted = amount.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   });
   return `${symbol}${formatted}`;
+}
+
+export function validateMilestones(milestones: QuotationMilestone[]): {
+  totalPercentage: number;
+  isValid: boolean;
+  warning?: string;
+} {
+  const sum = milestones.reduce((acc, m) => acc + Math.max(0, m.percentage), 0);
+  if (sum > 100) {
+    return {
+      totalPercentage: sum,
+      isValid: false,
+      warning: `Total milestone allocation (${sum}%) exceeds 100%. Adjust allocations before issuing proposal.`,
+    };
+  }
+  return { totalPercentage: sum, isValid: true };
 }
 
 /**

@@ -6,33 +6,13 @@ import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { downloadFile } from "@/lib/utils";
 
-type FieldType =
-  | "uuid"
-  | "fullName"
-  | "email"
-  | "phone"
-  | "city"
-  | "country"
-  | "jobTitle"
-  | "avatar"
-  | "boolean"
-  | "status"
-  | "number"
-  | "date";
-
-interface FieldDef {
-  id: string;
-  name: string;
-  type: FieldType;
-}
-
-const FIRST_NAMES = ["Liam", "Emma", "Noah", "Olivia", "Ethan", "Sophia", "Lucas", "Mia", "Aiden", "Isabella"];
-const LAST_NAMES = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Miller", "Davis", "Wilson", "Taylor", "Anderson"];
-const DOMAINS = ["example.com", "mailhub.io", "techlabs.co", "nexuscorp.net", "forgeapp.dev"];
-const CITIES = ["San Francisco", "New York", "London", "Tokyo", "Berlin", "Jakarta", "Singapore", "Sydney", "Toronto", "Amsterdam"];
-const COUNTRIES = ["United States", "United Kingdom", "Germany", "Japan", "Indonesia", "Singapore", "Australia", "Canada", "Netherlands"];
-const JOBS = ["Software Engineer", "Product Designer", "Data Scientist", "DevOps Architect", "Technical Writer", "VP of Engineering"];
-const STATUSES = ["active", "pending", "suspended", "verified"];
+import {
+  FieldType,
+  FieldDef,
+  generateMockDataset,
+  exportDatasetToCsv,
+  exportDatasetToJson,
+} from "./engine";
 
 export default function MockDataGenerator() {
   const [count, setCount] = useState(5);
@@ -61,77 +41,16 @@ export default function MockDataGenerator() {
     setFields((prev) => prev.map((f) => (f.id === id ? { ...f, ...updates } : f)));
   };
 
-  // Generate data deterministically or with pseudo-random seed
   const generatedData = useMemo(() => {
-    const pick = <T,>(arr: T[], offset: number): T => arr[(offset + seed) % arr.length];
-
-    const rows = [];
-    for (let i = 0; i < count; i++) {
-      const row: Record<string, unknown> = {};
-      const fName = pick(FIRST_NAMES, i * 3);
-      const lName = pick(LAST_NAMES, i * 7);
-
-      for (const f of fields) {
-        switch (f.type) {
-          case "uuid":
-            row[f.name] = `f7e8${(i + seed * 10).toString(16).padStart(4, "0")}-9c2b-42ab-b19c-${(1000 + i).toString(16).padStart(12, "0")}`;
-            break;
-          case "fullName":
-            row[f.name] = `${fName} ${lName}`;
-            break;
-          case "email":
-            row[f.name] = `${fName.toLowerCase()}.${lName.toLowerCase()}@${pick(DOMAINS, i)}`;
-            break;
-          case "phone":
-            row[f.name] = `+1 (555) ${100 + i * 23}-${1000 + i * 87}`;
-            break;
-          case "city":
-            row[f.name] = pick(CITIES, i);
-            break;
-          case "country":
-            row[f.name] = pick(COUNTRIES, i);
-            break;
-          case "jobTitle":
-            row[f.name] = pick(JOBS, i);
-            break;
-          case "avatar":
-            row[f.name] = `https://api.dicebear.com/7.x/avataaars/svg?seed=${fName}${i}`;
-            break;
-          case "status":
-            row[f.name] = pick(STATUSES, i);
-            break;
-          case "boolean":
-            row[f.name] = (i + seed) % 2 === 0;
-            break;
-          case "number":
-            row[f.name] = Math.floor(((i * 73 + seed * 17) % 900) + 100);
-            break;
-          case "date":
-            row[f.name] = `2026-0${((i % 8) + 1)}-${String(((i * 3) % 27) + 1).padStart(2, "0")}`;
-            break;
-          default:
-            row[f.name] = `Item ${i + 1}`;
-        }
-      }
-      rows.push(row);
-    }
-    return rows;
+    return generateMockDataset(fields, count, seed);
   }, [fields, count, seed]);
 
   const jsonString = useMemo(() => {
-    return JSON.stringify(generatedData, null, 2);
+    return exportDatasetToJson(generatedData);
   }, [generatedData]);
 
   const csvString = useMemo(() => {
-    if (generatedData.length === 0) return "";
-    const headers = fields.map((f) => f.name).join(",");
-    const rows = generatedData.map((row) =>
-      fields.map((f) => {
-        const val = row[f.name];
-        return typeof val === "string" && val.includes(",") ? `"${val}"` : String(val);
-      }).join(",")
-    );
-    return [headers, ...rows].join("\n");
+    return exportDatasetToCsv(generatedData, fields);
   }, [generatedData, fields]);
 
   const handleDownload = (format: "json" | "csv") => {

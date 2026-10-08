@@ -90,6 +90,15 @@ export function auditOpenGraph(input: OpenGraphInput): OpenGraphAudit {
   };
 }
 
+export function escapeHtmlAttribute(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 export function generateHtmlMetaTags(input: OpenGraphInput): string {
   const title = input.title.trim();
   const desc = input.description.trim();
@@ -100,41 +109,47 @@ export function generateHtmlMetaTags(input: OpenGraphInput): string {
   const locale = input.locale?.trim() || "en_US";
   const type = input.type?.trim() || "website";
 
+  const safeTitle = escapeHtmlAttribute(title);
+  const safeDesc = escapeHtmlAttribute(desc);
+  const safeUrl = escapeHtmlAttribute(url);
+  const safeType = escapeHtmlAttribute(type);
+  const safeLocale = escapeHtmlAttribute(locale);
+
   const lines = [
     `<!-- HTML Meta Tags -->`,
-    `<title>${title}</title>`,
-    `<meta name="description" content="${desc}">`,
+    `<title>${safeTitle}</title>`,
+    `<meta name="description" content="${safeDesc}">`,
     ``,
     `<!-- Facebook Meta Tags -->`,
-    `<meta property="og:url" content="${url}">`,
-    `<meta property="og:type" content="${type}">`,
-    `<meta property="og:title" content="${title}">`,
-    `<meta property="og:description" content="${desc}">`,
-    `<meta property="og:locale" content="${locale}">`,
+    `<meta property="og:url" content="${safeUrl}">`,
+    `<meta property="og:type" content="${safeType}">`,
+    `<meta property="og:title" content="${safeTitle}">`,
+    `<meta property="og:description" content="${safeDesc}">`,
+    `<meta property="og:locale" content="${safeLocale}">`,
   ];
 
   if (siteName) {
-    lines.push(`<meta property="og:site_name" content="${siteName}">`);
+    lines.push(`<meta property="og:site_name" content="${escapeHtmlAttribute(siteName)}">`);
   }
   if (img) {
-    lines.push(`<meta property="og:image" content="${img}">`);
+    lines.push(`<meta property="og:image" content="${escapeHtmlAttribute(img)}">`);
   }
 
   lines.push(
     ``,
     `<!-- Twitter Meta Tags -->`,
     `<meta name="twitter:card" content="summary_large_image">`,
-    `<meta property="twitter:domain" content="${extractHostname(url)}">`,
-    `<meta property="twitter:url" content="${url}">`,
-    `<meta name="twitter:title" content="${title}">`,
-    `<meta name="twitter:description" content="${desc}">`
+    `<meta property="twitter:domain" content="${escapeHtmlAttribute(extractHostname(url))}">`,
+    `<meta property="twitter:url" content="${safeUrl}">`,
+    `<meta name="twitter:title" content="${safeTitle}">`,
+    `<meta name="twitter:description" content="${safeDesc}">`
   );
 
   if (img) {
-    lines.push(`<meta name="twitter:image" content="${img}">`);
+    lines.push(`<meta name="twitter:image" content="${escapeHtmlAttribute(img)}">`);
   }
   if (twitter) {
-    lines.push(`<meta name="twitter:creator" content="${twitter}">`);
+    lines.push(`<meta name="twitter:creator" content="${escapeHtmlAttribute(twitter)}">`);
   }
 
   return lines.join("\n");

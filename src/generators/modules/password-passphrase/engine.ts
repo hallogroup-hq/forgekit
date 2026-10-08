@@ -4,42 +4,8 @@
  * Never uses Math.random(). Fails closed if WebCrypto is unavailable.
  */
 
-// 250+ vetted English words for strong Diceware-style passphrases
-export const EFF_WORDLIST = [
-  "abacus", "abbey", "ability", "academy", "accent", "acoustic", "action", "active",
-  "actor", "admire", "advance", "aerial", "agenda", "airline", "airport", "alcove",
-  "almond", "alpine", "anchor", "anthem", "apron", "aquarium", "arcade", "archer",
-  "arctic", "armchair", "artist", "asteroid", "atlas", "atom", "avalanche", "avenue",
-  "badger", "balcony", "bamboo", "banner", "baron", "barrel", "beacon", "biscuit",
-  "blanket", "boulder", "breeze", "bridge", "bronze", "cabin", "cactus", "cadet",
-  "canyon", "captain", "caravan", "castle", "cathedral", "cedar", "celestial", "cereal",
-  "chalet", "channel", "charcoal", "chariot", "cheetah", "chimney", "chisel", "chrome",
-  "cider", "circuit", "citadel", "clover", "cobalt", "colony", "comet", "compass",
-  "corridor", "cosmic", "cradle", "crater", "crescent", "crystal", "cylinder", "dolphin",
-  "dragon", "echo", "eclipse", "emerald", "empire", "falcon", "feather", "fjord",
-  "flame", "flamingo", "flint", "forest", "fossil", "fountain", "galaxy", "galley",
-  "garnet", "glacier", "glider", "granite", "gravel", "gravity", "harbor", "haven",
-  "hawk", "hazel", "helmet", "horizon", "humming", "iguana", "island", "ivory",
-  "javelin", "juniper", "jupiter", "kangaroo", "kelp", "lagoon", "lantern", "legend",
-  "leopard", "licorice", "lighthouse", "lily", "lizard", "lotus", "lunar", "magnet",
-  "mango", "mantis", "marble", "marsh", "meadow", "meteor", "mirage", "monarch",
-  "monument", "mosaic", "mountain", "nebula", "nectar", "neutron", "nexus", "nomad",
-  "north", "nova", "oasis", "obsidian", "ocean", "octave", "opal", "orbit",
-  "orchid", "origami", "orion", "otter", "outpost", "oxygen", "paddle", "palace",
-  "panther", "papyrus", "parade", "pebble", "pelican", "penguin", "phantom", "phoenix",
-  "pinnacle", "pioneer", "pipeline", "planet", "plasma", "plateau", "polar", "polaris",
-  "portico", "prairie", "prism", "propeller", "pyramid", "quantum", "quarry", "quartz",
-  "quiver", "radiant", "raptor", "raven", "reef", "rhombus", "ripple", "robot",
-  "rover", "ruby", "saddle", "safari", "sailor", "satellite", "savanna", "scarlet",
-  "scout", "sculptor", "serenade", "shadow", "shrine", "silver", "skylight", "solitude",
-  "sonata", "sparrow", "spectrum", "spiral", "stadium", "summit", "sunflower", "supernova",
-  "tapestry", "telescope", "temple", "timber", "titan", "topaz", "tornado", "torrent",
-  "totem", "trapeze", "tribute", "trident", "tulip", "tunnel", "turbine", "tundra",
-  "typhoon", "uranium", "valley", "velvet", "venture", "vessel", "vibrant", "village",
-  "vineyard", "vintage", "violet", "violin", "viper", "vortex", "voyage", "walrus",
-  "wavelet", "whisper", "wildcat", "windmill", "winter", "wizard", "wolverine", "zenith",
-  "zephyr", "zodiac"
-];
+import { EFF_WORDLIST } from "./wordlist";
+export { EFF_WORDLIST };
 
 export interface PasswordOptions {
   length: number;

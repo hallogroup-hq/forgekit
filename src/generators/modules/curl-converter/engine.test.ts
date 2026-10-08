@@ -34,7 +34,7 @@ describe("cURL to Code Converter Engine", () => {
     it("should parse basic authentication flag -u", () => {
       const curl = "curl -u myuser:mypass https://api.example.com/auth";
       const parsed = parseCurl(curl);
-      assert.ok(parsed.headers["Authorization"].startsWith("Basic "));
+      assert.equal(parsed.headers["Authorization"], "Basic bXl1c2VyOm15cGFzcw==");
     });
   });
 

@@ -1,3 +1,4 @@
+/// <reference types="@cloudflare/workers-types" />
 // Dynamically resolve puppeteer to support both Cloudflare Workers runtime and unit test environments
 let _puppeteerModule: any = null;
 async function getPuppeteer() {
@@ -16,6 +17,9 @@ export interface Env {
   MYBROWSER: any;
   INSPECTION_AUTH_SECRET: string;
   ALLOWED_DOMAINS?: string;
+  RATE_LIMITER?: {
+    limit: (options: { key: string }) => Promise<{ success: boolean }>;
+  };
 }
 
 export interface ExtractedMetrics {
@@ -244,22 +248,6 @@ export function normalizeToHex6(colorStr: string): string | null {
   return null;
 }
 
-// In-memory rate limiting map (IP -> { count, resetAt })
-const ipRateLimit = new Map<string, { count: number; resetAt: number }>();
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const record = ipRateLimit.get(ip);
-  if (!record || now > record.resetAt) {
-    ipRateLimit.set(ip, { count: 1, resetAt: now + 60000 });
-    return true;
-  }
-  if (record.count >= 15) {
-    return false;
-  }
-  record.count++;
-  return true;
-}
-
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     // 1. Method verification
@@ -270,11 +258,13 @@ export default {
       });
     }
 
-    // 2. Fail closed when INSPECTION_AUTH_SECRET is missing or empty
+    // 2. Fail closed when INSPECTION_AUTH_SECRET is missing or empty (Public inspection strictly disabled)
     const authSecret = env.INSPECTION_AUTH_SECRET?.trim();
     if (!authSecret) {
       return new Response(
-        JSON.stringify({ error: "Server security misconfiguration: INSPECTION_AUTH_SECRET is required" }),
+        JSON.stringify({
+          error: "Server security misconfiguration: INSPECTION_AUTH_SECRET is required. Public inspection is disabled.",
+        }),
         {
           status: 500,
           headers: { "Content-Type": "application/json" },
@@ -282,29 +272,41 @@ export default {
       );
     }
 
-    // 3. Strict authentication check (Authorization: Bearer <secret> or x-worker-auth: <secret>)
+    // 3. Strict authentication check: Public inspection is explicitly disabled without valid server secret
     const authHeader = request.headers.get("Authorization");
     const customHeader = request.headers.get("x-worker-auth");
     const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : null;
     const providedToken = bearerToken || customHeader?.trim();
 
     if (!providedToken || providedToken !== authSecret) {
-      return new Response(JSON.stringify({ error: "Unauthorized: Invalid or missing inspection auth token" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // 4. Rate Limiting Check
-    const clientIp = request.headers.get("CF-Connecting-IP") || "anonymous-client";
-    if (!checkRateLimit(clientIp)) {
       return new Response(
-        JSON.stringify({ error: "Rate limit exceeded. Maximum 15 inspections per minute." }),
+        JSON.stringify({
+          error: "Unauthorized: Public inspection is disabled. Valid server-to-server inspection auth token is required.",
+        }),
         {
-          status: 429,
-          headers: { "Content-Type": "application/json", "Retry-After": "60" },
+          status: 401,
+          headers: { "Content-Type": "application/json" },
         }
       );
+    }
+
+    // 4. Edge abuse protection via enforceable binding if provisioned
+    const clientIp = request.headers.get("CF-Connecting-IP") || "anonymous-client";
+    if (env.RATE_LIMITER && typeof env.RATE_LIMITER.limit === "function") {
+      try {
+        const rateResult = await env.RATE_LIMITER.limit({ key: clientIp });
+        if (!rateResult.success) {
+          return new Response(
+            JSON.stringify({ error: "Rate limit exceeded. Maximum allowed inspections reached." }),
+            {
+              status: 429,
+              headers: { "Content-Type": "application/json", "Retry-After": "60" },
+            }
+          );
+        }
+      } catch {
+        // Proceed under strict authentication barrier if edge binding is unavailable
+      }
     }
 
     // 5. Bounded Request Body (max 8KB)
@@ -371,30 +373,63 @@ export default {
       });
     }
 
-    // 7. Active DNS Pre-flight Check via Cloudflare 1.1.1.1 DoH
+    // 7. Mandatory DNS Pre-flight Verification via Cloudflare 1.1.1.1 DoH
+    // Must NOT silently bypass security policy if resolution fails or times out.
+    // Note: DNS pre-flight alone is NOT connection-level IP enforcement;
+    // session guardrails and browser request interception enforce network boundaries.
     try {
-      const dohRes = await fetch(`https://1.1.1.1/dns-query?name=${encodeURIComponent(parsed.hostname)}&type=A`, {
-        headers: { Accept: "application/dns-json" },
-        signal: AbortSignal.timeout(3000),
-      });
-      if (dohRes.ok) {
-        const dohData: any = await dohRes.json();
-        if (dohData.Answer && Array.isArray(dohData.Answer)) {
-          for (const ans of dohData.Answer) {
-            if (ans.type === 1 && typeof ans.data === "string") {
-              const v4 = parseIpv4ToNumber(ans.data);
-              if (v4 === null || isPrivateIpv4Num(v4)) {
-                return new Response(
-                  JSON.stringify({ error: `DNS resolution blocked: destination IP is in a private or reserved range` }),
-                  { status: 400, headers: { "Content-Type": "application/json" } }
-                );
-              }
-            }
+      const dohRes = await fetch(
+        `https://1.1.1.1/dns-query?name=${encodeURIComponent(parsed.hostname)}&type=A`,
+        {
+          headers: { Accept: "application/dns-json" },
+          signal: AbortSignal.timeout(4000),
+        }
+      );
+      if (!dohRes.ok) {
+        return new Response(
+          JSON.stringify({ error: `DNS preflight failed: upstream resolver returned HTTP ${dohRes.status}` }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      const dohData: any = await dohRes.json();
+      if (dohData.Status !== 0) {
+        return new Response(
+          JSON.stringify({ error: `DNS resolution error for ${parsed.hostname} (rcode ${dohData.Status})` }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (!dohData.Answer || !Array.isArray(dohData.Answer) || dohData.Answer.length === 0) {
+        return new Response(
+          JSON.stringify({ error: `DNS resolution failed: no records found for ${parsed.hostname}` }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      let hasValidPublicRecord = false;
+      for (const ans of dohData.Answer) {
+        if (ans.type === 1 && typeof ans.data === "string") {
+          const v4 = parseIpv4ToNumber(ans.data);
+          if (v4 === null || isPrivateIpv4Num(v4)) {
+            return new Response(
+              JSON.stringify({ error: `DNS resolution blocked: destination IP is in a private or reserved range` }),
+              { status: 400, headers: { "Content-Type": "application/json" } }
+            );
           }
+          hasValidPublicRecord = true;
         }
       }
-    } catch {
-      // DoH lookup failed or timed out; static SSRF controls remain intact
+
+      if (!hasValidPublicRecord) {
+        return new Response(
+          JSON.stringify({ error: `DNS resolution failed: no public IPv4 address records found for ${parsed.hostname}` }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+    } catch (dohErr: any) {
+      return new Response(
+        JSON.stringify({ error: `DNS preflight check failed: ${dohErr?.message || "Resolver timeout"}` }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
     }
 
     // 8. Fail closed if Cloudflare Browser Run binding is unavailable
@@ -418,7 +453,27 @@ export default {
       if (!puppeteer) {
         throw new Error("Cloudflare Puppeteer module unavailable in this environment");
       }
-      browser = await puppeteer.launch(env.MYBROWSER);
+
+      // Cloudflare Browser Run native session guardrails with explicit allowed hostnames
+      const allowedDomains = [
+        parsed.hostname.toLowerCase(),
+        "fonts.googleapis.com",
+        "fonts.gstatic.com",
+        "cdnjs.cloudflare.com",
+        "cdn.jsdelivr.net",
+        "unpkg.com",
+        "ajax.googleapis.com",
+      ];
+      if (env.ALLOWED_DOMAINS) {
+        const extra = env.ALLOWED_DOMAINS.split(",").map((d) => d.trim().toLowerCase()).filter(Boolean);
+        allowedDomains.push(...extra);
+      }
+
+      browser = await puppeteer.launch(env.MYBROWSER, {
+        guardrails: {
+          allowedDomains,
+        },
+      });
       const page = await browser.newPage();
 
       await page.setUserAgent(

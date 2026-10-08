@@ -41,3 +41,13 @@ jobs:
 
       - name: Build Next.js Application
         run: npm run build
+
+      - name: Install Cloudflare Worker Dependencies
+        run: npm --prefix workers/design-inspector install
+
+      - name: Typecheck Cloudflare Worker
+        run: npm --prefix workers/design-inspector run typecheck
+
+      - name: Verify Cloudflare Worker Wrangler Build
+        run: npm --prefix workers/design-inspector run build
+

@@ -6,14 +6,14 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build": "wrangler deploy --dry-run --outdir=dist"
   },
-  "dependencies": {},
   "devDependencies": {
-    "@cloudflare/puppeteer": "^0.0.14",
+    "@cloudflare/puppeteer": "^1.4.0",
     "@cloudflare/workers-types": "^4.20241004.0",
     "typescript": "^5.7.0",
-    "wrangler": "^3.80.0"
+    "wrangler": "^3.114.0"
   },
   "private": true
 }

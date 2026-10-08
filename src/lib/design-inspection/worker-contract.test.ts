@@ -153,7 +153,7 @@ describe("Cloudflare Browser Run Worker Contract & Security Verification", () =>
         INSPECTION_AUTH_SECRET: "",
       });
       assert.equal(resMissing.status, 500);
-      const data = await resMissing.json();
+      const data: any = await resMissing.json();
       assert.ok(data.error.includes("INSPECTION_AUTH_SECRET is required"));
     });
 
@@ -259,6 +259,24 @@ describe("Cloudflare Browser Run Worker Contract & Security Verification", () =>
       }
     });
 
+    it("should fail closed with HTTP 400 when DNS preflight fails or domain is unresolvable", async () => {
+      const req = new Request("https://worker.internal/inspect", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-worker-auth": "secret",
+        },
+        body: JSON.stringify({ url: "https://this-domain-does-not-exist-at-all-xyz9876.invalid" }),
+      });
+      const res = await workerHandler.fetch(req, {
+        MYBROWSER: {},
+        INSPECTION_AUTH_SECRET: "secret",
+      });
+      assert.equal(res.status, 400);
+      const data: any = await res.json();
+      assert.ok(data.error.toLowerCase().includes("dns"));
+    });
+
     it("should fail closed with HTTP 503 if MYBROWSER binding is absent", async () => {
       const req = new Request("https://worker.internal/inspect", {
         method: "POST",
@@ -273,7 +291,7 @@ describe("Cloudflare Browser Run Worker Contract & Security Verification", () =>
         INSPECTION_AUTH_SECRET: "secret",
       });
       assert.equal(res.status, 503);
-      const data = await res.json();
+      const data: any = await res.json();
       assert.ok(data.error.includes("MYBROWSER"));
     });
   });

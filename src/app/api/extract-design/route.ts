@@ -13,7 +13,7 @@ export const maxDuration = 45;
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const body: any = await req.json();
     let { url } = body;
 
     if (!url || typeof url !== "string") {
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
         });
 
         if (workerRes.ok) {
-          const workerData = await workerRes.json();
+          const workerData: any = await workerRes.json();
           if (workerData.success && workerData.metrics) {
             const jobId = crypto.randomUUID();
 

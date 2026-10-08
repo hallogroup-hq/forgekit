@@ -231,7 +231,7 @@ export default function DesignMdGenerator() {
         body: JSON.stringify({ url: raw.trim() }),
       });
 
-      const data = await res.json();
+      const data: any = await res.json();
 
       if (res.ok) {
         if (data.evidence) {

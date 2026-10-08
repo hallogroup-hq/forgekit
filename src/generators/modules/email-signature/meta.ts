@@ -8,5 +8,6 @@ export const meta: ToolMeta = {
   category: "growth",
   tags: ["email", "signature", "html", "branding", "gmail", "outlook", "contact", "professional"],
   icon: "MailCheck",
+  lifecycle: "ready",
   isPopular: true,
 };

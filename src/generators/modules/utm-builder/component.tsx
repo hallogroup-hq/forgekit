@@ -6,6 +6,13 @@ import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { downloadFile } from "@/lib/utils";
 
+import {
+  buildUtmUrl,
+  buildUtmMatrix,
+  exportMatrixToCsv,
+  DEFAULT_CHANNELS,
+} from "./engine";
+
 interface UtmPreset {
   name: string;
   source: string;
@@ -33,16 +40,6 @@ export default function UtmBuilderGenerator() {
   const [content, setContent] = useState("hero-cta");
   const [autoLowercase, setAutoLowercase] = useState(true);
 
-  // Sanitize helper
-  const sanitize = useCallback(
-    (val: string) => {
-      let out = val.trim().replace(/\s+/g, "-");
-      if (autoLowercase) out = out.toLowerCase();
-      return out;
-    },
-    [autoLowercase]
-  );
-
   const loadPreset = (p: UtmPreset) => {
     setSource(p.source);
     setMedium(p.medium);
@@ -52,69 +49,32 @@ export default function UtmBuilderGenerator() {
     confetti({ particleCount: 20, spread: 50, origin: { y: 0.8 } });
   };
 
-  // Generate Single Tagged URL
-  const generatedUrl = useMemo(() => {
-    let base = baseUrl.trim();
-    if (!base) return "";
-    if (!base.startsWith("http://") && !base.startsWith("https://")) {
-      base = `https://${base}`;
-    }
+  // Generate Single Tagged URL via pure engine
+  const generatedResult = useMemo(() => {
+    return buildUtmUrl(
+      baseUrl,
+      { source, medium, campaign, term, content },
+      { autoLowercase }
+    );
+  }, [baseUrl, source, medium, campaign, term, content, autoLowercase]);
 
-    try {
-      const urlObj = new URL(base);
-      if (source) urlObj.searchParams.set("utm_source", sanitize(source));
-      if (medium) urlObj.searchParams.set("utm_medium", sanitize(medium));
-      if (campaign) urlObj.searchParams.set("utm_campaign", sanitize(campaign));
-      if (term) urlObj.searchParams.set("utm_term", sanitize(term));
-      if (content) urlObj.searchParams.set("utm_content", sanitize(content));
-      return urlObj.toString();
-    } catch {
-      return base;
-    }
-  }, [baseUrl, source, medium, campaign, term, content, sanitize]);
+  const generatedUrl = generatedResult.url;
 
-  // Generate Multi-Channel Campaign Matrix
+  // Generate Multi-Channel Campaign Matrix via pure engine
   const channelMatrix = useMemo(() => {
-    const channels = [
-      { name: "Google Ads", src: "google", med: "cpc" },
-      { name: "Meta (FB/IG)", src: "facebook", med: "paid-social" },
-      { name: "Email Blast", src: "newsletter", med: "email" },
-      { name: "LinkedIn", src: "linkedin", med: "paid-social" },
-      { name: "Twitter / X", src: "twitter", med: "organic-social" },
-      { name: "YouTube Sponsor", src: "youtube", med: "video-sponsor" },
-    ];
-
-    let base = baseUrl.trim();
-    if (!base.startsWith("http://") && !base.startsWith("https://")) {
-      base = `https://${base}`;
-    }
-
-    return channels.map((ch) => {
-      try {
-        const urlObj = new URL(base);
-        urlObj.searchParams.set("utm_source", ch.src);
-        urlObj.searchParams.set("utm_medium", ch.med);
-        if (campaign) urlObj.searchParams.set("utm_campaign", sanitize(campaign));
-        if (content) urlObj.searchParams.set("utm_content", sanitize(content));
-        return {
-          channel: ch.name,
-          source: ch.src,
-          medium: ch.med,
-          url: urlObj.toString(),
-        };
-      } catch {
-        return { channel: ch.name, source: ch.src, medium: ch.med, url: base };
-      }
-    });
-  }, [baseUrl, campaign, content, sanitize]);
+    return buildUtmMatrix(
+      baseUrl,
+      DEFAULT_CHANNELS,
+      campaign,
+      content,
+      { autoLowercase }
+    );
+  }, [baseUrl, campaign, content, autoLowercase]);
 
   // CSV export
   const handleExportCsv = () => {
-    const headers = "Channel,Source,Medium,Campaign,Full_URL\n";
-    const rows = channelMatrix
-      .map((r) => `"${r.channel}","${r.source}","${r.medium}","${campaign}","${r.url}"`)
-      .join("\n");
-    downloadFile(headers + rows, `utm-campaign-matrix.csv`, "text/csv");
+    const csv = exportMatrixToCsv(channelMatrix);
+    downloadFile(csv, `utm-campaign-matrix-${Date.now()}.csv`, "text/csv");
     confetti({ particleCount: 30, spread: 60, origin: { y: 0.8 } });
   };
 

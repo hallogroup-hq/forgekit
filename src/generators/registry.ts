@@ -94,9 +94,21 @@ import AspectRatioGenerator from "./modules/aspect-ratio/component";
 import { meta as socialBioMeta } from "./modules/social-bio/meta";
 import SocialBioGenerator from "./modules/social-bio/component";
 
+import { meta as textCleanerMeta } from "./modules/text-cleaner/meta";
+import TextCleanerGenerator from "./modules/text-cleaner/component";
+
+import { meta as whatsappMeta } from "./modules/whatsapp-link/meta";
+import WhatsappLinkGenerator from "./modules/whatsapp-link/component";
+
+import { meta as campaignQaMeta } from "./modules/campaign-url-qa/meta";
+import CampaignUrlQaGenerator from "./modules/campaign-url-qa/component";
+
 export const registry: GeneratorModule[] = [
   // Flagship Workstation Modules
   { meta: qrMeta, component: QrCodeGenerator },
+  { meta: textCleanerMeta, component: TextCleanerGenerator },
+  { meta: whatsappMeta, component: WhatsappLinkGenerator },
+  { meta: campaignQaMeta, component: CampaignUrlQaGenerator },
   { meta: designMeta, component: DesignMdGenerator },
   { meta: promptOptMeta, component: PromptOptimizerGenerator },
   { meta: aiRulesMeta, component: AiRulesGenerator },

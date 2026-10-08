@@ -19,6 +19,12 @@ import {
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { downloadFile } from "@/lib/utils";
+import {
+  buildWifiPayload,
+  buildWhatsappPayload,
+  buildVCardPayload,
+  composeCompositeSvg,
+} from "./engine";
 
 type QrType = "url" | "wifi" | "whatsapp" | "vcard" | "crypto" | "email" | "text";
 
@@ -90,13 +96,23 @@ export default function QrCodeGenerator() {
         return clean;
       }
       case "wifi":
-        return `WIFI:T:${wifiEncryption};S:${ssid};P:${wifiPassword};H:${wifiHidden};;`;
-      case "whatsapp": {
-        const cleanPhone = waPhone.replace(/[^0-9]/g, "");
-        return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(waMessage)}`;
-      }
+        return buildWifiPayload({
+          ssid,
+          password: wifiPassword,
+          encryption: wifiEncryption,
+          hidden: wifiHidden,
+        });
+      case "whatsapp":
+        return buildWhatsappPayload(waPhone, waMessage);
       case "vcard":
-        return `BEGIN:VCARD\nVERSION:3.0\nFN:${vcardName}\nORG:${vcardOrg}\nTITLE:${vcardTitle}\nTEL:${vcardPhone}\nEMAIL:${vcardEmail}\nURL:${vcardWeb}\nEND:VCARD`;
+        return buildVCardPayload({
+          fullName: vcardName,
+          org: vcardOrg,
+          title: vcardTitle,
+          phone: vcardPhone,
+          email: vcardEmail,
+          url: vcardWeb,
+        });
       case "crypto":
         if (cryptoCoin === "bitcoin") {
           return `bitcoin:${cryptoAddress}${cryptoAmount ? `?amount=${cryptoAmount}` : ""}`;
@@ -348,16 +364,47 @@ export default function QrCodeGenerator() {
   const handleDownloadSvg = async () => {
     const payload = getPayload();
     try {
-      const svgString = await QRCode.toString(payload, {
+      const rawSvg = await QRCode.toString(payload, {
         type: "svg",
         margin,
         color: { dark: fgColor, light: bgColor },
         errorCorrectionLevel: errorLevel,
       });
-      downloadFile(svgString, `qrcode-${type}.svg`, "image/svg+xml");
+
+      let textBanner = "";
+      if (frameStyle !== "none") {
+        if (frameStyle === "wifi") textBanner = "CONNECT TO WI-FI";
+        else if (frameStyle === "whatsapp") textBanner = "CHAT ON WHATSAPP";
+        else if (frameStyle === "custom") textBanner = customFrameText || "SCAN ME";
+        else textBanner = "SCAN ME";
+      }
+
+      let logoDataUri: string | undefined;
+      if (logoPreset === "custom" && customLogoUrl) {
+        logoDataUri = customLogoUrl;
+      } else if (logoPreset === "whatsapp") {
+        logoDataUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#25D366"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2z"/></svg>')}`;
+      } else if (logoPreset === "wifi") {
+        logoDataUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M12 18a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-4.95-3.05a7 7 0 0 1 9.9 0l1.41-1.41a9 9 0 0 0-12.72 0l1.41 1.41zm-2.83-2.83a11 11 0 0 1 15.56 0l1.41-1.41a13 13 0 0 0-18.38 0l1.41 1.41z"/></svg>')}`;
+      } else if (logoPreset === "github") {
+        logoDataUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>')}`;
+      } else if (logoPreset === "crypto") {
+        logoDataUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#F7931A"><path d="M23.638 14.904c-1.602 6.43-8.09 10.34-14.52 8.736C2.69 22.04-1.22 15.55.384 9.12 1.986 2.69 8.474-1.22 14.904.384c6.43 1.602 10.34 8.09 8.734 14.52zM17.06 10.42c.23-.974-.59-1.498-1.597-1.847l.326-1.306-.795-.2-.317 1.27c-.21-.053-.424-.103-.637-.152l.32-1.28-.795-.198-.326 1.305c-.173-.04-.342-.078-.507-.119l.002-.007-1.097-.274-.212.85s.59.135.578.144c.322.08.38.293.37.463l-.372 1.49c.022.006.052.015.084.027l-.086-.022-.52 2.086c-.04.098-.14.246-.367.19.008.012-.577-.144-.577-.144l-.396.913 1.035.258c.193.048.38.098.566.145l-.33 1.326.794.198.326-1.306c.217.058.43.113.638.165l-.324 1.3.795.198.33-1.324c1.357.257 2.378.153 2.808-.075.346-.66.017-1.042-.462-1.29.349-.08.612-.31.683-.784z"/></svg>')}`;
+      }
+
+      const compositeSvg = composeCompositeSvg({
+        baseQrSvg: rawSvg,
+        size: 400,
+        frameText: textBanner,
+        fgColor,
+        bgColor,
+        logoSvgUri: logoDataUri,
+      });
+
+      downloadFile(compositeSvg, `qrcode-${type}.svg`, "image/svg+xml");
       confetti({ particleCount: 25, spread: 50, origin: { y: 0.8 } });
     } catch (e) {
-      console.error(e);
+      console.error("SVG generation error", e);
     }
   };
 

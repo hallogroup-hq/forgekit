@@ -561,6 +561,13 @@ export interface DesignObservation {
   detectedColors: string[];
   detectedFonts: string[];
   isDarkPreference?: boolean;
+  heroComposition?: {
+    type?: string;
+    textColumnWidth?: string;
+    visualColumnWidth?: string;
+    alignment?: string;
+    description?: string;
+  };
   notes?: string[];
 }
 
@@ -1531,6 +1538,11 @@ export function generateDesignMdDocument(
   }
   if (observation?.detectedFonts && observation.detectedFonts.length > 0) {
     observedNotes.push(`Detected web fonts: ${observation.detectedFonts.join(", ")}`);
+  }
+  if (observation?.heroComposition?.description) {
+    observedNotes.push(
+      `Spatial composition: ${observation.heroComposition.description} (text column width: ${observation.heroComposition.textColumnWidth || "standard"}, alignment: ${observation.heroComposition.alignment || "left"}).`
+    );
   }
 
   if (observedNotes.length === 0) {

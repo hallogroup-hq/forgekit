@@ -1,0 +1,14 @@
+name = "forgekit-design-inspector"
+main = "src/index.ts"
+compatibility_date = "2026-10-08"
+compatibility_flags = ["nodejs_compat"]
+
+# Browser Run / Browser Rendering Binding (Cloudflare Free Tier)
+# 10 minutes/day included, 3 concurrent browsers, hard capped ($0 overage)
+[browser]
+binding = "MYBROWSER"
+
+[vars]
+# Non-secret environment configuration
+MAX_DURATION_SECONDS = "15"
+MAX_CONCURRENT_BROWSERS = "2"

@@ -92,6 +92,51 @@ export default function DesignMdGenerator() {
 
   // Live Sandbox Viewport State
   const [sandboxViewport, setSandboxViewport] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const [lastEvidence, setLastEvidence] = useState<any>(null);
+
+  // Load draft & evidence from localStorage on initial client mount
+  useEffect(() => {
+    try {
+      const savedSystem = localStorage.getItem("forgekit_design_md_draft_system");
+      if (savedSystem) {
+        const parsed = JSON.parse(savedSystem);
+        if (parsed?.identity && parsed?.colors) {
+          setSystem(parsed);
+        }
+      }
+      const savedEvidence = localStorage.getItem("forgekit_design_md_last_evidence");
+      if (savedEvidence) {
+        const parsedEvidence = JSON.parse(savedEvidence);
+        if (parsedEvidence?.url) {
+          setLastEvidence(parsedEvidence);
+          if (parsedEvidence.screenshots?.desktopDataUri) {
+            setScreenshotPreviewUrl(parsedEvidence.screenshots.desktopDataUri);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Could not load design-md draft from localStorage", e);
+    }
+  }, []);
+
+  // Persist draft to localStorage on changes
+  useEffect(() => {
+    try {
+      localStorage.setItem("forgekit_design_md_draft_system", JSON.stringify(system));
+    } catch {
+      // quota or private mode fallback
+    }
+  }, [system]);
+
+  useEffect(() => {
+    if (lastEvidence) {
+      try {
+        localStorage.setItem("forgekit_design_md_last_evidence", JSON.stringify(lastEvidence));
+      } catch {
+        // quota fallback
+      }
+    }
+  }, [lastEvidence]);
 
   // Keep date updated
   useEffect(() => {
@@ -149,6 +194,23 @@ export default function DesignMdGenerator() {
       notes: [ref.fidelityReport],
     };
     setObservation(newObs);
+    setLastEvidence({
+      siteKey,
+      url: ref.url,
+      name: ref.name,
+      archetype: ref.archetype,
+      timestamp: new Date().toISOString(),
+      inspectionMethod: "manual-fallback",
+      viewports: { desktop: { width: 1440, height: 900 }, mobile: { width: 390, height: 844 } },
+      meta: { title: `${ref.name} — ${ref.visualIdentity}` },
+      metrics: {
+        containerMaxWidth: "1280px",
+        isDark: ref.archetype === "modern-saas" || ref.archetype === "minimal-landing",
+      },
+      extractedPalette: ref.observed.detectedColors,
+      extractedFonts: ref.observed.detectedFonts,
+      fidelityReport: ref.fidelityReport,
+    });
     setExtractSuccess(`Loaded empirical inspection baseline for ${ref.name}!`);
     confetti({ particleCount: 25, spread: 60, origin: { y: 0.8 } });
   };
@@ -172,6 +234,9 @@ export default function DesignMdGenerator() {
       const data = await res.json();
 
       if (res.ok) {
+        if (data.evidence) {
+          setLastEvidence(data.evidence);
+        }
         if (data.evidence?.screenshots?.desktopDataUri) {
           setScreenshotPreviewUrl(data.evidence.screenshots.desktopDataUri);
         } else if (data.evidence?.screenshots?.desktopUrl) {
@@ -411,6 +476,31 @@ export default function DesignMdGenerator() {
   const tailwindV4 = useMemo(() => generateTailwindV4Theme(system), [system]);
   const cheatsheetHtml = useMemo(() => generateComponentsCheatsheetHtml(system), [system]);
 
+  const handleExportEvidenceBundle = () => {
+    const bundle = {
+      name: system.identity.projectName.value,
+      url: lastEvidence?.url || urlInput || system.identity.projectName.sourceRef,
+      timestamp: lastEvidence?.timestamp || new Date().toISOString(),
+      inspectionMethod: lastEvidence?.inspectionMethod || "user-draft",
+      archetype: system.identity.archetype.value,
+      evidence: lastEvidence || {
+        palette: observation?.detectedColors || [],
+        fonts: observation?.detectedFonts || [],
+      },
+      system,
+      generated: {
+        markdown: markdownDoc,
+        tokensJson,
+      },
+    };
+    const slug = system.identity.projectName.value.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+    downloadFile(
+      JSON.stringify(bundle, null, 2),
+      `${slug}-evidence-bundle.json`,
+      "application/json"
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* 3-Mode Primary Header Selector */}
@@ -587,26 +677,37 @@ export default function DesignMdGenerator() {
             </div>
           )}
           {screenshotPreviewUrl && (
-            <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-900 border border-indigo-200 dark:border-indigo-900/50 flex items-center gap-3 shadow-2xs">
-              <div className="relative w-20 h-14 rounded overflow-hidden border border-zinc-200 dark:border-zinc-800 shrink-0 bg-zinc-950">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={screenshotPreviewUrl}
-                  alt="Visual inspection preview"
-                  className="w-full h-full object-cover object-top"
-                />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
-                  <span>Visual Evidence Attached</span>
-                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-mono">
-                    Captured
-                  </span>
+            <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-900 border border-indigo-200 dark:border-indigo-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="relative w-20 h-14 rounded overflow-hidden border border-zinc-200 dark:border-zinc-800 shrink-0 bg-zinc-950">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={screenshotPreviewUrl}
+                    alt="Visual inspection preview"
+                    className="w-full h-full object-cover object-top"
+                  />
                 </div>
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
-                  Observed colors and layout properties matched against rendered visual context
-                </p>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+                    <span>Visual Evidence Attached</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-mono">
+                      {lastEvidence?.inspectionMethod || "Captured"}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                    {lastEvidence?.url || "Rendered page evidence preserved in local memory"}
+                  </p>
+                </div>
               </div>
+              <button
+                type="button"
+                onClick={handleExportEvidenceBundle}
+                className="px-2.5 py-1.5 rounded-lg border border-indigo-300 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 text-xs font-semibold flex items-center gap-1.5 cursor-pointer shrink-0 self-start sm:self-auto"
+                title="Download complete evidence bundle (JSON, screenshots & tokens)"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Export Evidence Bundle</span>
+              </button>
             </div>
           )}
         </div>
@@ -1955,6 +2056,15 @@ export default function DesignMdGenerator() {
                   title="Download File"
                 >
                   <Download className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportEvidenceBundle}
+                  className="px-2 py-1 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 text-[11px] font-medium flex items-center gap-1.5 cursor-pointer"
+                  title="Download Evidence Bundle (Tokens, Evidence & Screenshots)"
+                >
+                  <FileJson className="w-3.5 h-3.5" />
+                  <span>Evidence Bundle</span>
                 </button>
               </div>
             </div>

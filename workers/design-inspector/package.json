@@ -1,0 +1,19 @@
+{
+  "name": "forgekit-design-inspector",
+  "version": "1.0.0",
+  "description": "Zero-cost Cloudflare Worker for isolated headless browser design inspection using Cloudflare Browser Run",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@cloudflare/puppeteer": "^0.0.14",
+    "@cloudflare/workers-types": "^4.20241004.0",
+    "typescript": "^5.7.0",
+    "wrangler": "^3.80.0"
+  },
+  "private": true
+}

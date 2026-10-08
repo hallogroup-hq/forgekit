@@ -37,7 +37,7 @@ export interface ReferenceSiteInspectionEvidence {
   name: string;
   archetype: DesignArchetype;
   timestamp: string;
-  inspectionMethod: "headless-chrome" | "manual-fallback" | "ssrf-fetch";
+  inspectionMethod: "headless-chrome" | "manual-fallback" | "ssrf-fetch" | "cloudflare-browser-run";
   jobId?: string;
   viewports: {
     desktop: { width: number; height: number };
@@ -57,6 +57,7 @@ export interface ReferenceSiteInspectionEvidence {
     card?: RenderedElementMetrics;
     containerMaxWidth: string;
     isDark: boolean;
+    heroComposition?: "center" | "split" | "text-only";
   };
   extractedPalette: string[];
   extractedFonts: string[];
@@ -202,12 +203,14 @@ export function detectArchetypeFromEvidence(
     .join(" ")
     .toLowerCase();
 
+  const nonSansFonts = allFonts.replace(/sans-serif/g, "").replace(/system-ui/g, "");
   const isSerif =
-    allFonts.includes("newsreader") ||
-    allFonts.includes("charter") ||
-    allFonts.includes("georgia") ||
-    allFonts.includes("playfair") ||
-    allFonts.includes("serif");
+    nonSansFonts.includes("newsreader") ||
+    nonSansFonts.includes("charter") ||
+    nonSansFonts.includes("georgia") ||
+    nonSansFonts.includes("playfair") ||
+    nonSansFonts.includes("times") ||
+    /\bserif\b/.test(nonSansFonts);
 
   const isMonoOrDev =
     allFonts.includes("geist") ||
@@ -305,8 +308,10 @@ export async function inspectLiveSite(
     options?.privateOutputDir ||
     (options?.outputBaseDir
       ? path.resolve(options.outputBaseDir, siteKey)
-      : path.resolve(process.cwd(), "storage/inspections", jobId));
-  await fs.mkdir(outputDir, { recursive: true });
+      : undefined);
+  if (outputDir) {
+    await fs.mkdir(outputDir, { recursive: true });
+  }
 
   const captureScreenshots = options?.captureScreenshots ?? true;
   const chromePath = resolveChromeExecutable() || getLocalChromePath();
@@ -405,10 +410,17 @@ export async function inspectLiveSite(
     let desktopScreenshotPath: string | undefined;
     let desktopDataUri: string | undefined;
     if (captureScreenshots) {
-      desktopScreenshotPath = path.join(outputDir, "desktop.png");
-      const desktopBuf = (await page.screenshot({ path: desktopScreenshotPath, fullPage: false })) as Buffer;
-      if (desktopBuf) {
-        desktopDataUri = `data:image/png;base64,${desktopBuf.toString("base64")}`;
+      if (outputDir) {
+        desktopScreenshotPath = path.join(outputDir, "desktop.png");
+        const desktopBuf = (await page.screenshot({ path: desktopScreenshotPath, fullPage: false })) as Buffer;
+        if (desktopBuf) {
+          desktopDataUri = `data:image/png;base64,${desktopBuf.toString("base64")}`;
+        }
+      } else {
+        const desktopBuf = (await page.screenshot({ fullPage: false, type: "jpeg", quality: 75 })) as Buffer;
+        if (desktopBuf) {
+          desktopDataUri = `data:image/jpeg;base64,${desktopBuf.toString("base64")}`;
+        }
       }
     }
 
@@ -610,6 +622,21 @@ export async function inspectLiveSite(
         isDark = lum < 128;
       }
 
+      // Detect hero composition: center vs split vs text-only
+      let heroComposition: "center" | "split" | "text-only" = "center";
+      const heroEl = document.querySelector("header, main > section:first-of-type, [class*='hero']");
+      if (heroEl) {
+        const hasMedia = heroEl.querySelector("img, video, canvas, svg, [class*='media'], [class*='image']") !== null;
+        const textCenter = window.getComputedStyle(heroEl).textAlign === "center";
+        if (hasMedia && !textCenter) {
+          heroComposition = "split";
+        } else if (textCenter) {
+          heroComposition = "center";
+        } else if (!hasMedia) {
+          heroComposition = "text-only";
+        }
+      }
+
       return {
         title,
         metaTheme,
@@ -622,6 +649,7 @@ export async function inspectLiveSite(
         card: cardEl ? getMetrics(cardEl) : undefined,
         containerMaxWidth: maxContainerWidth,
         isDark,
+        heroComposition,
         colorSamples: Array.from(colorSamples),
         fontSamples: Array.from(fontSamples),
       };
@@ -634,10 +662,17 @@ export async function inspectLiveSite(
     let mobileScreenshotPath: string | undefined;
     let mobileDataUri: string | undefined;
     if (captureScreenshots) {
-      mobileScreenshotPath = path.join(outputDir, "mobile.png");
-      const mobileBuf = (await page.screenshot({ path: mobileScreenshotPath, fullPage: false })) as Buffer;
-      if (mobileBuf) {
-        mobileDataUri = `data:image/png;base64,${mobileBuf.toString("base64")}`;
+      if (outputDir) {
+        mobileScreenshotPath = path.join(outputDir, "mobile.png");
+        const mobileBuf = (await page.screenshot({ path: mobileScreenshotPath, fullPage: false })) as Buffer;
+        if (mobileBuf) {
+          mobileDataUri = `data:image/png;base64,${mobileBuf.toString("base64")}`;
+        }
+      } else {
+        const mobileBuf = (await page.screenshot({ fullPage: false, type: "jpeg", quality: 75 })) as Buffer;
+        if (mobileBuf) {
+          mobileDataUri = `data:image/jpeg;base64,${mobileBuf.toString("base64")}`;
+        }
       }
     }
 
@@ -703,6 +738,7 @@ export async function inspectLiveSite(
         card: empirical.card,
         containerMaxWidth: empirical.containerMaxWidth,
         isDark: empirical.isDark,
+        heroComposition: empirical.heroComposition,
       },
       extractedPalette,
       extractedFonts: empirical.fontSamples,
@@ -711,18 +747,20 @@ export async function inspectLiveSite(
         mobilePath: mobileScreenshotPath,
         desktopDataUri,
         mobileDataUri,
-        desktopUrl: `/api/inspection-artifacts/${jobId}/desktop.png`,
-        mobileUrl: `/api/inspection-artifacts/${jobId}/mobile.png`,
+        desktopUrl: desktopDataUri || (desktopScreenshotPath ? `/api/inspection-artifacts/${jobId}/desktop.png` : undefined),
+        mobileUrl: mobileDataUri || (mobileScreenshotPath ? `/api/inspection-artifacts/${jobId}/mobile.png` : undefined),
       },
       fidelityReport: `Inspected ${name} via headless Chrome (1440x900 desktop & 390x844 mobile). Extracted ${extractedPalette.length} colors and ${empirical.fontSamples.length} rendered fonts. Archetype: ${finalArchetype}. Body: ${bodyHex} on ${bodyBgHex}. Primary CTA: ${primaryBtnBg || "derived"}.`,
     };
 
-    // Save evidence.json
-    await fs.writeFile(
-      path.join(outputDir, "evidence.json"),
-      JSON.stringify(evidence, null, 2),
-      "utf-8"
-    );
+    // Save evidence.json if outputDir provided
+    if (outputDir) {
+      await fs.writeFile(
+        path.join(outputDir, "evidence.json"),
+        JSON.stringify(evidence, null, 2),
+        "utf-8"
+      );
+    }
 
     return evidence;
   } finally {
@@ -734,74 +772,53 @@ export async function inspectLiveSite(
 
 /**
  * Synthesizes a FullDesignSystem strictly bound to empirical inspection evidence.
+ * Directly constructs all 14 design system sections without synthetic archetype presets.
  */
 export function buildDesignSystemFromEvidence(
   evidence: ReferenceSiteInspectionEvidence
 ): FullDesignSystem {
-  const base = createArchetypeDesignSystem(evidence.archetype, {
-    projectName: `${evidence.name} Design System`,
-    brandTone: evidence.meta.description || `Empirical extraction from ${evidence.name}`,
-  });
-
   const url = evidence.url;
   const ts = evidence.timestamp;
+  const isDark = evidence.metrics.isDark;
 
   // 1. Identity
-  base.identity.projectName = attr(
-    `${evidence.name} Empirical Design System`,
-    "observed",
-    url,
-    `Inspected live at ${ts}`,
-    "desktop",
-    1.0
-  );
-  base.identity.archetype = attr(
-    evidence.archetype,
-    "inferred",
-    url,
-    `Classified based on visual identity`,
-    "all",
-    0.95
-  );
+  const identity = {
+    projectName: attr(
+      `${evidence.name} Empirical Design System`,
+      "observed",
+      url,
+      `Inspected live at ${ts}`,
+      "desktop",
+      1.0
+    ),
+    archetype: attr(
+      evidence.archetype,
+      "inferred",
+      url,
+      `Classified based on visual identity`,
+      "all",
+      0.95
+    ),
+    brandTone: attr(
+      evidence.meta.description || `Empirical extraction from ${evidence.name}`,
+      evidence.meta.description ? "observed" : "inferred",
+      url,
+      "Extracted from page metadata"
+    ),
+    platform: attr("Web / Responsive", "observed", url, "Extracted from responsive viewports"),
+    version: attr("1.0.0", "inferred", url, "Initial extraction baseline"),
+    date: attr(ts.split("T")[0] || new Date().toISOString().split("T")[0], "observed", url, "Extraction timestamp"),
+  };
 
   // 2. Colors & Contrast Validation
   const bgHex = rgbToHex(evidence.metrics.body.backgroundColor);
   const textHex = rgbToHex(evidence.metrics.body.color);
-  const primaryCtaBg = evidence.metrics.primaryButton?.backgroundColor
-    ? rgbToHex(evidence.metrics.primaryButton.backgroundColor)
-    : undefined;
-
-  // Validate Primary Button CTA (reject 0x0 hidden elements)
-  const isBtnValid = Boolean(
-    evidence.metrics.primaryButton &&
-    (evidence.metrics.primaryButton.width === undefined || evidence.metrics.primaryButton.width >= 40) &&
-    (evidence.metrics.primaryButton.height === undefined || evidence.metrics.primaryButton.height >= 20)
-  );
-
-  if (isBtnValid && primaryCtaBg && primaryCtaBg !== bgHex) {
-    base.colors.primary = attr(primaryCtaBg, "observed", url, "Measured primary button CTA background", "desktop", 0.95);
-    base.colors.primaryLadder = attr(generateColorLadder(primaryCtaBg), "inferred", url, "11-step mathematical interpolation");
-  } else {
-    // Inferred fallback: pick distinct tone from palette
-    const candidateColor = evidence.extractedPalette.find(
-      (c) => c.toLowerCase() !== bgHex.toLowerCase() && c.toLowerCase() !== textHex.toLowerCase()
-    ) || base.colors.primary.value;
-    base.colors.primary = attr(
-      candidateColor,
-      "inferred",
-      url,
-      "Inferred from extracted palette; no standalone visible CTA button in top viewport",
-      "desktop",
-      0.6
-    );
-    base.colors.primaryLadder = attr(generateColorLadder(candidateColor), "inferred", url, "11-step mathematical interpolation");
-  }
 
   // Normalize contrast if background equals text color (inherited/transparent bug)
   let finalBgHex = bgHex;
   let finalTextHex = textHex;
   if (finalBgHex.toLowerCase() === finalTextHex.toLowerCase()) {
-    if (evidence.metrics.isDark) {
+    if (isDark) {
       finalBgHex = "#08090a";
       finalTextHex = "#ededed";
     } else {
@@ -810,22 +827,48 @@ export function buildDesignSystemFromEvidence(
     }
   }
 
-  base.colors.neutrals.background = attr(finalBgHex, "observed", url, "Measured body background", "desktop", 1.0);
-  base.colors.neutrals.text = attr(finalTextHex, "observed", url, "Measured body text color", "desktop", 1.0);
+  // Validate Primary Button CTA (reject 0x0 hidden elements)
+  const isBtnValid = Boolean(
+    evidence.metrics.primaryButton &&
+    (evidence.metrics.primaryButton.width === undefined || evidence.metrics.primaryButton.width >= 40) &&
+    (evidence.metrics.primaryButton.height === undefined || evidence.metrics.primaryButton.height >= 20)
+  );
+  const primaryCtaBg = isBtnValid && evidence.metrics.primaryButton?.backgroundColor
+    ? rgbToHex(evidence.metrics.primaryButton.backgroundColor)
+    : undefined;
 
-  // Surface and border
-  if (evidence.metrics.card?.backgroundColor) {
-    const cardBgHex = rgbToHex(evidence.metrics.card.backgroundColor);
-    base.colors.neutrals.surface = attr(cardBgHex, "observed", url, "Measured card/container surface", "desktop", 0.9);
+  let primaryColor: string;
+  let primaryProvenance: "observed" | "inferred";
+  let primaryConfidence: number;
+  let primaryNote: string;
+
+  if (isBtnValid && primaryCtaBg && primaryCtaBg.toLowerCase() !== finalBgHex.toLowerCase()) {
+    primaryColor = primaryCtaBg;
+    primaryProvenance = "observed";
+    primaryConfidence = 0.95;
+    primaryNote = "Measured primary button CTA background";
+  } else {
+    // Inferred fallback: pick distinct tone from extracted palette
+    const candidate = evidence.extractedPalette.find(
+      (c) => c.toLowerCase() !== finalBgHex.toLowerCase() && c.toLowerCase() !== finalTextHex.toLowerCase()
+    );
+    primaryColor = candidate || (isDark ? "#3b82f6" : "#2563eb");
+    primaryProvenance = "inferred";
+    primaryConfidence = candidate ? 0.6 : 0.5;
+    primaryNote = candidate
+      ? "Inferred from extracted palette; no standalone visible CTA button in top viewport"
+      : "Fallback default primary tone";
   }
 
-  // Extract distinctive brand accents from empirical palette (diverging from generic defaults)
+  const primaryLadder = generateColorLadder(primaryColor);
+
+  // Distinct brand accents from empirical palette
   const distinctAccents = evidence.extractedPalette.filter((c) => {
     const lower = c.toLowerCase();
     return (
       lower !== finalBgHex.toLowerCase() &&
       lower !== finalTextHex.toLowerCase() &&
-      lower !== base.colors.primary.value.toLowerCase() &&
+      lower !== primaryColor.toLowerCase() &&
       lower !== "#000000" &&
       lower !== "#ffffff" &&
       lower !== "#08090a" &&
@@ -835,34 +878,56 @@ export function buildDesignSystemFromEvidence(
       lower !== "#f7f8f8"
     );
   });
-  if (distinctAccents.length > 0) {
-    base.colors.accent = attr(
-      distinctAccents[0],
-      "observed",
-      url,
-      "Extracted distinctive brand accent from rendered page elements",
-      "desktop",
-      0.9
-    );
-    if (distinctAccents.length > 1) {
-      base.colors.secondary = attr(
-        distinctAccents[1],
-        "observed",
-        url,
-        "Extracted secondary brand color",
-        "desktop",
-        0.85
-      );
-    }
-  }
+
+  const accentColor = distinctAccents[0] || (isDark ? "#38bdf8" : "#0284c7");
+  const accentProvenance = distinctAccents[0] ? "observed" : "inferred";
+  const secondaryColor = distinctAccents[1] || (isDark ? "#a1a1aa" : "#64748b");
+  const secondaryProvenance = distinctAccents[1] ? "observed" : "inferred";
+
+  const cardBg = evidence.metrics.card?.backgroundColor
+    ? rgbToHex(evidence.metrics.card.backgroundColor)
+    : undefined;
+  const surfaceColor = cardBg && cardBg.toLowerCase() !== finalBgHex.toLowerCase()
+    ? cardBg
+    : (isDark ? "#121316" : "#f8fafc");
+  const surfaceProvenance = cardBg ? "observed" : "inferred";
+
+  const colors = {
+    primary: attr(primaryColor, primaryProvenance, url, primaryNote, "desktop", primaryConfidence),
+    primaryLadder: attr(primaryLadder, "inferred", url, "11-step mathematical interpolation"),
+    secondary: attr(secondaryColor, secondaryProvenance, url, "Secondary brand tone", "desktop", 0.85),
+    accent: attr(accentColor, accentProvenance, url, "Extracted distinctive brand accent", "desktop", 0.9),
+    neutrals: {
+      background: attr(finalBgHex, "observed", url, "Measured body background", "desktop", 1.0),
+      surface: attr(surfaceColor, surfaceProvenance, url, "Measured container/card surface", "desktop", 0.9),
+      border: attr(isDark ? "#27272a" : "#e2e8f0", "inferred", url, "Neutral border stroke"),
+      mutedText: attr(isDark ? "#a1a1aa" : "#64748b", "inferred", url, "Secondary muted body text"),
+      text: attr(finalTextHex, "observed", url, "Measured body text color", "desktop", 1.0),
+    },
+    semantic: {
+      success: attr("#10b981", "inferred", url, "Accessible success state"),
+      warning: attr("#f59e0b", "inferred", url, "Accessible warning state"),
+      error: attr("#ef4444", "inferred", url, "Accessible error state"),
+      info: attr("#3b82f6", "inferred", url, "Accessible info state"),
+    },
+  };
 
   // 3. Typography
-  if (evidence.extractedFonts.length > 0) {
-    const headingFontName = evidence.metrics.h1?.fontFamily || evidence.extractedFonts[0];
-    const bodyFontName = evidence.metrics.body?.fontFamily || evidence.extractedFonts[1] || headingFontName;
+  const headingFontName =
+    evidence.metrics.h1?.fontFamily ||
+    (evidence.extractedFonts.length > 0 ? evidence.extractedFonts[0] : "Inter, -apple-system, BlinkMacSystemFont, sans-serif");
+  const bodyFontName =
+    evidence.metrics.body?.fontFamily ||
+    (evidence.extractedFonts.length > 1 ? evidence.extractedFonts[1] : headingFontName);
 
-    base.typography.headingFont = attr(headingFontName, "observed", url, "Extracted from rendered H1 computed style", "desktop", 0.95);
-    base.typography.bodyFont = attr(bodyFontName, "observed", url, "Extracted from rendered body computed style", "desktop", 0.95);
+  let baseFontSizeNum = 16;
+  let baseFontProvenance: "observed" | "inferred" = "inferred";
+  if (evidence.metrics.body?.fontSize) {
+    const parsed = parseInt(evidence.metrics.body.fontSize, 10);
+    if (!isNaN(parsed) && parsed >= 12 && parsed <= 24) {
+      baseFontSizeNum = parsed;
+      baseFontProvenance = "observed";
+    }
   }
 
   // Validate Heading H1 (reject 1x1 screen-reader elements)
@@ -872,144 +937,255 @@ export function buildDesignSystemFromEvidence(
     (evidence.metrics.h1.height === undefined || evidence.metrics.h1.height >= 16)
   );
 
-  if (isH1Valid && evidence.metrics.h1.fontSize) {
-    base.typography.headings.h1 = attr(
-      {
-        size: evidence.metrics.h1.fontSize,
-        weight: evidence.metrics.h1.fontWeight || "700",
-        lineHeight: evidence.metrics.h1.lineHeight || "1.1",
-        tracking: evidence.metrics.h1.letterSpacing || "-0.02em",
-      },
-      "observed",
-      url,
-      "Extracted from computed H1 styles",
-      "desktop",
-      0.95
-    );
-  } else if (evidence.metrics.h2?.fontSize && evidence.metrics.h2.width && evidence.metrics.h2.width >= 40) {
-    base.typography.headings.h1 = attr(
-      {
-        size: evidence.metrics.h2.fontSize,
-        weight: evidence.metrics.h2.fontWeight || "600",
-        lineHeight: evidence.metrics.h2.lineHeight || "1.2",
-        tracking: evidence.metrics.h2.letterSpacing || "-0.01em",
-      },
-      "inferred",
-      url,
-      "H1 was hidden/sr-only; inferred from prominent visible H2",
-      "desktop",
-      0.85
-    );
+  let h1Val: { size: string; weight: string; lineHeight: string; tracking: string };
+  let h1Prov: "observed" | "inferred";
+  let h1Note: string;
+
+  if (isH1Valid && evidence.metrics.h1?.fontSize) {
+    h1Val = {
+      size: evidence.metrics.h1.fontSize,
+      weight: evidence.metrics.h1.fontWeight || "700",
+      lineHeight: evidence.metrics.h1.lineHeight || "1.1",
+      tracking: evidence.metrics.h1.letterSpacing || "-0.02em",
+    };
+    h1Prov = "observed";
+    h1Note = "Extracted from computed H1 styles";
+  } else if (evidence.metrics.h2?.fontSize && (!evidence.metrics.h2.width || evidence.metrics.h2.width >= 40)) {
+    h1Val = {
+      size: evidence.metrics.h2.fontSize,
+      weight: evidence.metrics.h2.fontWeight || "600",
+      lineHeight: evidence.metrics.h2.lineHeight || "1.2",
+      tracking: evidence.metrics.h2.letterSpacing || "-0.01em",
+    };
+    h1Prov = "inferred";
+    h1Note = "H1 was hidden/sr-only; inferred from prominent visible H2";
+  } else {
+    h1Val = { size: "48px", weight: "700", lineHeight: "1.1", tracking: "-0.02em" };
+    h1Prov = "inferred";
+    h1Note = "Default heading size";
   }
 
-  // Heading H2 & Body Font Size hierarchy
-  if (evidence.metrics.h2?.fontSize) {
-    base.typography.headings.h2 = attr(
-      {
+  const h2Val = evidence.metrics.h2?.fontSize
+    ? {
         size: evidence.metrics.h2.fontSize,
         weight: evidence.metrics.h2.fontWeight || "600",
         lineHeight: evidence.metrics.h2.lineHeight || "1.2",
         tracking: evidence.metrics.h2.letterSpacing || "-0.01em",
-      },
-      "observed",
-      url,
-      "Extracted from computed H2 styles",
-      "desktop",
-      0.9
-    );
-  }
-  if (evidence.metrics.body?.fontSize) {
-    const parsedBase = parseInt(evidence.metrics.body.fontSize, 10);
-    if (!isNaN(parsedBase) && parsedBase >= 12 && parsedBase <= 24) {
-      base.typography.baseFontSize = attr(
-        parsedBase,
-        "observed",
-        url,
-        "Measured body font size",
-        "desktop",
-        0.95
-      );
-    }
-  }
+      }
+    : { size: "32px", weight: "600", lineHeight: "1.2", tracking: "-0.01em" };
+  const h2Prov = evidence.metrics.h2?.fontSize ? "observed" : "inferred";
+
+  const typography = {
+    headingFont: attr(headingFontName, "observed", url, "Extracted from rendered H1 computed style", "desktop", 0.95),
+    bodyFont: attr(bodyFontName, "observed", url, "Extracted from rendered body computed style", "desktop", 0.95),
+    monoFont: attr("ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace", "inferred", url, "System monospace font stack"),
+    scaleRatio: attr(1.25, "inferred", url, "Major third modular type scale"),
+    baseFontSize: attr(baseFontSizeNum, baseFontProvenance, url, "Measured body font size", "desktop", 0.95),
+    headings: {
+      h1: attr(h1Val, h1Prov, url, h1Note, "desktop", 0.95),
+      h2: attr(h2Val, h2Prov, url, "Extracted from computed H2 styles", "desktop", 0.9),
+      h3: attr({ size: "24px", weight: "600", lineHeight: "1.3", tracking: "0em" }, "inferred", url, "Proportional sub-heading"),
+      h4: attr({ size: "20px", weight: "600", lineHeight: "1.4", tracking: "0em" }, "inferred", url, "Proportional section-heading"),
+    },
+  };
 
   // 4. Layout
-  if (evidence.metrics.containerMaxWidth) {
-    base.layout.containerMaxWidth = attr(evidence.metrics.containerMaxWidth, "observed", url, "Measured container bounding rect", "desktop", 0.9);
-  }
+  const layout = {
+    containerMaxWidth: attr(evidence.metrics.containerMaxWidth || "1280px", "observed", url, "Measured container bounding rect", "desktop", 0.9),
+    containerPadding: attr("24px", "inferred", url, "Standard responsive gutter padding"),
+    gridColumns: attr(12, "inferred", url, "Standard 12-column responsive layout grid"),
+    gutterWidth: attr("24px", "inferred", url, "Inter-column layout gutter"),
+  };
 
-  // 6. Surfaces & Shadows
-  if (evidence.metrics.card?.borderRadius) {
-    base.surfaces.cardRadius = attr(evidence.metrics.card.borderRadius, "observed", url, "Measured card border-radius", "desktop", 0.9);
-  }
-  if (evidence.metrics.card?.boxShadow) {
-    base.surfaces.shadows.medium = attr(
-      evidence.metrics.card.boxShadow,
-      "observed",
+  // 5. Spacing
+  const spacing = {
+    baseUnit: attr(4, "inferred", url, "4px baseline grid unit"),
+    scale: attr(
+      { xs: "4px", sm: "8px", md: "16px", lg: "24px", xl: "32px", "2xl": "48px", "3xl": "64px" },
+      "inferred",
       url,
-      "Measured card box-shadow",
-      "desktop",
-      0.9
-    );
-  }
+      "Geometric 4px rhythm spacing scale"
+    ),
+    densityMode: attr("normal" as const, "inferred", url, "Standard layout density"),
+  };
 
-  // 7. Measured Button System (bg, text, radius, padding, height, shadow)
-  if (isBtnValid && evidence.metrics.primaryButton) {
-    const btnBg = primaryCtaBg || rgbToHex(evidence.metrics.primaryButton.backgroundColor);
-    const btnText = rgbToHex(evidence.metrics.primaryButton.color);
-    const btnRadius = evidence.metrics.primaryButton.borderRadius || base.surfaces.baseRadius.value;
-    const btnShadow = evidence.metrics.primaryButton.boxShadow || "none";
+  // 6. Surfaces, Elevation & Borders
+  const btnRadius = isBtnValid && evidence.metrics.primaryButton?.borderRadius
+    ? evidence.metrics.primaryButton.borderRadius
+    : "8px";
+  const cardRadius = evidence.metrics.card?.borderRadius || btnRadius;
+  const cardRadiusProv = evidence.metrics.card?.borderRadius ? "observed" : "inferred";
+  const btnRadiusProv = isBtnValid && evidence.metrics.primaryButton?.borderRadius ? "observed" : "inferred";
 
-    base.surfaces.baseRadius = attr(btnRadius, "observed", url, "Measured button border-radius", "desktop", 0.9);
-    base.buttons.primary = attr(
+  const surfaces = {
+    baseRadius: attr(btnRadius, btnRadiusProv, url, "Measured primary component border-radius", "desktop", 0.9),
+    cardRadius: attr(cardRadius, cardRadiusProv, url, "Measured card container border-radius", "desktop", 0.9),
+    borderWidth: attr("1px", "inferred", url, "Hairline element stroke"),
+    shadows: {
+      subtle: attr(
+        isBtnValid && evidence.metrics.primaryButton?.boxShadow && evidence.metrics.primaryButton.boxShadow !== "none"
+          ? evidence.metrics.primaryButton.boxShadow
+          : "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+        isBtnValid && evidence.metrics.primaryButton?.boxShadow ? "observed" : "inferred",
+        url,
+        "Subtle component elevation"
+      ),
+      medium: attr(
+        evidence.metrics.card?.boxShadow && evidence.metrics.card.boxShadow !== "none"
+          ? evidence.metrics.card.boxShadow
+          : "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+        evidence.metrics.card?.boxShadow ? "observed" : "inferred",
+        url,
+        "Card container elevation"
+      ),
+      elevated: attr("0 10px 15px -3px rgba(0, 0, 0, 0.1)", "inferred", url, "Popover / modal elevation"),
+    },
+    glassmorphism: attr({ enabled: false, blur: "12px", opacity: "0.8" }, "inferred", url, "Backdrop blur specification"),
+  };
+
+  // 7. Buttons
+  const btnTextColor = isBtnValid && evidence.metrics.primaryButton?.color
+    ? rgbToHex(evidence.metrics.primaryButton.color)
+    : (calculateContrastRatio("#ffffff", primaryColor) >= 4.5 ? "#ffffff" : "#000000");
+  const btnShadow = isBtnValid && evidence.metrics.primaryButton?.boxShadow ? evidence.metrics.primaryButton.boxShadow : "none";
+
+  const buttons = {
+    primary: attr(
       {
-        bg: btnBg,
-        text: btnText,
+        bg: primaryColor,
+        text: btnTextColor,
         radius: btnRadius,
         shadow: btnShadow,
       },
-      "observed",
+      isBtnValid ? "observed" : "inferred",
       url,
-      "Measured primary CTA button styles (bg, text, radius, shadow)",
+      "Measured primary CTA button styles",
       "desktop",
       0.95
-    );
+    ),
+    secondary: attr(
+      {
+        bg: isDark ? "#27272a" : "#f4f4f5",
+        text: finalTextHex,
+        border: isDark ? "1px solid #3f3f46" : "1px solid #e4e4e7",
+      },
+      "inferred",
+      url,
+      "Secondary button style"
+    ),
+    ghost: attr(
+      {
+        hoverBg: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.05)",
+        text: finalTextHex,
+      },
+      "inferred",
+      url,
+      "Ghost / transparent button style"
+    ),
+    destructive: attr(
+      { bg: "#ef4444", text: "#ffffff" },
+      "inferred",
+      url,
+      "Destructive action button style"
+    ),
+    sizes: attr(
+      {
+        sm: { height: "32px", padding: "0 12px", text: "12px" },
+        md: {
+          height: isBtnValid && evidence.metrics.primaryButton?.height ? `${evidence.metrics.primaryButton.height}px` : "40px",
+          padding: isBtnValid && evidence.metrics.primaryButton?.padding ? evidence.metrics.primaryButton.padding : "0 16px",
+          text: isBtnValid && evidence.metrics.primaryButton?.fontSize ? evidence.metrics.primaryButton.fontSize : "14px",
+        },
+        lg: { height: "48px", padding: "0 24px", text: "16px" },
+      },
+      isBtnValid && evidence.metrics.primaryButton?.height ? "observed" : "inferred",
+      url,
+      "Button size hierarchy"
+    ),
+  };
 
-    if (evidence.metrics.primaryButton.boxShadow) {
-      base.surfaces.shadows.subtle = attr(
-        evidence.metrics.primaryButton.boxShadow,
-        "observed",
-        url,
-        "Measured button box-shadow",
-        "desktop",
-        0.9
-      );
-    }
+  // 8. Form Controls
+  const forms = {
+    inputHeight: attr("40px", "inferred", url, "Standard touch/click target input height"),
+    inputRadius: attr(btnRadius, "inferred", url, "Input border-radius aligned with button"),
+    borderDefault: attr(isDark ? "#27272a" : "#e4e4e7", "inferred", url, "Default input outline stroke"),
+    borderFocus: attr(primaryColor, "inferred", url, "Input active focus border"),
+    focusRingStyle: attr(`0 0 0 2px ${primaryColor}40`, "inferred", url, "Focus ring style"),
+  };
 
-    if (evidence.metrics.primaryButton.height || evidence.metrics.primaryButton.padding) {
-      const currentSizes = { ...base.buttons.sizes.value };
-      currentSizes.md = {
-        height: evidence.metrics.primaryButton.height ? `${evidence.metrics.primaryButton.height}px` : currentSizes.md.height,
-        padding: evidence.metrics.primaryButton.padding || currentSizes.md.padding,
-        text: evidence.metrics.primaryButton.fontSize || currentSizes.md.text,
-      };
-      base.buttons.sizes = attr(currentSizes, "observed", url, "Measured button dimensions", "desktop", 0.9);
-    }
-  }
+  // 9. Navigation
+  const navigation = {
+    navbarHeight: attr("64px", "inferred", url, "Top navigation bar height"),
+    sidebarWidth: attr("256px", "inferred", url, "Left application navigation rail width"),
+    navStyle: attr("sticky" as const, "inferred", url, "Top navbar placement mode"),
+  };
 
-  // 14. Real Measured Accessibility Contrast Pairs
-  const btnTextColor = isBtnValid && evidence.metrics.primaryButton?.color
-    ? rgbToHex(evidence.metrics.primaryButton.color)
-    : undefined;
+  // 10. Components
+  const components = {
+    cardStyle: attr(
+      isDark ? "bg-zinc-900 border border-zinc-800" : "bg-white border border-zinc-200",
+      "inferred",
+      url,
+      "Surface card container specification"
+    ),
+    badgeStyle: attr("rounded-full px-2.5 py-0.5 text-xs font-medium", "inferred", url, "Pill status badge"),
+    modalBackdrop: attr("rgba(0, 0, 0, 0.5) backdrop-blur-sm", "inferred", url, "Modal dialog overlay"),
+    tooltipStyle: attr(isDark ? "bg-zinc-800 text-zinc-100" : "bg-zinc-900 text-white", "inferred", url, "Tooltip popover"),
+  };
 
-  base.accessibility.verifiedContrastPairs = auditContrastPairs(
-    base.colors.primary.value,
-    base.colors.neutrals.background.value,
-    base.colors.neutrals.surface.value,
-    base.colors.neutrals.text.value,
-    btnTextColor
-  );
+  // 11. Media
+  const media = {
+    iconSet: attr("lucide-react", "inferred", url, "Consistent vector stroke iconography"),
+    avatarRadius: attr("9999px", "inferred", url, "Full-circle avatar radius"),
+    defaultAspectRatio: attr("16/9", "inferred", url, "Standard hero and card aspect ratio"),
+  };
 
-  return base;
+  // 12. Motion
+  const motion = {
+    durationFast: attr("150ms", "inferred", url, "Micro-interaction transition duration"),
+    durationNormal: attr("200ms", "inferred", url, "Default component transition duration"),
+    durationSlow: attr("300ms", "inferred", url, "Modal and sheet transition duration"),
+    easingDefault: attr("cubic-bezier(0.4, 0, 0.2, 1)", "inferred", url, "Standard ease-in-out easing curve"),
+  };
+
+  // 13. Breakpoints
+  const breakpoints = {
+    sm: attr("640px", "inferred", url, "Mobile landscape breakpoint"),
+    md: attr("768px", "inferred", url, "Tablet portrait breakpoint"),
+    lg: attr("1024px", "inferred", url, "Tablet landscape / small laptop breakpoint"),
+    xl: attr("1280px", "inferred", url, "Standard desktop breakpoint"),
+    "2xl": attr("1536px", "inferred", url, "Wide display breakpoint"),
+  };
+
+  // 14. Accessibility
+  const accessibility = {
+    targetLevel: attr("WCAG_AA" as const, "inferred", url, "Target accessibility conformance"),
+    verifiedContrastPairs: auditContrastPairs(
+      primaryColor,
+      finalBgHex,
+      surfaceColor,
+      finalTextHex,
+      btnTextColor
+    ),
+    focusVisibleRule: attr("outline: 2px solid currentColor; outline-offset: 2px", "inferred", url, "Keyboard focus indicator"),
+  };
+
+  return {
+    identity,
+    colors,
+    typography,
+    layout,
+    spacing,
+    surfaces,
+    buttons,
+    forms,
+    navigation,
+    components,
+    media,
+    motion,
+    breakpoints,
+    accessibility,
+  };
 }
 
 /**

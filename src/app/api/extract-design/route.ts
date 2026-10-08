@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "node:fs";
+import crypto from "node:crypto";
 import { validateSafeUrlForFetch, safeFetchWithRedirects, readSafeResponseBody } from "@/lib/security/ssrf";
 import {
   inspectLiveSite,
-  resolveChromeExecutable,
   isChromeAvailable,
   buildDesignSystemFromEvidence,
+  ReferenceSiteInspectionEvidence,
 } from "@/lib/design-inspection/inspect-reference";
-import { createArchetypeDesignSystem, attr } from "@/generators/modules/design-md/engine";
 
 export const maxDuration = 45;
 
@@ -45,6 +44,91 @@ export async function POST(req: NextRequest) {
     const siteKey = domain.replace(/[^a-z0-9-]/g, "-").toLowerCase();
     const cleanProjectName =
       domain.split(".")[0].charAt(0).toUpperCase() + domain.split(".")[0].slice(1);
+
+    // 0. Attempt Cloudflare Browser Run Worker (Zero-Cost Isolated Cloudflare Worker)
+    const workerUrl = process.env.DESIGN_INSPECTION_WORKER_URL;
+    if (workerUrl) {
+      try {
+        const workerSecret = process.env.DESIGN_INSPECTION_WORKER_AUTH || "forgekit-worker-dev-token";
+        const workerRes = await fetch(workerUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-worker-auth": workerSecret,
+          },
+          body: JSON.stringify({ url: parsedUrl.toString() }),
+          signal: AbortSignal.timeout(30000),
+        });
+
+        if (workerRes.ok) {
+          const workerData = await workerRes.json();
+          if (workerData.success && workerData.metrics) {
+            const jobId = crypto.randomUUID();
+            const workerEvidence: ReferenceSiteInspectionEvidence = {
+              siteKey,
+              url: parsedUrl.toString(),
+              name: cleanProjectName,
+              archetype: "modern-saas",
+              timestamp: new Date().toISOString(),
+              inspectionMethod: "cloudflare-browser-run",
+              jobId,
+              viewports: {
+                desktop: { width: 1440, height: 900 },
+                mobile: { width: 390, height: 844 },
+              },
+              meta: {
+                title: workerData.meta?.title || cleanProjectName,
+              },
+              metrics: {
+                body: workerData.metrics.body,
+                h1: workerData.metrics.headings?.h1 || workerData.metrics.body,
+                h2: workerData.metrics.headings?.h2 || workerData.metrics.body,
+                p: workerData.metrics.paragraph || workerData.metrics.body,
+                primaryButton: workerData.metrics.components?.primaryButton || workerData.metrics.primaryButton,
+                card: workerData.metrics.components?.card || workerData.metrics.card,
+                containerMaxWidth: workerData.metrics.layout?.containerMaxWidth || "1280px",
+                isDark: workerData.metrics.layout?.isDark ?? false,
+                heroComposition: workerData.metrics.layout?.heroComposition?.type
+                  ? (workerData.metrics.layout.heroComposition.type === "centered"
+                      ? "center"
+                      : workerData.metrics.layout.heroComposition.type.includes("split")
+                      ? "split"
+                      : "text-only")
+                  : undefined,
+              },
+              extractedPalette: workerData.extractedPalette || [],
+              extractedFonts: workerData.extractedFonts || [],
+              screenshots: {
+                desktopDataUri: workerData.screenshots?.desktopDataUri,
+                mobileDataUri: workerData.screenshots?.mobileDataUri,
+                desktopUrl: workerData.screenshots?.desktopDataUri,
+                mobileUrl: workerData.screenshots?.mobileDataUri,
+              },
+              fidelityReport: `Inspected ${cleanProjectName} via Cloudflare Browser Run worker. Extracted rendered layout, components, and typography.`,
+            };
+
+            const system = buildDesignSystemFromEvidence(workerEvidence);
+
+            return NextResponse.json({
+              success: true,
+              inspectionMethod: "cloudflare-browser-run",
+              jobId,
+              domain,
+              projectName: workerEvidence.name,
+              evidence: workerEvidence,
+              system,
+              screenshots: workerEvidence.screenshots,
+              source: "live-extracted",
+              notes: [workerEvidence.fidelityReport],
+            });
+          }
+        }
+      } catch (workerErr: any) {
+        console.warn(
+          `[Extract Design] Cloudflare Browser Run worker call failed: ${workerErr?.message}. Falling back to next available inspection method.`
+        );
+      }
+    }
 
     // 1. Attempt Real Headless Chrome Live Inspection if Chrome is available
     if (isChromeAvailable()) {
@@ -164,29 +248,82 @@ export async function POST(req: NextRequest) {
         html.includes("background:#000") ||
         html.includes("background:#0a0a0a");
 
-      const primaryColor = themeColor || detectedColors[0] || "#2563eb";
-      const headingFont = detectedFonts[0] || "Inter";
-      const bodyFont = detectedFonts[1] || detectedFonts[0] || "Inter";
+      const primaryColor = themeColor || detectedColors[0] || (isDark ? "#3b82f6" : "#2563eb");
+      const headingFont = detectedFonts[0] || "Inter, -apple-system, BlinkMacSystemFont, sans-serif";
+      const bodyFont = detectedFonts[1] || detectedFonts[0] || headingFont;
 
-      const fallbackSystem = createArchetypeDesignSystem("modern-saas", {
-        projectName: extractedTitle,
-        primaryColor,
-      });
+      const ssrfEvidence: ReferenceSiteInspectionEvidence = {
+        siteKey,
+        url: parsedUrl.toString(),
+        name: extractedTitle,
+        archetype: "modern-saas",
+        timestamp: new Date().toISOString(),
+        inspectionMethod: "ssrf-fetch",
+        viewports: {
+          desktop: { width: 1440, height: 900 },
+          mobile: { width: 390, height: 844 },
+        },
+        meta: {
+          title: extractedTitle,
+          themeColor,
+        },
+        metrics: {
+          body: {
+            fontFamily: bodyFont,
+            fontSize: "16px",
+            fontWeight: "400",
+            lineHeight: "1.5",
+            letterSpacing: "normal",
+            color: isDark ? "rgb(240, 240, 240)" : "rgb(17, 17, 17)",
+            backgroundColor: isDark ? "rgb(8, 9, 10)" : "rgb(255, 255, 255)",
+          },
+          h1: {
+            fontFamily: headingFont,
+            fontSize: "48px",
+            fontWeight: "700",
+            lineHeight: "1.1",
+            letterSpacing: "-0.02em",
+            color: isDark ? "rgb(255, 255, 255)" : "rgb(17, 17, 17)",
+            backgroundColor: "transparent",
+          },
+          h2: {
+            fontFamily: headingFont,
+            fontSize: "32px",
+            fontWeight: "600",
+            lineHeight: "1.2",
+            letterSpacing: "-0.01em",
+            color: isDark ? "rgb(240, 240, 240)" : "rgb(24, 24, 27)",
+            backgroundColor: "transparent",
+          },
+          p: {
+            fontFamily: bodyFont,
+            fontSize: "16px",
+            fontWeight: "400",
+            lineHeight: "1.6",
+            letterSpacing: "normal",
+            color: isDark ? "rgb(161, 161, 170)" : "rgb(100, 116, 139)",
+            backgroundColor: "transparent",
+          },
+          primaryButton: {
+            fontFamily: bodyFont,
+            fontSize: "14px",
+            fontWeight: "500",
+            lineHeight: "1",
+            letterSpacing: "normal",
+            color: "rgb(255, 255, 255)",
+            backgroundColor: primaryColor.startsWith("#") ? primaryColor : "rgb(37, 99, 235)",
+            borderRadius: "8px",
+          },
+          containerMaxWidth: "1280px",
+          isDark,
+        },
+        extractedPalette: detectedColors,
+        extractedFonts: detectedFonts,
+        screenshots: {},
+        fidelityReport: `Extracted metadata & CSS tokens from HTML stream (${detectedColors.length} colors, ${detectedFonts.length} fonts).`,
+      };
 
-      fallbackSystem.identity.projectName = attr(extractedTitle, "observed", domain);
-      fallbackSystem.colors.primary = attr(primaryColor, "observed", domain, "HTML theme extraction");
-      fallbackSystem.colors.neutrals.background = attr(
-        isDark ? "#08090a" : "#ffffff",
-        "inferred",
-        domain
-      );
-      fallbackSystem.colors.neutrals.text = attr(
-        isDark ? "#f7f8f8" : "#111111",
-        "inferred",
-        domain
-      );
-      fallbackSystem.typography.headingFont = attr(headingFont, "observed", domain);
-      fallbackSystem.typography.bodyFont = attr(bodyFont, "observed", domain);
+      const fallbackSystem = buildDesignSystemFromEvidence(ssrfEvidence);
 
       return NextResponse.json({
         success: true,
@@ -197,6 +334,7 @@ export async function POST(req: NextRequest) {
         domain,
         projectName: extractedTitle,
         system: fallbackSystem,
+        evidence: ssrfEvidence,
         observed: {
           title: extractedTitle,
           themeColor,

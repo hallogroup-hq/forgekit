@@ -5,7 +5,6 @@ export interface ConsoleAsset {
   coverImage: string;
   backdropImage: string;
   tagline: string;
-  badge?: string;
   activities: {
     title: string;
     description: string;
@@ -21,7 +20,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1920&q=80",
     tagline: "Generate high-contrast QR codes with custom styling and instant SVG export.",
-    badge: "PS5",
     activities: [
       {
         title: "Preset Palettes",
@@ -42,7 +40,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=80",
     tagline: "Extract typography, palette, and layout principles from any live website.",
-    badge: "PS5 PRO",
     activities: [
       {
         title: "Live URL Crawler",
@@ -63,7 +60,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1618172193763-c511deb635ca?auto=format&fit=crop&w=1920&q=80",
     tagline: "Refine and structure prompts for Claude, Gemini, and GPT with zero fluff.",
-    badge: "PS5",
     activities: [
       {
         title: "Model Dialing",
@@ -84,7 +80,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1617791160505-6f00504e3519?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?auto=format&fit=crop&w=1920&q=80",
     tagline: "Craft custom cursor rules, Claude instructions, and agent configs.",
-    badge: "PS5",
     activities: [
       {
         title: "Preset Library",
@@ -105,7 +100,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1920&q=80",
     tagline: "Generate rich RPG character profiles with voice, backstory, and personality.",
-    badge: "PS5",
     activities: [
       {
         title: "Archetype Generator",
@@ -126,7 +120,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&w=1920&q=80",
     tagline: "Test expressions in real-time with an instant syntax cheat sheet.",
-    badge: "PS5",
     activities: [
       {
         title: "Live Matcher",
@@ -147,7 +140,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1920&q=80",
     tagline: "Decode headers, claims, expiration dates, and verify HMAC signatures.",
-    badge: "PS5 PRO",
     activities: [
       {
         title: "Expiry Detection",
@@ -168,7 +160,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80",
     tagline: "Convert natural language descriptions into Postgres, SQLite, or MySQL DDL.",
-    badge: "PS5",
     activities: [
       {
         title: "Multi Dialect",
@@ -189,7 +180,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=1920&q=80",
     tagline: "Design interactive multi-point CSS mesh gradients and copy clean code.",
-    badge: "PS5",
     activities: [
       {
         title: "4-Point Canvas",
@@ -210,7 +200,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=80",
     tagline: "Sculpt organic SVG shapes with randomness seeds and smooth bezier curves.",
-    badge: "PS5",
     activities: [
       {
         title: "Seed Randomizer",
@@ -231,7 +220,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=1920&q=80",
     tagline: "Calculate exact pixel dimensions, responsive CSS padding, and video scales.",
-    badge: "PS5",
     activities: [
       {
         title: "Cinema Presets",
@@ -252,7 +240,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1920&q=80",
     tagline: "Test foreground and background combinations against WCAG 2.1 AA and AAA standards.",
-    badge: "PS5",
     activities: [
       {
         title: "WCAG AA / AAA",
@@ -273,7 +260,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=1920&q=80",
     tagline: "Build clean campaign tracking links with source, medium, and campaign tags.",
-    badge: "PS5",
     activities: [
       {
         title: "Preset Channels",
@@ -294,7 +280,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1920&q=80",
     tagline: "Compose sharp bios for X, GitHub, LinkedIn, and Instagram with live character counts.",
-    badge: "PS5",
     activities: [
       {
         title: "Platform Limits",
@@ -315,7 +300,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1920&q=80",
     tagline: "Structure pitches using proven marketing formulas like PAS, AIDA, and BAB.",
-    badge: "PS5",
     activities: [
       {
         title: "PAS Engine",
@@ -336,7 +320,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1920&q=80",
     tagline: "Generate shields.io markdown badges for tech stacks, licenses, and releases.",
-    badge: "PS5",
     activities: [
       {
         title: "Tech Stack Shields",
@@ -357,7 +340,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80",
     tagline: "Generate realistic JSON arrays for users, products, orders, and metrics.",
-    badge: "PS5",
     activities: [
       {
         title: "Entity Presets",
@@ -378,7 +360,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1507499739999-097706ad8914?auto=format&fit=crop&w=1920&q=80",
     tagline: "Tune backdrop-blur, specular reflections, and layered box shadows in real-time.",
-    badge: "PS5",
     activities: [
       {
         title: "Multi Layer Shadow",
@@ -399,7 +380,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1920&q=80",
     tagline: "Generate cryptographically secure passwords and memorable diceware passphrases.",
-    badge: "PS5",
     activities: [
       {
         title: "Diceware Words",
@@ -420,7 +400,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1920&q=80",
     tagline: "Generate batches of UUID v4, NanoID, or CUID strings with one tap.",
-    badge: "PS5",
     activities: [
       {
         title: "Batch Mode",
@@ -441,7 +420,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1920&q=80",
     tagline: "Build cron schedule expressions with plain-English descriptions.",
-    badge: "PS5",
     activities: [
       {
         title: "Expression Parser",
@@ -462,7 +440,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1920&q=80",
     tagline: "Generate production Dockerfiles and curated .gitignore presets for any language.",
-    badge: "PS5",
     activities: [
       {
         title: "Multi Stage Docker",
@@ -483,7 +460,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1510511459019-5dda7724fd87?auto=format&fit=crop&w=1920&q=80",
     tagline: "Compute SHA-256, SHA-512, MD5 hashes and generate secure hex tokens.",
-    badge: "PS5",
     activities: [
       {
         title: "SubtleCrypto Core",
@@ -504,7 +480,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80",
     tagline: "Format spreadsheets and CSV text into GitHub Flavored Markdown tables.",
-    badge: "PS5",
     activities: [
       {
         title: "CSV & TSV Paste",
@@ -525,7 +500,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1920&q=80",
     tagline: "Simulate social share cards across Twitter, Facebook, LinkedIn, and Discord.",
-    badge: "PS5",
     activities: [
       {
         title: "Card Simulator",
@@ -546,7 +520,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=80",
     tagline: "Generate clean printable PDF-ready receipts with custom tax and line items.",
-    badge: "PS5",
     activities: [
       {
         title: "Print Ready Layout",
@@ -567,7 +540,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1920&q=80",
     tagline: "Create timed meeting agendas with discussion goals and action items.",
-    badge: "PS5",
     activities: [
       {
         title: "Time Allocator",
@@ -588,7 +560,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1920&q=80",
     tagline: "Format clean HTML email signatures with social links and contact badges.",
-    badge: "PS5",
     activities: [
       {
         title: "Table Layout",
@@ -609,7 +580,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1920&q=80",
     tagline: "Draft structured Product Requirement Documents with user stories and scope.",
-    badge: "PS5 PRO",
     activities: [
       {
         title: "Feature Scoping",
@@ -630,7 +600,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1920&q=80",
     tagline: "Convert cURL commands into JavaScript Fetch, Python Requests, Go, and Axios.",
-    badge: "PS5",
     activities: [
       {
         title: "Multi Language",
@@ -651,7 +620,6 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     coverImage: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=1920&q=80",
     tagline: "Inspect and simulate incoming webhook JSON payloads for Stripe, GitHub, and Shopify.",
-    badge: "PS5",
     activities: [
       {
         title: "Provider Schemas",
@@ -676,7 +644,6 @@ export function getConsoleAsset(slug: string): ConsoleAsset {
     coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1920&q=80",
     tagline: "Specialized browser workstation generator tool.",
-    badge: "PS5",
     activities: [
       {
         title: "Instant Execution",

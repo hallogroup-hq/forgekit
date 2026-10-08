@@ -10,13 +10,11 @@ import {
   Grid,
   ChevronLeft,
   ChevronRight,
-  Wifi,
-  Bell,
   Play,
-  Gamepad2,
   X,
   Heart,
-  Sliders,
+  ArrowRight,
+  Info,
 } from "lucide-react";
 import { registry } from "@/generators/registry";
 import { CATEGORIES } from "@/generators/types";
@@ -27,16 +25,16 @@ import { CommandPalette } from "@/components/shared/CommandPalette";
 import { getConsoleAsset } from "@/data/consoleAssets";
 
 const CATEGORY_TABS = [
-  { id: "all", label: "ALL" },
-  { id: "vibe-coder", label: "VIBE CODER" },
-  { id: "developer", label: "DEVOPS" },
-  { id: "design", label: "DESIGN" },
-  { id: "growth", label: "GROWTH" },
-  { id: "content", label: "CREATIVE" },
-  { id: "pinned", label: "PINNED" },
+  { id: "all", label: "All" },
+  { id: "vibe-coder", label: "Vibe Coder" },
+  { id: "developer", label: "DevOps" },
+  { id: "design", label: "Design" },
+  { id: "growth", label: "Growth" },
+  { id: "content", label: "Creative" },
+  { id: "pinned", label: "Favorites" },
 ];
 
-export default function PS5HomePage() {
+export default function PS5InspiredHomePage() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -49,7 +47,7 @@ export default function PS5HomePage() {
   const carouselRef = useRef<HTMLDivElement>(null);
   const { isFavorite, toggleFavorite, favorites, isLoaded } = usePreferences();
 
-  // Clock tick (24h console format: e.g. 21:35)
+  // Clock
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
@@ -106,7 +104,7 @@ export default function PS5HomePage() {
     [visibleTools.length]
   );
 
-  // Switch category bumper (L1 / R1)
+  // Switch category tabs
   const handleSwitchCategory = useCallback(
     (direction: "left" | "right") => {
       const currentIndex = CATEGORY_TABS.findIndex((c) => c.id === selectedCategory);
@@ -120,7 +118,7 @@ export default function PS5HomePage() {
     [selectedCategory]
   );
 
-  // Keyboard navigation for console controls
+  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
@@ -175,7 +173,6 @@ export default function PS5HomePage() {
     <div className="relative min-h-screen w-full bg-[#05070b] text-white flex flex-col justify-between overflow-x-hidden font-sans select-none selection:bg-white/20">
       {/* 1. CINEMATIC FULL-SCREEN KEY ART BACKDROP */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        {/* Dynamic Photo Backdrop with smooth crossfade */}
         <img
           key={activeAsset.backdropImage}
           src={activeAsset.backdropImage}
@@ -183,86 +180,62 @@ export default function PS5HomePage() {
           className="w-full h-full object-cover object-center absolute inset-0 opacity-45 scale-105 transition-all duration-700 ease-out animate-in fade-in"
         />
 
-        {/* Cinematic Vignette Overlays for contrast and legibility */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#05070b] via-[#05070b]/65 to-transparent" />
+        {/* Cinematic Vignette Overlays for crisp contrast and readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#05070b] via-[#05070b]/60 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#05070b]/90 via-[#05070b]/40 to-transparent" />
         <div className="absolute inset-0 bg-radial-at-c from-transparent via-[#05070b]/30 to-[#05070b]/80" />
       </div>
 
-      {/* 2. TOP HUD: PS5 STATUS BAR */}
+      {/* 2. TOP HUD: CLEAN MODERN HEADER */}
       <header className="relative z-30 pt-6 px-6 sm:px-12 flex items-center justify-between gap-4">
-        {/* Left: Clock, Wifi, and Category Bumper Pills */}
+        {/* Left: Brand Identity */}
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2 text-sm font-semibold tracking-wide text-white/90">
-            <span>{currentTime || "21:35"}</span>
-            <Wifi className="w-4 h-4 text-white/70" />
-          </div>
-
-          {/* L1 / R1 Controller Category Switcher */}
-          <div className="hidden lg:flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => handleSwitchCategory("left")}
-              className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-white/10 text-white/70 hover:bg-white/20 transition-colors cursor-pointer"
-              title="Press Q or Click to go left"
-            >
-              L1
-            </button>
-
-            <div className="flex items-center gap-1">
-              {CATEGORY_TABS.map((tab) => {
-                const active = selectedCategory === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedCategory(tab.id);
-                      setActiveIndex(0);
-                      soundManager.playNavigate();
-                    }}
-                    className={`px-3 py-1 rounded-full text-xs font-extrabold tracking-wider transition-all cursor-pointer ${
-                      active
-                        ? "bg-white text-black shadow-md scale-105"
-                        : "text-white/60 hover:text-white hover:bg-white/5"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                );
-              })}
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-8 h-8 rounded-xl bg-white text-black font-black text-sm flex items-center justify-center tracking-tighter shadow-md group-hover:scale-105 transition-transform">
+              FK
             </div>
+            <div className="flex flex-col">
+              <span className="font-extrabold text-sm tracking-wider uppercase text-white">
+                ForgeKit
+              </span>
+              <span className="text-[10px] font-mono text-white/40 tracking-wider">
+                Generator Suite
+              </span>
+            </div>
+          </Link>
 
-            <button
-              type="button"
-              onClick={() => handleSwitchCategory("right")}
-              className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-white/10 text-white/70 hover:bg-white/20 transition-colors cursor-pointer"
-              title="Press E or Click to go right"
-            >
-              R1
-            </button>
-          </div>
+          <span className="hidden sm:inline-block text-xs font-mono text-white/40 border-l border-white/10 pl-4">
+            {currentTime || "21:35"}
+          </span>
         </div>
 
-        {/* Right: Notification, PS Plus, Sound, Search & Online Avatar */}
-        <div className="flex items-center gap-4 text-white/80">
-          {/* Notifications */}
-          <div className="hidden sm:flex items-center gap-1.5 text-xs text-white/60">
-            <Bell className="w-3.5 h-3.5" />
-            <span className="font-mono text-[11px] font-bold">12</span>
-          </div>
+        {/* Center: Category Pills */}
+        <div className="hidden lg:flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-1.5 rounded-full border border-white/10 shadow-inner">
+          {CATEGORY_TABS.map((tab) => {
+            const active = selectedCategory === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => {
+                  setSelectedCategory(tab.id);
+                  setActiveIndex(0);
+                  soundManager.playNavigate();
+                }}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                  active
+                    ? "bg-white text-black shadow-md scale-105"
+                    : "text-white/60 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
 
-          {/* Controller / Trophies */}
-          <div className="hidden sm:flex items-center gap-1.5 text-xs text-white/60">
-            <Gamepad2 className="w-3.5 h-3.5" />
-            <span className="font-mono text-[11px] font-bold">9</span>
-          </div>
-
-          {/* PS Plus Badge */}
-          <div className="hidden sm:inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-400 text-black font-black text-[12px] leading-none">
-            +
-          </div>
-
+        {/* Right: Sound, Search & View Controls */}
+        <div className="flex items-center gap-3 text-white/80">
           {/* Sound Toggle */}
           <button
             type="button"
@@ -270,8 +243,8 @@ export default function PS5HomePage() {
               const res = soundManager.toggleSound();
               setSoundEnabled(res);
             }}
-            className="p-1.5 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-colors cursor-pointer"
-            title={soundEnabled ? "Mute Console Audio" : "Enable Console Audio"}
+            className="p-2 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-colors cursor-pointer"
+            title={soundEnabled ? "Mute Audio Feedback" : "Enable Audio Feedback"}
           >
             {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 text-white/40" />}
           </button>
@@ -280,63 +253,58 @@ export default function PS5HomePage() {
           <button
             type="button"
             onClick={() => setIsCommandOpen(true)}
-            className="p-1.5 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-colors cursor-pointer"
-            title="Quick Search (⌘K)"
+            className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors cursor-pointer flex items-center gap-2 text-xs font-medium border border-white/10"
+            title="Search Generators (⌘K)"
           >
-            <Search className="w-4 h-4" />
+            <Search className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Search</span>
+            <kbd className="hidden sm:inline text-[10px] font-mono px-1 rounded bg-black/30 text-white/50">⌘K</kbd>
           </button>
 
-          {/* Grid View Toggle */}
+          {/* Grid / Shelf View Toggle */}
           <button
             type="button"
             onClick={() => {
               setViewMode(viewMode === "shelf" ? "grid" : "shelf");
               soundManager.playNavigate();
             }}
-            className={`p-1.5 rounded-full transition-colors cursor-pointer ${
+            className={`p-2 rounded-full transition-colors cursor-pointer ${
               viewMode === "grid" ? "bg-white/20 text-white" : "hover:bg-white/10 text-white/70"
             }`}
-            title="Toggle Library View (V)"
+            title="Toggle Library Grid (V)"
           >
             <Grid className="w-4 h-4" />
           </button>
-
-          {/* Avatar Profile (Matching Reference FallingStickman) */}
-          <div className="flex items-center gap-2 pl-2">
-            <div className="relative">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-bold text-xs text-white shadow-sm ring-1 ring-white/20">
-                FS
-              </div>
-              <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-black" />
-            </div>
-            <div className="hidden md:flex flex-col text-left">
-              <span className="text-xs font-bold leading-none">FallingStickman</span>
-              <span className="text-[10px] font-mono text-white/40 leading-none mt-0.5">Lv. 14</span>
-            </div>
-          </div>
         </div>
       </header>
 
-      {/* 3. CENTER / LOWER-MIDDLE: PS5 GAME CAROUSEL SHELF */}
-      <main className="relative z-20 flex-1 px-6 sm:px-12 flex flex-col justify-end pb-4 pt-12">
-        <div className="space-y-6">
+      {/* 3. CENTER & LOWER-MIDDLE: SHELF CAROUSEL WITH AMPLE HEADROOM */}
+      <main className="relative z-20 flex-1 px-6 sm:px-12 flex flex-col justify-end pb-4 pt-8">
+        <div className="space-y-4">
           {/* Active Tool Headline (Clean & Cinematic, zero AI slop) */}
           <div className="space-y-2 max-w-3xl">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-mono font-bold tracking-widest uppercase px-2 py-0.5 rounded bg-white/10 text-white/70 border border-white/10">
+                {activeAsset.category}
+              </span>
+              <span className="text-xs font-mono text-white/40">
+                {activeIndex + 1} of {visibleTools.length}
+              </span>
+            </div>
+
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white drop-shadow-lg uppercase">
               {activeAsset.title}
             </h1>
-            <p className="text-sm sm:text-base text-white/80 leading-relaxed font-normal">
+            <p className="text-sm sm:text-base text-white/80 leading-relaxed font-normal max-w-2xl">
               {activeAsset.tagline}
             </p>
           </div>
 
-          {/* Carousel Navigation Controls Header */}
-          <div className="flex items-center justify-between pt-2">
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-mono font-bold tracking-widest uppercase text-white/50">
-                INSTALLED GAMES & GENERATORS ({visibleTools.length})
-              </span>
-            </div>
+          {/* Carousel Navigation Bar Header */}
+          <div className="flex items-center justify-between pt-1">
+            <span className="text-xs font-mono font-bold tracking-wider uppercase text-white/40">
+              Tool Shelf
+            </span>
 
             <div className="flex items-center gap-2">
               <button
@@ -360,11 +328,11 @@ export default function PS5HomePage() {
             </div>
           </div>
 
-          {/* 4. THE SIGNATURE SQUARE COVER ART GAME SHELF */}
+          {/* 4. THE HORIZONTAL COVER ART SHELF (WITH GENEROUS pt-10 pb-8 TO PREVENT CLIPPING) */}
           {viewMode === "shelf" ? (
             <div
               ref={carouselRef}
-              className="flex items-end gap-4 overflow-x-auto pt-4 pb-4 scrollbar-none scroll-smooth"
+              className="flex items-center gap-5 overflow-x-auto pt-10 pb-8 scrollbar-none scroll-smooth"
             >
               {visibleTools.map((tool, idx) => {
                 const isSelected = idx === activeIndex;
@@ -382,17 +350,17 @@ export default function PS5HomePage() {
                       soundManager.playConfirm();
                       router.push(`/tools/${tool.meta.slug}`);
                     }}
-                    className={`group relative shrink-0 flex flex-col items-center transition-all duration-200 cursor-pointer ${
+                    className={`group relative shrink-0 flex flex-col items-center transition-all duration-300 cursor-pointer ${
                       isSelected
-                        ? "-translate-y-3 scale-110 z-20"
+                        ? "-translate-y-2 scale-105 z-20"
                         : "hover:-translate-y-1 opacity-75 hover:opacity-100"
                     }`}
                   >
-                    {/* Game Box Poster Tile (PS5 Cover Art) */}
+                    {/* Game Box Poster Tile */}
                     <div
-                      className={`w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-2xl relative overflow-hidden transition-all duration-200 ${
+                      className={`w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-2xl relative overflow-hidden transition-all duration-300 ${
                         isSelected
-                          ? "ring-2 ring-white shadow-[0_0_25px_rgba(255,255,255,0.45)] ps-active-tile"
+                          ? "ring-2 ring-white shadow-[0_0_25px_rgba(255,255,255,0.4)] ps-active-tile"
                           : "border border-white/10 hover:border-white/30"
                       }`}
                     >
@@ -405,27 +373,28 @@ export default function PS5HomePage() {
                       />
 
                       {/* Subtle Bottom Gradient for Poster Readability */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/20" />
 
-                      {/* Small Icon Pip */}
-                      <div className="absolute top-2 left-2 p-1 rounded-md bg-black/50 backdrop-blur-md text-white/90">
+                      {/* Icon Pip */}
+                      <div className="absolute top-2.5 left-2.5 p-1 rounded-md bg-black/50 backdrop-blur-md text-white/90">
                         <Icon name={tool.meta.icon} size={14} />
                       </div>
 
-                      {/* Category Chip */}
-                      <span className="absolute bottom-2 left-2 right-2 text-[9px] font-bold tracking-wider uppercase text-white/90 truncate drop-shadow">
+                      {/* Tool Title on Tile */}
+                      <span className="absolute bottom-2 left-2 right-2 text-[10px] font-bold tracking-wide uppercase text-white/95 truncate drop-shadow">
                         {asset.title}
                       </span>
                     </div>
 
-                    {/* PS5 Badge directly below selected tile (matching user reference) */}
+                    {/* Active Pip & Title Indicator */}
                     <div
-                      className={`mt-2 flex flex-col items-center transition-all ${
+                      className={`mt-2 flex items-center gap-1.5 transition-all ${
                         isSelected ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
                       }`}
                     >
-                      <span className="text-[10px] font-mono font-black tracking-widest text-white/80">
-                        {asset.badge || "PS5"}
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse shrink-0" />
+                      <span className="text-[11px] font-semibold text-white/90 tracking-wide truncate max-w-[120px]">
+                        {asset.title}
                       </span>
                     </div>
                   </button>
@@ -468,9 +437,9 @@ export default function PS5HomePage() {
             </div>
           )}
 
-          {/* 5. PRIMARY ACTION BAR & PS5 ACTIVITY CARDS WITH REAL THUMBNAILS */}
+          {/* 5. PRIMARY ACTION BAR & ACTIVITY CARDS */}
           <div className="pt-2 flex items-center justify-between flex-wrap gap-4">
-            {/* Play & Favorite Action Buttons */}
+            {/* Clean Action Buttons */}
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -478,12 +447,13 @@ export default function PS5HomePage() {
                   soundManager.playConfirm();
                   if (activeTool) router.push(`/tools/${activeTool.meta.slug}`);
                 }}
-                className="px-7 py-3 rounded-full bg-white hover:bg-zinc-200 text-black font-extrabold text-sm tracking-wider uppercase flex items-center gap-2.5 shadow-[0_0_25px_rgba(255,255,255,0.4)] transition-all transform active:scale-95 cursor-pointer"
+                className="px-7 py-3 rounded-full bg-white hover:bg-zinc-200 text-black font-extrabold text-sm tracking-wide flex items-center gap-2.5 shadow-[0_0_25px_rgba(255,255,255,0.35)] transition-all transform active:scale-95 cursor-pointer"
               >
-                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-black text-white font-black text-[11px]">
-                  ✕
+                <span>Open Generator</span>
+                <ArrowRight className="w-4 h-4" />
+                <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-black/10 text-black/70">
+                  ↵
                 </span>
-                <span>PLAY (ENTER)</span>
               </button>
 
               <button
@@ -494,31 +464,27 @@ export default function PS5HomePage() {
                     soundManager.playConfirm();
                   }
                 }}
-                className={`px-4 py-3 rounded-full border text-xs font-bold tracking-wider uppercase flex items-center gap-2 backdrop-blur-md transition-all active:scale-95 cursor-pointer ${
+                className={`px-4 py-3 rounded-full border text-xs font-bold tracking-wide flex items-center gap-2 backdrop-blur-md transition-all active:scale-95 cursor-pointer ${
                   isFav
-                    ? "bg-amber-500/20 border-amber-500/50 text-amber-300"
+                    ? "bg-rose-500/20 border-rose-500/50 text-rose-300"
                     : "bg-black/40 border-white/15 text-white hover:border-white/30"
                 }`}
               >
-                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-black text-[11px] border border-emerald-500/30">
-                  △
-                </span>
-                <span>{isFav ? "FAVORITE" : "FAVORITE (F)"}</span>
+                <Heart className={`w-3.5 h-3.5 ${isFav ? "fill-rose-400 text-rose-400" : "text-white/70"}`} />
+                <span>{isFav ? "Saved" : "Save"}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setShowDetailsModal(true)}
-                className="px-4 py-3 rounded-full border border-white/15 bg-black/40 hover:border-white/30 text-white text-xs font-bold tracking-wider uppercase flex items-center gap-2 backdrop-blur-md transition-all active:scale-95 cursor-pointer"
+                className="px-4 py-3 rounded-full border border-white/15 bg-black/40 hover:border-white/30 text-white text-xs font-bold tracking-wide flex items-center gap-2 backdrop-blur-md transition-all active:scale-95 cursor-pointer"
               >
-                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-pink-500/20 text-pink-400 font-black text-[11px] border border-pink-500/30">
-                  □
-                </span>
-                <span>DETAILS (SPACE)</span>
+                <Info className="w-3.5 h-3.5 text-white/70" />
+                <span>Details</span>
               </button>
             </div>
 
-            {/* Activity Cards (Horizontal with Photo Thumbnails, matching Explore Image 1) */}
+            {/* Feature Activity Cards with Real Photo Thumbnails */}
             <div className="hidden xl:flex items-center gap-3">
               {activeAsset.activities.map((act, i) => (
                 <div
@@ -551,70 +517,31 @@ export default function PS5HomePage() {
         </div>
       </main>
 
-      {/* 6. BOTTOM CONTROLLER LEGEND / PROMPT HUD (Matching user reference Image 2) */}
-      <footer className="relative z-30 py-3 px-6 sm:px-12 border-t border-white/10 bg-black/80 backdrop-blur-md flex items-center justify-between text-xs font-semibold text-white/80">
-        {/* Subtle Brand Identity */}
-        <div className="flex items-center gap-2 text-white/40 font-mono text-[11px]">
-          <span>FORGEKIT OS</span>
-          <span>//</span>
-          <span>PLAYSTATION 5 EDITION</span>
+      {/* 6. CLEAN FOOTER & KEYBOARD HINTS */}
+      <footer className="relative z-30 py-3 px-6 sm:px-12 border-t border-white/10 bg-black/80 backdrop-blur-md flex items-center justify-between text-xs text-white/70">
+        <div className="flex items-center gap-2 text-white/50">
+          <span className="font-bold text-white/80">ForgeKit</span>
+          <span>·</span>
+          <span>Instant client-side developer generators</span>
         </div>
 
-        {/* Controller Prompts Legend */}
-        <div className="flex items-center gap-6">
-          <button
-            type="button"
-            onClick={() => setIsCommandOpen(true)}
-            className="flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer"
-          >
-            <Sliders className="w-3.5 h-3.5 text-white/60" />
-            <span>OPTIONS</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              if (activeTool) {
-                toggleFavorite(activeTool.meta.slug);
-                soundManager.playConfirm();
-              }
-            }}
-            className="flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer"
-          >
-            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[10px] border border-emerald-500/40">
-              △
-            </span>
-            <span>TOP MENU</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowDetailsModal(true)}
-            className="flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer"
-          >
-            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-pink-500/20 text-pink-400 font-bold text-[10px] border border-pink-500/40">
-              □
-            </span>
-            <span>DETAILS</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              soundManager.playConfirm();
-              if (activeTool) router.push(`/tools/${activeTool.meta.slug}`);
-            }}
-            className="flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer"
-          >
-            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-500/30 text-blue-300 font-bold text-[10px] border border-blue-400/40">
-              ✕
-            </span>
-            <span>PLAY</span>
-          </button>
+        <div className="flex items-center gap-5 text-white/60">
+          <span className="hidden sm:flex items-center gap-1.5">
+            <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono text-[10px] text-white/80">← / →</kbd>
+            <span>Navigate</span>
+          </span>
+          <span className="hidden sm:flex items-center gap-1.5">
+            <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono text-[10px] text-white/80">Enter</kbd>
+            <span>Open</span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono text-[10px] text-white/80">⌘K</kbd>
+            <span>Search</span>
+          </span>
         </div>
       </footer>
 
-      {/* 7. QUICK DETAILS MODAL (SPACE or □) */}
+      {/* 7. QUICK DETAILS MODAL */}
       {showDetailsModal && activeTool && (
         <div
           role="dialog"
@@ -645,7 +572,7 @@ export default function PS5HomePage() {
               <div>
                 <h3 className="text-xl font-black">{activeAsset.title}</h3>
                 <span className="text-xs font-mono text-white/50 uppercase">
-                  {activeAsset.category} // {activeAsset.badge || "PS5"}
+                  {activeAsset.category}
                 </span>
               </div>
             </div>
@@ -655,11 +582,11 @@ export default function PS5HomePage() {
             </p>
 
             <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-2">
-              <div className="text-xs font-bold text-white/90">Controller Keybindings</div>
+              <div className="text-xs font-bold text-white/90">Keyboard Shortcuts</div>
               <div className="grid grid-cols-2 gap-2 text-xs text-white/60">
-                <div>[Enter] : Play Generator</div>
+                <div>[Enter] : Open Generator</div>
                 <div>[F] : Toggle Favorite</div>
-                <div>[Q / E] : Switch Categories</div>
+                <div>[Q / E] : Switch Category</div>
                 <div>[Left / Right] : Select Tool</div>
               </div>
             </div>
@@ -671,9 +598,9 @@ export default function PS5HomePage() {
                   soundManager.playConfirm();
                   router.push(`/tools/${activeTool.meta.slug}`);
                 }}
-                className="flex-1 py-3 rounded-full bg-white text-black font-extrabold text-sm tracking-wider uppercase text-center hover:bg-zinc-200 transition-colors cursor-pointer"
+                className="flex-1 py-3 rounded-full bg-white text-black font-extrabold text-sm tracking-wide text-center hover:bg-zinc-200 transition-colors cursor-pointer"
               >
-                Launch Now (Enter)
+                Open Generator (Enter)
               </button>
               <button
                 type="button"

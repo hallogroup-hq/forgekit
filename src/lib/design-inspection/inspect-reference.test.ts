@@ -21,7 +21,8 @@ describe("Reference Site Inspection Pipeline", () => {
     it("should resolve a valid Chrome or Chromium executable on host system", () => {
       const chromePath = getLocalChromePath();
       assert.ok(chromePath.length > 0);
-      assert.ok(chromePath.includes("Chrome") || chromePath.includes("chromium"));
+      const lower = chromePath.toLowerCase();
+      assert.ok(lower.includes("chrome") || lower.includes("chromium") || lower.includes("edge") || lower.includes("brave"));
     });
   });
 

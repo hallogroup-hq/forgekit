@@ -1,4 +1,3 @@
-/// <reference types="@cloudflare/workers-types" />
 // Dynamically resolve puppeteer to support both Cloudflare Workers runtime and unit test environments
 let _puppeteerModule: any = null;
 async function getPuppeteer() {

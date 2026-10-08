@@ -27,10 +27,12 @@ export function GeneratorHarness({ meta, children }: GeneratorHarnessProps) {
             <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
               <Link
                 href="/"
-                className="hover:text-zinc-900 dark:hover:text-zinc-100 flex items-center gap-1 transition-colors"
+                className="hover:text-zinc-900 dark:hover:text-zinc-100 flex items-center gap-1.5 transition-colors font-semibold group"
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                All Tools
+                <span className="w-5 h-5 rounded-md bg-white text-black text-[9px] font-black flex items-center justify-center tracking-tighter shadow-2xs group-hover:scale-105 transition-transform">
+                  PS5
+                </span>
+                <span>Console Home</span>
               </Link>
               <span>/</span>
               <span className="capitalize">{category?.name || meta.category}</span>

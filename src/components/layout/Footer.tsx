@@ -1,8 +1,14 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Wrench, ShieldCheck, Zap, Lock } from "lucide-react";
 
 export function Footer() {
+  const pathname = usePathname();
+  if (pathname === "/") return null;
+
   return (
     <footer className="mt-auto border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 py-10 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">

@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Wrench, Search, Command } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { CommandPalette } from "../shared/CommandPalette";
 
 export function Navbar() {
   const [isCommandOpen, setIsCommandOpen] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -19,6 +21,15 @@ export function Navbar() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  if (pathname === "/") {
+    return (
+      <CommandPalette
+        isOpen={isCommandOpen}
+        onClose={() => setIsCommandOpen(false)}
+      />
+    );
+  }
 
   return (
     <>

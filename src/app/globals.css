@@ -26,3 +26,26 @@ body {
     display: none !important;
   }
 }
+
+/* PS5 Console Utilities */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes ps-glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.4), 0 0 45px rgba(59, 130, 246, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 32px rgba(255, 255, 255, 0.65), 0 0 65px rgba(59, 130, 246, 0.45);
+  }
+}
+
+.ps-active-tile {
+  animation: ps-glow-pulse 3.5s infinite ease-in-out;
+}
+

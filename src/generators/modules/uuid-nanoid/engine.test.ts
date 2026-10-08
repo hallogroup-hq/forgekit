@@ -48,6 +48,38 @@ describe("UUID & NanoID CSPRNG Engine", () => {
         );
       }
     });
+
+    it("should preserve strict monotonicity when system clock rolls back (RFC 9562 §6.2)", async () => {
+      const { setUuidV7State } = await import("./engine");
+      const highTs = 1775600050000;
+      const rolledBackTs = 1775600000000; // 50 seconds in the past
+
+      setUuidV7State(highTs, 100);
+      const id1 = generateUuidV7(highTs);
+
+      // System clock rolls back
+      const id2 = generateUuidV7(rolledBackTs);
+      const id3 = generateUuidV7(rolledBackTs);
+
+      assert.ok(id1 < id2, `Rollback ID id1 (${id1}) must be < id2 (${id2})`);
+      assert.ok(id2 < id3, `Successive rollback ID id2 (${id2}) must be < id3 (${id3})`);
+    });
+
+    it("should handle sequence counter boundary overflow by advancing timestamp by 1ms (RFC 9562 §6.2)", async () => {
+      const { setUuidV7State } = await import("./engine");
+      const ts = 1775600000000;
+      // Set counter at the boundary 0x0fff (4095)
+      setUuidV7State(ts, 4095);
+
+      const idBeforeOverflow = generateUuidV7(ts);
+      // Next call in same ms triggers counter overflow (4096 -> advances ts to ts+1 and resets counter to 0)
+      const idAfterOverflow = generateUuidV7(ts);
+
+      assert.ok(
+        idBeforeOverflow < idAfterOverflow,
+        `Expected boundary ID ${idBeforeOverflow} to be < overflow ID ${idAfterOverflow}`
+      );
+    });
   });
 
   describe("generateNanoId", () => {

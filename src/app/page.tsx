@@ -149,7 +149,7 @@ export default function PS5InspiredHomePage() {
   // Filter tools based on category, search query, and lifecycle
   const visibleTools = useMemo(() => {
     const publicRegistry = registry.filter(
-      (t) => !t.meta.lifecycle || t.meta.lifecycle === "ready" || t.meta.lifecycle === "qa"
+      (t) => t.meta.lifecycle === "ready"
     );
 
     let tools = publicRegistry;

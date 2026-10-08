@@ -122,4 +122,84 @@ describe("QR Code Studio Engine", () => {
       assert.ok(!composite.includes("<NOW>"));
     });
   });
+
+  describe("QR Decoder End-to-End Scanability Verification (jsQR)", () => {
+    it("should decode generated standard QR code to exact original text", async () => {
+      const QRCode = await import("qrcode");
+      const jsQR = (await import("jsqr")).default;
+
+      const testPayload = "https://forgekit.dev/tools/qr-code?campaign=launch2026";
+      const qr = QRCode.create(testPayload, { errorCorrectionLevel: "H" });
+
+      const scale = 8;
+      const size = qr.modules.size;
+      const width = size * scale;
+      const height = size * scale;
+      const buffer = new Uint8ClampedArray(width * height * 4);
+
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const modX = Math.floor(x / scale);
+          const modY = Math.floor(y / scale);
+          const isDark = qr.modules.get(modX, modY);
+          const idx = (y * width + x) * 4;
+          const val = isDark ? 0 : 255;
+          buffer[idx] = val;
+          buffer[idx + 1] = val;
+          buffer[idx + 2] = val;
+          buffer[idx + 3] = 255;
+        }
+      }
+
+      const decoded = jsQR(buffer, width, height);
+      assert.ok(decoded !== null, "QR decoder failed to find QR code");
+      assert.equal(decoded.data, testPayload);
+    });
+
+    it("should decode QR code with center logo overlay up to 22% size with Level H error correction", async () => {
+      const QRCode = await import("qrcode");
+      const jsQR = (await import("jsqr")).default;
+
+      const testPayload = "WIFI:T:WPA;S:StudioGuest;P:Secret12345;H:false;;";
+      const qr = QRCode.create(testPayload, { errorCorrectionLevel: "H" });
+
+      const scale = 8;
+      const size = qr.modules.size;
+      const width = size * scale;
+      const height = size * scale;
+      const buffer = new Uint8ClampedArray(width * height * 4);
+
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const modX = Math.floor(x / scale);
+          const modY = Math.floor(y / scale);
+          const isDark = qr.modules.get(modX, modY);
+          const idx = (y * width + x) * 4;
+          const val = isDark ? 0 : 255;
+          buffer[idx] = val;
+          buffer[idx + 1] = val;
+          buffer[idx + 2] = val;
+          buffer[idx + 3] = 255;
+        }
+      }
+
+      // Draw center logo covering up to 22% of QR code
+      const logoSize = Math.floor(width * 0.22);
+      const startX = Math.floor((width - logoSize) / 2);
+      const startY = Math.floor((height - logoSize) / 2);
+      for (let y = startY; y < startY + logoSize; y++) {
+        for (let x = startX; x < startX + logoSize; x++) {
+          const idx = (y * width + x) * 4;
+          buffer[idx] = 180; // Gray logo
+          buffer[idx + 1] = 180;
+          buffer[idx + 2] = 180;
+          buffer[idx + 3] = 255;
+        }
+      }
+
+      const decoded = jsQR(buffer, width, height);
+      assert.ok(decoded !== null, "QR decoder failed to decode QR code with center logo");
+      assert.equal(decoded.data, testPayload);
+    });
+  });
 });

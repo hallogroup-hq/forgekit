@@ -5,7 +5,7 @@ import { Download, Terminal, CheckCircle2, AlertCircle, Code, Layers } from "luc
 import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { downloadFile } from "@/lib/utils";
-import { safeExecuteRegex } from "./engine";
+import { safeExecuteRegex, safeExecuteRegexIsolated, RegexEvaluation } from "./engine";
 
 interface RegexPreset {
   id: string;
@@ -73,6 +73,16 @@ export default function RegexCheatGenerator() {
   const [testString, setTestString] = useState(REGEX_PRESETS[0].sampleText);
   const [activeTab, setActiveTab] = useState<"tester" | "javascript" | "python" | "go">("tester");
 
+  const [evaluation, setEvaluation] = useState<RegexEvaluation>(() =>
+    safeExecuteRegex(REGEX_PRESETS[0].pattern, REGEX_PRESETS[0].flags, REGEX_PRESETS[0].sampleText)
+  );
+
+  const applyPreset = (preset: (typeof REGEX_PRESETS)[0]) => {
+    setPattern(preset.pattern);
+    setFlags(preset.flags);
+    setTestString(preset.sampleText);
+  };
+
   const toggleFlag = (flag: string) => {
     if (flags.includes(flag)) {
       setFlags(flags.replace(flag, ""));
@@ -81,16 +91,33 @@ export default function RegexCheatGenerator() {
     }
   };
 
-  const applyPreset = (preset: RegexPreset) => {
-    setPattern(preset.pattern);
-    setFlags(preset.flags);
-    setTestString(preset.sampleText);
-    confetti({ particleCount: 20, spread: 45, origin: { y: 0.8 } });
-  };
+  React.useEffect(() => {
+    let canceled = false;
+    safeExecuteRegexIsolated(pattern, flags, testString, { maxExecutionTimeMs: 250 })
+      .then((res) => {
+        if (!canceled) {
+          setEvaluation(res);
+        }
+      })
+      .catch((err) => {
+        if (!canceled) {
+          setEvaluation({
+            isValid: false,
+            regexError: err instanceof Error ? err.message : "Execution error",
+            isRedosRisky: true,
+            matches: [],
+            executionTimeMs: 0,
+            isTruncated: false,
+          });
+        }
+      });
 
-  const { isValid, regexError, matches, redosWarning } = useMemo(() => {
-    return safeExecuteRegex(pattern, flags, testString);
+    return () => {
+      canceled = true;
+    };
   }, [pattern, flags, testString]);
+
+  const { isValid, regexError, matches, redosWarning } = evaluation;
 
   const jsSnippet = useMemo(() => {
     return `// JavaScript / TypeScript Pattern Matcher

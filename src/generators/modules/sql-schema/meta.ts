@@ -8,6 +8,7 @@ export const meta: ToolMeta = {
   category: "developer",
   tags: ["sql", "postgres", "mysql", "sqlite", "schema", "seed", "database", "ddl", "types"],
   icon: "Database",
+  lifecycle: "development",
   isPopular: true,
   isNew: true,
 };

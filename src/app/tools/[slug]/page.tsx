@@ -10,7 +10,7 @@ interface ToolPageProps {
 
 export async function generateStaticParams() {
   return registry
-    .filter((tool) => tool.meta.lifecycle !== "hidden")
+    .filter((tool) => tool.meta.lifecycle === "ready")
     .map((tool) => ({
       slug: tool.meta.slug,
     }));
@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: ToolPageProps): Promise<Metad
   const { slug } = await params;
   const tool = getGeneratorBySlug(slug);
 
-  if (!tool || tool.meta.lifecycle === "hidden") {
+  if (!tool || tool.meta.lifecycle !== "ready") {
     return {
       title: "Tool Not Found: ForgeKit",
     };
@@ -36,7 +36,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
   const { slug } = await params;
   const tool = getGeneratorBySlug(slug);
 
-  if (!tool || tool.meta.lifecycle === "hidden") {
+  if (!tool || tool.meta.lifecycle !== "ready") {
     notFound();
   }
 

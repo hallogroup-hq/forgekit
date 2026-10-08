@@ -9,6 +9,7 @@ export const meta: ToolMeta = {
   category: "vibe-coder",
   tags: ["prompt", "ai", "llm", "claude", "cursor", "gpt", "system-prompt"],
   icon: "Sparkles",
+  lifecycle: "development",
   isNew: true,
   isPopular: true,
   version: "2.0.0",

@@ -10,11 +10,17 @@ import {
   generateTailwindV3Config,
   generateTailwindV4Theme,
   generateComponentsCheatsheet,
+  generateComponentsCheatsheetHtml,
   calculateContrastRatio,
   generateColorLadder,
   parseCssTokens,
   parseTokensJson,
+  parseDtcgTokens,
+  parseCssBoxShadowToDtcg,
+  dtcgShadowToCss,
   auditContrastPairs,
+  REFERENCE_SITES,
+  createReferenceSiteDesignSystem,
 } from "./engine";
 
 describe("Design.md 3-Layer Strategic Engine", () => {
@@ -224,6 +230,177 @@ describe("Design.md 3-Layer Strategic Engine", () => {
       assert.equal(ladder[500], "#3b82f6");
       assert.ok(ladder[900].startsWith("#"));
       assert.ok(ladder[950].startsWith("#"));
+    });
+  });
+
+  describe("DTCG 2025.10 Token Specification & Composite Shadows", () => {
+    it("should parse CSS box-shadow into structured DTCG composite shadow object", () => {
+      const shadow = parseCssBoxShadowToDtcg("0 4px 12px rgba(0, 0, 0, 0.15)");
+      assert.equal(shadow.offsetX, "0px");
+      assert.equal(shadow.offsetY, "4px");
+      assert.equal(shadow.blur, "12px");
+      assert.equal(shadow.spread, "0px");
+      assert.equal(shadow.color, "rgba(0, 0, 0, 0.15)");
+
+      const cssRoundtrip = dtcgShadowToCss(shadow);
+      assert.ok(cssRoundtrip.includes("4px 12px"));
+    });
+
+    it("should generate DTCG 2025.10 tokens with composite shadow objects and semantic aliases", () => {
+      const system = createArchetypeDesignSystem("modern-saas", {
+        projectName: "Linear Fidelity Test",
+        primaryColor: "#5e6ad2",
+        accentColor: "#8f9bf9",
+      });
+
+      const jsonStr = generateTokensJson(system);
+      const parsed = JSON.parse(jsonStr);
+
+      // Official type definitions
+      assert.equal(parsed.color.primary["500"].$type, "color");
+      assert.equal(parsed.color.primary["500"].$value, "#5e6ad2");
+      assert.equal(parsed.dimension.radius.base.$type, "dimension");
+      assert.equal(parsed.shadow.subtle.$type, "shadow");
+
+      // Composite shadow format
+      assert.ok(typeof parsed.shadow.subtle.$value === "object");
+      assert.ok("offsetX" in parsed.shadow.subtle.$value);
+      assert.ok("offsetY" in parsed.shadow.subtle.$value);
+      assert.ok("blur" in parsed.shadow.subtle.$value);
+      assert.ok("color" in parsed.shadow.subtle.$value);
+
+      // Semantic token aliases
+      assert.equal(parsed.component.button.primary.background.$value, "{color.primary.500}");
+      assert.equal(parsed.component.button.primary.radius.$value, "{dimension.radius.base}");
+    });
+
+    it("should parse DTCG tokens and report unsupported fields honestly", () => {
+      const dtcgPayload = JSON.stringify({
+        $schema: "https://design-tokens.github.io/community-group/format/",
+        color: {
+          primary: { $value: "#6366f1", $type: "color" },
+          accent: { $value: "#10b981", $type: "color" },
+        },
+        shadow: {
+          subtle: {
+            $type: "shadow",
+            $value: {
+              offsetX: "0px",
+              offsetY: "2px",
+              blur: "4px",
+              spread: "0px",
+              color: "rgba(0,0,0,0.06)",
+            },
+          },
+        },
+        experimentalSoundFX: {
+          clickVolume: { $value: "0.8" },
+        },
+        proprietaryFigmaPluginMeta: {
+          syncId: "xyz-123",
+        },
+      });
+
+      const result = parseDtcgTokens(dtcgPayload);
+      assert.ok(result.importedTokens >= 3);
+      assert.equal(result.system.colors?.primary?.value, "#6366f1");
+      assert.equal(result.system.colors?.accent?.value, "#10b981");
+      assert.ok(result.system.surfaces?.shadows?.subtle?.value.includes("2px 4px"));
+
+      // Honest reporting of unsupported fields
+      assert.ok(result.unsupportedFields.includes("experimentalSoundFX"));
+      assert.ok(result.unsupportedFields.includes("proprietaryFigmaPluginMeta"));
+    });
+  });
+
+  describe("HTML Component Cheatsheet Generator", () => {
+    it("should generate complete, responsive, dependency-free HTML component cheatsheet", () => {
+      const system = createArchetypeDesignSystem("modern-saas", {
+        projectName: "Cheatsheet Specimen",
+      });
+
+      const html = generateComponentsCheatsheetHtml(system);
+      assert.ok(html.startsWith("<!DOCTYPE html>"));
+      assert.ok(html.includes("<html lang=\"en\">"));
+      assert.ok(html.includes("<style>"));
+      assert.ok(html.includes("--color-primary:"));
+      assert.ok(html.includes("--radius-card:"));
+      assert.ok(html.includes("class=\"navbar\""));
+      assert.ok(html.includes("class=\"hero\""));
+      assert.ok(html.includes("class=\"card\""));
+      assert.ok(html.includes("class=\"form-group\""));
+      assert.ok(html.includes("class=\"btn btn-primary\""));
+      assert.ok(html.includes("class=\"modal-preview\""));
+      assert.ok(html.includes("@media (max-width: 768px)"));
+      assert.ok(html.includes("</html>"));
+    });
+  });
+
+  describe("Reference Site Fidelity Testing (6 Distinct Visual Identities)", () => {
+    const sites = [
+      { key: "linear", name: "Linear", expectedArch: "modern-saas", expectedDensity: "compact" },
+      { key: "the-atlantic", name: "The Atlantic", expectedArch: "editorial", expectedDensity: "comfortable" },
+      { key: "shopify", name: "Shopify", expectedArch: "ecommerce", expectedDensity: "normal" },
+      { key: "aesop", name: "Aesop", expectedArch: "luxury", expectedDensity: "comfortable" },
+      { key: "vercel", name: "Vercel", expectedArch: "minimal-landing", expectedDensity: "compact" },
+      { key: "pitch", name: "Pitch", expectedArch: "expressive-studio", expectedDensity: "normal" },
+    ];
+
+    for (const site of sites) {
+      it(`should produce high-fidelity empirical model for "${site.name}" (${site.expectedArch})`, () => {
+        const ref = REFERENCE_SITES[site.key];
+        assert.ok(ref, `Reference site ${site.key} must be defined`);
+        assert.equal(ref.archetype, site.expectedArch);
+        assert.equal(ref.observed.density, site.expectedDensity);
+        assert.ok(ref.observed.detectedColors.length >= 4);
+        assert.ok(ref.observed.detectedFonts.length >= 2);
+        assert.ok(ref.fidelityReport.length > 20);
+
+        // Build verified system
+        const system = createReferenceSiteDesignSystem(site.key);
+
+        // Verify observed provenance
+        assert.equal(system.colors.primary.provenance, "observed");
+        assert.equal(system.colors.primary.sourceRef, ref.url);
+        assert.equal(system.colors.neutrals.background.provenance, "observed");
+        assert.equal(system.surfaces.cardRadius.provenance, "observed");
+        assert.equal(system.surfaces.cardRadius.value, ref.observed.cardRadius);
+
+        // Verify WCAG contrast audit
+        assert.ok(system.accessibility.verifiedContrastPairs.length >= 4);
+
+        // Verify Markdown document contains empirical status
+        const md = generateDesignMdDocument(system);
+        assert.ok(md.includes(ref.url));
+        assert.ok(md.includes("## 1. Epistemic Architecture & Evidence Status"));
+        assert.ok(md.includes(ref.name));
+      });
+    }
+
+    it("should demonstrate distinct visual tokens across different archetypes", () => {
+      const linear = createReferenceSiteDesignSystem("linear");
+      const theAtlantic = createReferenceSiteDesignSystem("the-atlantic");
+      const aesop = createReferenceSiteDesignSystem("aesop");
+      const pitch = createReferenceSiteDesignSystem("pitch");
+
+      // Backgrounds differ
+      assert.notEqual(linear.colors.neutrals.background.value, theAtlantic.colors.neutrals.background.value);
+      assert.equal(linear.colors.neutrals.background.value, "#08090a"); // Obsidian
+      assert.equal(theAtlantic.colors.neutrals.background.value, "#fcfbf9"); // Newsprint warm
+      assert.equal(aesop.colors.neutrals.background.value, "#fffef2"); // Alabaster cream
+      assert.equal(pitch.colors.neutrals.background.value, "#0f1015"); // Deep plum
+
+      // Radii differ drastically
+      assert.equal(aesop.surfaces.cardRadius.value, "0px"); // Razor-sharp luxury
+      assert.equal(theAtlantic.surfaces.cardRadius.value, "2px"); // Editorial
+      assert.equal(linear.surfaces.cardRadius.value, "6px"); // High density SaaS
+      assert.equal(pitch.surfaces.cardRadius.value, "20px"); // Playful studio
+
+      // Typography stacks differ
+      assert.ok(linear.typography.headingFont.value.includes("Inter"));
+      assert.ok(theAtlantic.typography.headingFont.value.includes("Newsreader"));
+      assert.ok(aesop.typography.headingFont.value.includes("Suisse Works"));
+      assert.ok(pitch.typography.headingFont.value.includes("Space Grotesk"));
     });
   });
 });

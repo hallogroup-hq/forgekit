@@ -140,9 +140,9 @@ export async function POST(req: NextRequest) {
     const domain = parsedUrl.hostname.replace(/^www\./, "").toLowerCase();
     const preset = CURATED_PRESETS[domain];
 
-    // Live HTML/CSS fetch with SSRF redirect validation and timeout
+    // Live HTML/CSS fetch with SSRF redirect validation and cumulative timeout
     try {
-      const { response: res } = await safeFetchWithRedirects(parsedUrl.toString(), {
+      const fetchResult = await safeFetchWithRedirects(parsedUrl.toString(), {
         timeoutMs: 4500,
         maxRedirects: 3,
         headers: {
@@ -151,7 +151,7 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      if (!res.ok) {
+      if (fetchResult.statusCode < 200 || fetchResult.statusCode >= 300) {
         // If live fetch returned an error (e.g. 403 bot-block or 404)
         if (preset) {
           return NextResponse.json({
@@ -176,14 +176,14 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json(
           {
-            error: `Website returned status ${res.status}. Automated inspection was blocked by the host. You can use manual specification or screenshot reference.`,
+            error: `Website returned status ${fetchResult.statusCode}. Automated inspection was blocked by the host. You can use manual specification or screenshot reference.`,
             canFallbackToScreenshot: true,
           },
           { status: 422 }
         );
       }
 
-      const html = await readSafeResponseBody(res);
+      const html = fetchResult.responseText;
       const detectedColors: string[] = [];
       const detectedFonts: string[] = [];
       const notes: string[] = [];

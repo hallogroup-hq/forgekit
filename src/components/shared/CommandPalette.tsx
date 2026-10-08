@@ -28,7 +28,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
 
   const filteredTools = useMemo(() => {
     const publicRegistry = registry.filter(
-      (t) => !t.meta.lifecycle || t.meta.lifecycle === "ready" || t.meta.lifecycle === "qa"
+      (t) => t.meta.lifecycle === "ready"
     );
     if (!query.trim()) return publicRegistry.slice(0, 8);
     const q = query.toLowerCase();

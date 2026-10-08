@@ -1,3 +1,5 @@
+import http from "node:http";
+import https from "node:https";
 import dns from "node:dns/promises";
 import net from "node:net";
 
@@ -16,9 +18,9 @@ export function isPrivateOrReservedIpv4(ip: string): boolean {
     return true; // Malformed IP, treat as unsafe
   }
 
-  const [a, b, c] = parts;
+  const [a, b, c, d] = parts;
 
-  // 0.0.0.0/8 - Current network
+  // 0.0.0.0/8 - Current network (0.0.0.0 connects to localhost on unix)
   if (a === 0) return true;
 
   // 10.0.0.0/8 - Private network
@@ -60,6 +62,9 @@ export function isPrivateOrReservedIpv4(ip: string): boolean {
   // 240.0.0.0/4 - Reserved for future use
   if (a >= 240) return true;
 
+  // 255.255.255.255 - Broadcast
+  if (a === 255 && b === 255 && c === 255 && d === 255) return true;
+
   return false;
 }
 
@@ -67,7 +72,7 @@ export function isPrivateOrReservedIpv4(ip: string): boolean {
  * Checks if an IPv6 address belongs to private, loopback, or reserved ranges.
  */
 export function isPrivateOrReservedIpv6(ip: string): boolean {
-  const normalized = ip.toLowerCase();
+  const normalized = ip.toLowerCase().trim().replace(/^\[|\]$/g, "");
 
   // ::1 loopback
   if (normalized === "::1" || normalized === "0:0:0:0:0:0:0:1") return true;
@@ -75,12 +80,43 @@ export function isPrivateOrReservedIpv6(ip: string): boolean {
   // :: unspecified
   if (normalized === "::" || normalized === "0:0:0:0:0:0:0:0") return true;
 
-  // IPv4-mapped IPv6 (::ffff:192.168.1.1 or ::ffff:c0a8:0101)
+  // IPv4-mapped IPv6 (::ffff:192.168.1.1 or ::ffff:7f00:1)
   if (normalized.startsWith("::ffff:") || normalized.startsWith("0:0:0:0:0:ffff:")) {
-    const lastPart = normalized.split(":").pop();
-    if (lastPart && lastPart.includes(".")) {
+    const lastPart = normalized.replace(/^(::ffff:|0:0:0:0:0:ffff:)/, "");
+    if (lastPart.includes(".")) {
       return isPrivateOrReservedIpv4(lastPart);
     }
+    // Hex IPv4-mapped (e.g. 7f00:1)
+    const hexParts = lastPart.split(":");
+    if (hexParts.length === 2) {
+      const high = parseInt(hexParts[0], 16);
+      const low = parseInt(hexParts[1], 16);
+      if (!isNaN(high) && !isNaN(low)) {
+        const b1 = (high >> 8) & 0xff;
+        const b2 = high & 0xff;
+        const b3 = (low >> 8) & 0xff;
+        const b4 = low & 0xff;
+        return isPrivateOrReservedIpv4(`${b1}.${b2}.${b3}.${b4}`);
+      }
+    }
+    return true; // Malformed IPv4-mapped format, block
+  }
+
+  // 6to4 transition (2002::/16) - embeds IPv4 in the next 32 bits
+  if (normalized.startsWith("2002:")) {
+    const parts = normalized.split(":");
+    if (parts.length >= 3) {
+      const high = parseInt(parts[1], 16);
+      const low = parseInt(parts[2], 16);
+      if (!isNaN(high) && !isNaN(low)) {
+        const b1 = (high >> 8) & 0xff;
+        const b2 = high & 0xff;
+        const b3 = (low >> 8) & 0xff;
+        const b4 = low & 0xff;
+        return isPrivateOrReservedIpv4(`${b1}.${b2}.${b3}.${b4}`);
+      }
+    }
+    return true;
   }
 
   // fc00::/7 - Unique local address (ULA)
@@ -121,15 +157,17 @@ export async function validateSafeUrlForFetch(rawUrl: string): Promise<SsrCheckR
 
   const hostname = parsed.hostname.toLowerCase();
 
-  // 2. Reject obvious loopback and internal hostname patterns
+  // 2. Reject obvious loopback, internal, or cloud metadata hostname patterns
   if (
     hostname === "localhost" ||
     hostname.endsWith(".localhost") ||
     hostname.endsWith(".local") ||
     hostname.endsWith(".internal") ||
-    hostname.endsWith(".onion")
+    hostname.endsWith(".onion") ||
+    hostname === "metadata.google.internal" ||
+    hostname === "169.254.169.254"
   ) {
-    return { safe: false, reason: `Internal or loopback hostname is forbidden: ${hostname}` };
+    return { safe: false, reason: `Internal, metadata, or loopback hostname is forbidden: ${hostname}` };
   }
 
   // 3. Direct IP address in hostname
@@ -180,73 +218,88 @@ export async function validateSafeUrlForFetch(rawUrl: string): Promise<SsrCheckR
   }
 }
 
+/**
+ * Custom DNS lookup handler that verifies resolved IP addresses at socket creation time.
+ * This guarantees DNS-to-connection safety against TOCTOU / DNS rebinding attacks.
+ */
+export function createSafeLookup(customDns?: typeof dns.lookup) {
+  const lookupFn = customDns || dns.lookup;
+  return (
+    hostname: string,
+    options: any,
+    callback: (err: Error | null, address?: any, family?: any) => void
+  ) => {
+    // If hostname is already a verified public IP
+    const directIp = net.isIP(hostname);
+    if (directIp === 4) {
+      if (isPrivateOrReservedIpv4(hostname)) {
+        return callback(new Error(`SSRF blocked: Direct private IPv4 address ${hostname}`));
+      }
+      return callback(null, hostname, 4);
+    }
+    if (directIp === 6) {
+      if (isPrivateOrReservedIpv6(hostname)) {
+        return callback(new Error(`SSRF blocked: Direct private IPv6 address ${hostname}`));
+      }
+      return callback(null, hostname, 6);
+    }
+
+    // Resolve DNS and check all returned IPs
+    lookupFn(hostname, { all: true })
+      .then((records) => {
+        if (!records || records.length === 0) {
+          return callback(new Error(`SSRF blocked: Could not resolve domain ${hostname}`));
+        }
+
+        for (const r of records) {
+          if (r.family === 4 && isPrivateOrReservedIpv4(r.address)) {
+            return callback(new Error(`SSRF blocked: DNS rebinding/private IPv4 detected: ${r.address}`));
+          }
+          if (r.family === 6 && isPrivateOrReservedIpv6(r.address)) {
+            return callback(new Error(`SSRF blocked: DNS rebinding/private IPv6 detected: ${r.address}`));
+          }
+        }
+
+        // Return first safe record to the connecting socket
+        if (options && options.all) {
+          callback(null, records);
+        } else {
+          callback(null, records[0].address, records[0].family);
+        }
+      })
+      .catch((err) => callback(err));
+  };
+}
+
 export interface SafeFetchOptions {
   headers?: Record<string, string>;
   maxRedirects?: number;
   timeoutMs?: number;
   maxResponseBytes?: number;
   allowedContentTypes?: string[];
+  customDnsLookup?: typeof dns.lookup;
 }
 
-export interface SafeFetchResponse {
-  response: Response;
+export interface SafeFetchResult {
+  responseText: string;
   finalUrl: string;
+  statusCode: number;
+  contentType: string;
   redirectCount: number;
 }
 
 /**
- * Reads a response stream up to maxBytes, aborting if the payload exceeds the limit.
- */
-export async function readSafeResponseBody(
-  response: Response,
-  maxBytes: number = 2 * 1024 * 1024 // 2MB default
-): Promise<string> {
-  const contentLength = response.headers.get("content-length");
-  if (contentLength && parseInt(contentLength, 10) > maxBytes) {
-    throw new Error(`Response payload exceeds maximum allowed size of ${maxBytes} bytes.`);
-  }
-
-  if (!response.body) {
-    return "";
-  }
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder("utf-8");
-  let totalBytes = 0;
-  let text = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    if (value) {
-      totalBytes += value.byteLength;
-      if (totalBytes > maxBytes) {
-        try {
-          await reader.cancel();
-        } catch {
-          // ignore
-        }
-        throw new Error(`Response payload exceeded maximum allowed size of ${maxBytes} bytes.`);
-      }
-      text += decoder.decode(value, { stream: true });
-    }
-  }
-  text += decoder.decode();
-  return text;
-}
-
-/**
- * Executes a fetch request with strict SSRF validation at every redirect hop.
- * Uses a cumulative timeout across all redirects, inspects content-type,
- * and restricts destination IPs.
+ * Executes an HTTP/HTTPS request with strict SSRF validation at every redirect hop,
+ * socket-level DNS verification (DNS-to-connection security),
+ * and a single cumulative timeout budget covering redirect resolution, headers, and body streaming.
  */
 export async function safeFetchWithRedirects(
   initialUrl: string,
   options?: SafeFetchOptions
-): Promise<SafeFetchResponse> {
+): Promise<SafeFetchResult> {
   const maxRedirects = options?.maxRedirects ?? 3;
   const timeoutMs = options?.timeoutMs ?? 5000;
-  const maxResponseBytes = options?.maxResponseBytes ?? 2 * 1024 * 1024;
+  const maxResponseBytes = options?.maxResponseBytes ?? 2 * 1024 * 1024; // 2MB
   const allowedContentTypes = options?.allowedContentTypes ?? [
     "text/html",
     "application/xhtml+xml",
@@ -257,77 +310,169 @@ export async function safeFetchWithRedirects(
   let currentUrl = initialUrl;
   let redirectCount = 0;
 
-  // Single cumulative abort controller across all redirects
-  const controller = new AbortController();
-  const globalTimer = setTimeout(() => controller.abort(), timeoutMs);
+  const startTime = Date.now();
+  let timedOut = false;
+  let activeReq: http.ClientRequest | null = null;
 
-  try {
-    while (redirectCount <= maxRedirects) {
-      // 1. Validate the current URL before connecting
-      const check = await validateSafeUrlForFetch(currentUrl);
-      if (!check.safe) {
-        throw new Error(`SSRF blocked: ${check.reason || "Forbidden URL"}`);
+  return new Promise<SafeFetchResult>((resolve, reject) => {
+    // 1. Single global cumulative timer covering the ENTIRE transaction
+    const globalTimer = setTimeout(() => {
+      timedOut = true;
+      if (activeReq) {
+        activeReq.destroy(new Error(`Request cumulative execution timed out after ${timeoutMs}ms.`));
       }
+      reject(new Error(`Request timed out after ${timeoutMs}ms.`));
+    }, timeoutMs);
 
-      let res: Response;
-      try {
-        res = await fetch(currentUrl, {
-          headers: options?.headers ?? {
-            "User-Agent": "ForgeKit-AuditBot/1.0",
-            Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-          },
-          signal: controller.signal,
-          redirect: "manual",
-        });
-      } catch (fetchErr: unknown) {
-        if (controller.signal.aborted) {
-          throw new Error(`Request timed out after ${timeoutMs}ms.`);
-        }
-        throw fetchErr;
-      }
-
-      // Check for redirect status codes (301, 302, 303, 307, 308)
-      if ([301, 302, 303, 307, 308].includes(res.status)) {
-        const location = res.headers.get("location");
-        if (!location) {
-          throw new Error(`Redirect response from ${currentUrl} missing Location header.`);
-        }
-
-        // Resolve relative redirect against current URL
-        const nextUrl = new URL(location, currentUrl).toString();
-
-        redirectCount++;
-        if (redirectCount > maxRedirects) {
-          throw new Error(`Exceeded maximum redirect limit (${maxRedirects}).`);
-        }
-
-        currentUrl = nextUrl;
-        continue;
-      }
-
-      // Check content-type header on final non-redirect response
-      const contentType = res.headers.get("content-type")?.toLowerCase() || "";
-      const isAllowedType = allowedContentTypes.some((type) => contentType.includes(type));
-      if (res.ok && contentType && !isAllowedType) {
-        throw new Error(`Forbidden response content-type: ${contentType}. Expected HTML or text.`);
-      }
-
-      // Check content-length header
-      const contentLength = res.headers.get("content-length");
-      if (contentLength && parseInt(contentLength, 10) > maxResponseBytes) {
-        throw new Error(`Response length (${contentLength} bytes) exceeds limit of ${maxResponseBytes} bytes.`);
-      }
-
-      return {
-        response: res,
-        finalUrl: currentUrl,
-        redirectCount,
-      };
+    function cleanup() {
+      clearTimeout(globalTimer);
     }
 
-    throw new Error(`Exceeded maximum redirect limit (${maxRedirects}).`);
-  } finally {
-    clearTimeout(globalTimer);
-  }
+    async function executeHop(targetUrl: string) {
+      if (timedOut) return;
+
+      // 2. Pre-flight URL validation
+      const ssrfCheck = await validateSafeUrlForFetch(targetUrl);
+      if (!ssrfCheck.safe) {
+        cleanup();
+        return reject(new Error(`SSRF blocked: ${ssrfCheck.reason || "Forbidden URL"}`));
+      }
+
+      let parsed: URL;
+      try {
+        parsed = new URL(targetUrl);
+      } catch {
+        cleanup();
+        return reject(new Error("Malformed URL"));
+      }
+
+      const isHttps = parsed.protocol === "https:";
+      const transport = isHttps ? https : http;
+      const port = parsed.port ? parseInt(parsed.port, 10) : isHttps ? 443 : 80;
+
+      const safeLookup = createSafeLookup(options?.customDnsLookup);
+
+      const requestOptions: https.RequestOptions = {
+        hostname: parsed.hostname,
+        port,
+        path: `${parsed.pathname}${parsed.search}`,
+        method: "GET",
+        headers: {
+          "User-Agent": options?.headers?.["User-Agent"] || "ForgeKit-AuditBot/1.0",
+          Accept: options?.headers?.Accept || "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          Host: parsed.host,
+        },
+        lookup: safeLookup as any,
+      };
+
+      activeReq = transport.request(requestOptions, (res) => {
+        const statusCode = res.statusCode || 0;
+
+        // Check for redirects (301, 302, 303, 307, 308)
+        if ([301, 302, 303, 307, 308].includes(statusCode)) {
+          res.resume(); // Discard redirect body
+          const location = res.headers["location"];
+          if (!location) {
+            cleanup();
+            return reject(new Error(`Redirect response from ${targetUrl} missing Location header.`));
+          }
+
+          redirectCount++;
+          if (redirectCount > maxRedirects) {
+            cleanup();
+            return reject(new Error(`Exceeded maximum redirect limit (${maxRedirects}).`));
+          }
+
+          const nextUrl = new URL(location, targetUrl).toString();
+          currentUrl = nextUrl;
+          return executeHop(nextUrl);
+        }
+
+        // Check Content-Type header on final destination
+        const contentType = (res.headers["content-type"] || "").toLowerCase();
+        if (statusCode >= 200 && statusCode < 300 && contentType) {
+          const isAllowed = allowedContentTypes.some((t) => contentType.includes(t));
+          if (!isAllowed) {
+            res.destroy();
+            cleanup();
+            return reject(new Error(`Forbidden response content-type: ${contentType}. Expected HTML or text.`));
+          }
+        }
+
+        // Check Content-Length header
+        const contentLength = res.headers["content-length"];
+        if (contentLength && parseInt(contentLength, 10) > maxResponseBytes) {
+          res.destroy();
+          cleanup();
+          return reject(new Error(`Response length (${contentLength} bytes) exceeds limit of ${maxResponseBytes} bytes.`));
+        }
+
+        // Stream and accumulate body under the active cumulative timeout
+        let totalBytes = 0;
+        const chunks: Buffer[] = [];
+
+        res.on("data", (chunk: Buffer) => {
+          totalBytes += chunk.length;
+          if (totalBytes > maxResponseBytes) {
+            res.destroy();
+            cleanup();
+            return reject(new Error(`Response payload exceeded maximum allowed size of ${maxResponseBytes} bytes.`));
+          }
+          chunks.push(chunk);
+        });
+
+        res.on("end", () => {
+          cleanup();
+          const responseText = Buffer.concat(chunks).toString("utf-8");
+          resolve({
+            responseText,
+            finalUrl: currentUrl,
+            statusCode,
+            contentType,
+            redirectCount,
+          });
+        });
+
+        res.on("error", (streamErr) => {
+          cleanup();
+          reject(streamErr);
+        });
+      });
+
+      activeReq.on("error", (err) => {
+        if (timedOut) return;
+        cleanup();
+        reject(err);
+      });
+
+      activeReq.end();
+    }
+
+    executeHop(initialUrl).catch((err) => {
+      cleanup();
+      reject(err);
+    });
+  });
 }
 
+/**
+ * Backward-compatible helper for legacy string reading
+ */
+export async function readSafeResponseBody(
+  response: Response | { responseText: string },
+  maxBytes: number = 2 * 1024 * 1024
+): Promise<string> {
+  if ("responseText" in response && typeof response.responseText === "string") {
+    if (Buffer.byteLength(response.responseText) > maxBytes) {
+      throw new Error(`Response payload exceeded maximum allowed size of ${maxBytes} bytes.`);
+    }
+    return response.responseText;
+  }
+
+  const res = response as Response;
+  const text = await res.text();
+  if (Buffer.byteLength(text) > maxBytes) {
+    throw new Error(`Response payload exceeded maximum allowed size of ${maxBytes} bytes.`);
+  }
+  return text;
+}

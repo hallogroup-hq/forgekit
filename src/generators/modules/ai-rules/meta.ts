@@ -8,6 +8,7 @@ export const meta: ToolMeta = {
   category: "vibe-coder",
   tags: ["cursorrules", "claude", "cursor", "vibe-coder", "ai", "prompt", "typescript", "rules"],
   icon: "Bot",
+  lifecycle: "development",
   isPopular: true,
   isNew: true,
 };

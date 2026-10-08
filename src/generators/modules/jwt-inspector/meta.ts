@@ -9,6 +9,7 @@ export const meta: ToolMeta = {
   category: "developer",
   tags: ["jwt", "auth", "token", "security", "bearer", "developer", "api"],
   icon: "KeyRound",
+  lifecycle: "development",
   isNew: true,
   isPopular: true,
   version: "1.0.0",

@@ -8,6 +8,7 @@ export const meta: ToolMeta = {
   category: "design",
   tags: ["css", "gradient", "mesh", "aurora", "ui", "design", "background", "svg", "tailwind"],
   icon: "Palette",
+  lifecycle: "development",
   isPopular: true,
   isNew: true,
 };

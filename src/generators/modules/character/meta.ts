@@ -8,5 +8,6 @@ export const meta: ToolMeta = {
   category: "content",
   tags: ["character", "rpg", "writing", "story", "dnd", "persona", "creative"],
   icon: "UserSquare2",
+  lifecycle: "development",
   isPopular: true,
 };

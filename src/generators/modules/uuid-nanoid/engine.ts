@@ -34,10 +34,20 @@ export function resetUuidV7State(): void {
   sequenceCounterV7 = 0;
 }
 
+export function setUuidV7State(timestamp: number, counter: number): void {
+  lastTimestampV7 = timestamp;
+  sequenceCounterV7 = counter;
+}
+
+export function getUuidV7State(): { lastTimestamp: number; sequenceCounter: number } {
+  return { lastTimestamp: lastTimestampV7, sequenceCounter: sequenceCounterV7 };
+}
+
 /**
  * Generates an RFC 9562 compliant UUID Version 7.
- * Adheres to Section 6.2 (Monotonicity and Counters Method 1) to guarantee
- * that successive IDs generated within the same millisecond remain strictly ordered.
+ * Adheres strictly to Section 6.2 (Monotonicity and Counters Method 1) to guarantee
+ * that successive IDs remain strictly ordered under rapid generation, sequence overflow,
+ * and system clock rollback.
  * Layout:
  * - unix_ts_ms: 48 bits (bytes 0-5)
  * - ver: 4 bits (0111) (byte 6 top 4 bits)
@@ -49,25 +59,37 @@ export function generateUuidV7(customTimestamp?: number, cryptoInstance: Crypto 
   const ts = customTimestamp !== undefined ? customTimestamp : Date.now();
   const bytes = new Uint8Array(16);
 
-  // 1. Fill random bytes
+  // 1. Fill random bytes via CSPRNG
   cryptoInstance.getRandomValues(bytes);
 
-  // 2. Monotonic sequence counter for rand_a (12 bits)
-  if (ts === lastTimestampV7) {
-    sequenceCounterV7 = (sequenceCounterV7 + 1) & 0x0fff;
+  // 2. Monotonic sequence counter with RFC 9562 §6.2 clock rollback & overflow handling
+  let effectiveTs = ts;
+  if (effectiveTs <= lastTimestampV7) {
+    // Clock rollback (ts < lastTimestampV7) or same-millisecond generation (ts === lastTimestampV7):
+    // Freeze to lastTimestampV7 and advance counter to ensure strict monotonicity
+    effectiveTs = lastTimestampV7;
+    sequenceCounterV7++;
+
+    // Sequence counter overflow boundary (12 bits max: 0x0fff / 4095)
+    if (sequenceCounterV7 > 0x0fff) {
+      // Advance timestamp by 1ms and reset sequence counter to 0 (RFC 9562 §6.2 Method 1)
+      effectiveTs++;
+      lastTimestampV7 = effectiveTs;
+      sequenceCounterV7 = 0;
+    }
   } else {
-    lastTimestampV7 = ts;
-    // Reseed counter with cryptographically random 12 bits
+    // New millisecond forward: advance timestamp and initialize counter with 12-bit random value
+    lastTimestampV7 = effectiveTs;
     sequenceCounterV7 = ((bytes[6] & 0x0f) << 8) | bytes[7];
   }
 
   // 3. Set 48-bit timestamp in big-endian (bytes 0-5)
-  bytes[0] = Math.floor(ts / 2 ** 40) & 0xff;
-  bytes[1] = Math.floor(ts / 2 ** 32) & 0xff;
-  bytes[2] = Math.floor(ts / 2 ** 24) & 0xff;
-  bytes[3] = Math.floor(ts / 2 ** 16) & 0xff;
-  bytes[4] = Math.floor(ts / 2 ** 8) & 0xff;
-  bytes[5] = ts & 0xff;
+  bytes[0] = Math.floor(effectiveTs / 2 ** 40) & 0xff;
+  bytes[1] = Math.floor(effectiveTs / 2 ** 32) & 0xff;
+  bytes[2] = Math.floor(effectiveTs / 2 ** 24) & 0xff;
+  bytes[3] = Math.floor(effectiveTs / 2 ** 16) & 0xff;
+  bytes[4] = Math.floor(effectiveTs / 2 ** 8) & 0xff;
+  bytes[5] = effectiveTs & 0xff;
 
   // 4. Set version 7 (0b0111) in top 4 bits of byte 6, plus top 4 bits of sequence counter
   bytes[6] = 0x70 | ((sequenceCounterV7 >> 8) & 0x0f);
@@ -126,7 +148,7 @@ export function generateNanoId(size = 21, cryptoInstance: Crypto = getCrypto()):
  * Generates a batch of identifiers with casing and hyphen formatting.
  */
 export function generateBatchIds(options: GenerateIdOptions, cryptoInstance: Crypto = getCrypto()): string[] {
-  const { type, count, uppercase = false, hyphens = true, nanoidLength = 21, timestamp } = options;
+  const { type, count, uppercase = false, hyphens = true, timestamp } = options;
 
   if (count < 1 || count > 1000) {
     throw new Error("Batch count must be between 1 and 1000");
@@ -140,7 +162,7 @@ export function generateBatchIds(options: GenerateIdOptions, cryptoInstance: Cry
     } else if (type === "uuid7") {
       id = generateUuidV7(timestamp, cryptoInstance);
     } else {
-      id = generateNanoId(nanoidLength, cryptoInstance);
+      id = generateNanoId(options.nanoidLength ?? 21, cryptoInstance);
     }
 
     if (!hyphens && (type === "uuid4" || type === "uuid7")) {

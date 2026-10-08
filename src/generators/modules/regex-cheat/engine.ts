@@ -1,7 +1,7 @@
 /**
  * Regex Tester & Safe Evaluation Engine
  * Protects against ReDoS (Regular Expression Denial of Service) through
- * static pattern heuristics, string length constraints, and execution budgets.
+ * static pattern heuristics, string length constraints, and isolated terminable worker threads.
  */
 
 export interface RegexMatchResult {
@@ -56,7 +56,7 @@ export function detectPotentialRedos(pattern: string): { isRisky: boolean; reaso
 }
 
 /**
- * Safely executes a regular expression against test input with time budget.
+ * Safely executes a regular expression against test input with time budget and truncation.
  */
 export function safeExecuteRegex(
   pattern: string,
@@ -86,7 +86,7 @@ export function safeExecuteRegex(
   // 1. Static ReDoS Check
   const redosCheck = detectPotentialRedos(pattern);
 
-  // If pattern is risky and input string is long, reject early to protect browser thread
+  // If pattern is risky and input string is long, reject early to protect thread
   if (redosCheck.isRisky && testString.length > 200) {
     return {
       isValid: false,
@@ -154,7 +154,6 @@ export function safeExecuteRegex(
           break;
         }
 
-        // Avoid infinite loop on zero-length matches (e.g. /^/g)
         if (match[0].length === 0) {
           reg.lastIndex++;
         }
@@ -194,17 +193,302 @@ export function safeExecuteRegex(
 }
 
 /**
- * Generates snippet for JavaScript / TypeScript
+ * Isolated Worker Execution Engine
+ * Evaluates regular expressions inside a dedicated, terminable worker thread
+ * with hard termination on timeout (never blocks main thread or process).
  */
+export async function safeExecuteRegexIsolated(
+  pattern: string,
+  flags: string,
+  testString: string,
+  options?: {
+    maxExecutionTimeMs?: number;
+    maxMatches?: number;
+  }
+): Promise<RegexEvaluation> {
+  const timeoutMs = options?.maxExecutionTimeMs ?? 200;
+  const maxMatches = options?.maxMatches ?? 500;
+  const redosCheck = detectPotentialRedos(pattern);
+
+  if (!pattern) {
+    return {
+      isValid: true,
+      regexError: null,
+      isRedosRisky: false,
+      matches: [],
+      executionTimeMs: 0,
+      isTruncated: false,
+    };
+  }
+
+  // Pre-validate regex syntax
+  try {
+    new RegExp(pattern, flags);
+  } catch (err: unknown) {
+    return {
+      isValid: false,
+      regexError: err instanceof Error ? err.message : "Invalid regular expression",
+      isRedosRisky: redosCheck.isRisky,
+      redosWarning: redosCheck.reason,
+      matches: [],
+      executionTimeMs: 0,
+      isTruncated: false,
+    };
+  }
+
+  const startTime = Date.now();
+
+  // 1. Node.js Environment (worker_threads)
+  if (typeof window === "undefined") {
+    try {
+      const { Worker } = await import("node:worker_threads");
+
+      const workerScript = `
+        const { parentPort, workerData } = require("node:worker_threads");
+        try {
+          const reg = new RegExp(workerData.pattern, workerData.flags);
+          const results = [];
+          let isTruncated = false;
+
+          if (workerData.flags.includes("g")) {
+            let match;
+            let count = 0;
+            while ((match = reg.exec(workerData.text)) !== null) {
+              results.push({
+                match: match[0],
+                index: match.index,
+                groups: match.slice(1),
+              });
+              count++;
+              if (count >= workerData.maxMatches) {
+                isTruncated = true;
+                break;
+              }
+              if (match[0].length === 0) reg.lastIndex++;
+            }
+          } else {
+            const match = reg.exec(workerData.text);
+            if (match) {
+              results.push({
+                match: match[0],
+                index: match.index,
+                groups: match.slice(1),
+              });
+            }
+          }
+          parentPort.postMessage({ success: true, results, isTruncated });
+        } catch (err) {
+          parentPort.postMessage({ success: false, error: err.message });
+        }
+      `;
+
+      return new Promise<RegexEvaluation>((resolve) => {
+        let completed = false;
+        const worker = new Worker(workerScript, {
+          eval: true,
+          workerData: { pattern, flags, text: testString, maxMatches },
+        });
+
+        const timer = setTimeout(async () => {
+          if (!completed) {
+            completed = true;
+            try {
+              await worker.terminate();
+            } catch {
+              // ignore
+            }
+            resolve({
+              isValid: false,
+              regexError: `Execution forcefully aborted: Hard timeout exceeded (${timeoutMs}ms) via worker termination.`,
+              isRedosRisky: true,
+              redosWarning: "Catastrophic backtracking exceeded hard timeout budget.",
+              matches: [],
+              executionTimeMs: timeoutMs,
+              isTruncated: true,
+            });
+          }
+        }, timeoutMs);
+
+        worker.on("message", (msg) => {
+          if (completed) return;
+          completed = true;
+          clearTimeout(timer);
+          worker.terminate().catch(() => {});
+
+          if (msg.success) {
+            resolve({
+              isValid: true,
+              regexError: null,
+              isRedosRisky: redosCheck.isRisky,
+              redosWarning: redosCheck.reason,
+              matches: msg.results,
+              executionTimeMs: Date.now() - startTime,
+              isTruncated: msg.isTruncated,
+            });
+          } else {
+            resolve({
+              isValid: false,
+              regexError: msg.error,
+              isRedosRisky: redosCheck.isRisky,
+              matches: [],
+              executionTimeMs: Date.now() - startTime,
+              isTruncated: false,
+            });
+          }
+        });
+
+        worker.on("error", (err) => {
+          if (completed) return;
+          completed = true;
+          clearTimeout(timer);
+          worker.terminate().catch(() => {});
+          resolve({
+            isValid: false,
+            regexError: err.message,
+            isRedosRisky: redosCheck.isRisky,
+            matches: [],
+            executionTimeMs: Date.now() - startTime,
+            isTruncated: false,
+          });
+        });
+      });
+    } catch {
+      // Fallback to sync execution if worker_threads unavailable
+      return safeExecuteRegex(pattern, flags, testString, { maxExecutionTimeMs: timeoutMs, maxMatches });
+    }
+  }
+
+  // 2. Browser Environment (Web Worker via Blob URL)
+  if (typeof Worker !== "undefined") {
+    try {
+      const workerCode = `
+        self.onmessage = function(e) {
+          try {
+            var data = e.data;
+            var reg = new RegExp(data.pattern, data.flags);
+            var results = [];
+            var isTruncated = false;
+
+            if (data.flags.indexOf("g") !== -1) {
+              var match;
+              var count = 0;
+              while ((match = reg.exec(data.text)) !== null) {
+                results.push({
+                  match: match[0],
+                  index: match.index,
+                  groups: match.slice(1)
+                });
+                count++;
+                if (count >= data.maxMatches) {
+                  isTruncated = true;
+                  break;
+                }
+                if (match[0].length === 0) reg.lastIndex++;
+              }
+            } else {
+              var match = reg.exec(data.text);
+              if (match) {
+                results.push({
+                  match: match[0],
+                  index: match.index,
+                  groups: match.slice(1)
+                });
+              }
+            }
+            self.postMessage({ success: true, results: results, isTruncated: isTruncated });
+          } catch (err) {
+            self.postMessage({ success: false, error: err.message });
+          }
+        };
+      `;
+
+      const blob = new Blob([workerCode], { type: "application/javascript" });
+      const workerUrl = URL.createObjectURL(blob);
+      const worker = new Worker(workerUrl);
+
+      return new Promise<RegexEvaluation>((resolve) => {
+        let completed = false;
+
+        const timer = setTimeout(() => {
+          if (!completed) {
+            completed = true;
+            worker.terminate();
+            URL.revokeObjectURL(workerUrl);
+            resolve({
+              isValid: false,
+              regexError: `Execution forcefully aborted: Hard timeout exceeded (${timeoutMs}ms) via web worker termination.`,
+              isRedosRisky: true,
+              redosWarning: "Catastrophic backtracking exceeded hard timeout budget.",
+              matches: [],
+              executionTimeMs: timeoutMs,
+              isTruncated: true,
+            });
+          }
+        }, timeoutMs);
+
+        worker.onmessage = (event) => {
+          if (completed) return;
+          completed = true;
+          clearTimeout(timer);
+          worker.terminate();
+          URL.revokeObjectURL(workerUrl);
+
+          const msg = event.data;
+          if (msg.success) {
+            resolve({
+              isValid: true,
+              regexError: null,
+              isRedosRisky: redosCheck.isRisky,
+              redosWarning: redosCheck.reason,
+              matches: msg.results,
+              executionTimeMs: Date.now() - startTime,
+              isTruncated: msg.isTruncated,
+            });
+          } else {
+            resolve({
+              isValid: false,
+              regexError: msg.error,
+              isRedosRisky: redosCheck.isRisky,
+              matches: [],
+              executionTimeMs: Date.now() - startTime,
+              isTruncated: false,
+            });
+          }
+        };
+
+        worker.onerror = (err) => {
+          if (completed) return;
+          completed = true;
+          clearTimeout(timer);
+          worker.terminate();
+          URL.revokeObjectURL(workerUrl);
+          resolve({
+            isValid: false,
+            regexError: err.message,
+            isRedosRisky: redosCheck.isRisky,
+            matches: [],
+            executionTimeMs: Date.now() - startTime,
+            isTruncated: false,
+          });
+        };
+
+        worker.postMessage({ pattern, flags, text: testString, maxMatches });
+      });
+    } catch {
+      return safeExecuteRegex(pattern, flags, testString, { maxExecutionTimeMs: timeoutMs, maxMatches });
+    }
+  }
+
+  // Fallback to sync
+  return safeExecuteRegex(pattern, flags, testString, { maxExecutionTimeMs: timeoutMs, maxMatches });
+}
+
 export function generateJsRegexCode(pattern: string, flags: string): string {
   return `const regex = /${pattern}/${flags};
 const matches = [...str.matchAll(regex)];
 matches.forEach(m => console.log(m[0]));`;
 }
 
-/**
- * Generates snippet for Python re module
- */
 export function generatePythonRegexCode(pattern: string, flags: string): string {
   const pyFlags = [];
   if (flags.includes("i")) pyFlags.push("re.IGNORECASE");
@@ -220,9 +504,6 @@ for m in matches:
     print(m.group(0), "at index", m.start())`;
 }
 
-/**
- * Generates snippet for Go regexp package
- */
 export function generateGoRegexCode(pattern: string): string {
   return `package main
 

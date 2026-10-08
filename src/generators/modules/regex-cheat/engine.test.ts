@@ -73,6 +73,35 @@ describe("Regex Tester & Safe Evaluation Engine", () => {
     });
   });
 
+  describe("safeExecuteRegexIsolated (Hard Worker Termination)", () => {
+    it("should evaluate regex in isolated worker thread successfully", async () => {
+      const { safeExecuteRegexIsolated } = await import("./engine");
+      const result = await safeExecuteRegexIsolated(
+        "\\d+",
+        "g",
+        "Order #123 placed with 45 items"
+      );
+      assert.equal(result.isValid, true);
+      assert.equal(result.matches.length, 2);
+      assert.equal(result.matches[0].match, "123");
+      assert.equal(result.matches[1].match, "45");
+    });
+
+    it("should forcefully terminate worker thread when catastrophic regex exceeds hard timeout", async () => {
+      const { safeExecuteRegexIsolated } = await import("./engine");
+      // Classic ReDoS pattern with backtracking string
+      const result = await safeExecuteRegexIsolated(
+        "(a+)+$",
+        "",
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaa!",
+        { maxExecutionTimeMs: 100 }
+      );
+      // Hard worker termination guarantees main thread isn't frozen
+      assert.equal(result.isValid, false);
+      assert.ok(result.regexError?.includes("Hard timeout exceeded"));
+    });
+  });
+
   describe("Code Generators", () => {
     it("should generate valid JS regex code", () => {
       const code = generateJsRegexCode("[0-9]+", "gi");

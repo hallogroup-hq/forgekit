@@ -1,22 +1,66 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Plus, Trash2, AlignLeft, AlignCenter, AlignRight, FileSpreadsheet, Download, Sparkles } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  FileSpreadsheet,
+  Download,
+  FileText,
+  RotateCcw,
+} from "lucide-react";
 import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { downloadFile } from "@/lib/utils";
+import {
+  TableAlignment,
+  parseDelimitedTextToGrid,
+  generateMarkdownTable,
+  exportGridToCsv,
+} from "./engine";
 
-type Alignment = "left" | "center" | "right";
+const PRESETS = [
+  {
+    name: "Feature Matrix",
+    headers: ["Feature", "Starter Tier", "Pro Workstation", "Status"],
+    alignments: ["left" as const, "center" as const, "center" as const, "right" as const],
+    rows: [
+      ["Client-Side Privacy", "Yes", "Yes (Unlimited)", "Active"],
+      ["High-Res Export", "512px", "4096px Ultra", "Active"],
+      ["Custom Presets", "3 slots", "Unlimited", "Active"],
+      ["API Bridges", "Community", "Dedicated", "Beta"],
+    ],
+  },
+  {
+    name: "API Endpoints",
+    headers: ["Method", "Endpoint", "Auth", "Description"],
+    alignments: ["left" as const, "left" as const, "center" as const, "left" as const],
+    rows: [
+      ["GET", "/api/v1/projects", "Bearer", "List active user projects"],
+      ["POST", "/api/v1/projects", "Bearer", "Create new workspace project"],
+      ["DELETE", "/api/v1/projects/:id", "Bearer", "Archive project by ID"],
+    ],
+  },
+  {
+    name: "Comparison Table",
+    headers: ["Criterion", "Option A", "Option B", "Winner"],
+    alignments: ["left" as const, "left" as const, "left" as const, "center" as const],
+    rows: [
+      ["Setup Complexity", "Zero config", "Requires CLI install", "Option A"],
+      ["Runtime Speed", "Native Rust (0.4ms)", "V8 Node (12ms)", "Option A"],
+      ["Ecosystem Plugins", "Growing (150+)", "Mature (3,000+)", "Option B"],
+    ],
+  },
+];
 
 export default function MarkdownTableGenerator() {
-  const [headers, setHeaders] = useState<string[]>(["Feature", "Starter Tier", "Pro Workstation", "Status"]);
-  const [alignments, setAlignments] = useState<Alignment[]>(["left", "center", "center", "right"]);
-  const [rows, setRows] = useState<string[][]>([
-    ["Client-Side Privacy", "Yes", "Yes (Unlimited)", "Active"],
-    ["High-Res Export", "512px", "4096px Ultra", "Active"],
-    ["Custom Presets", "3 slots", "Unlimited", "Active"],
-    ["API Bridges", "Community", "Dedicated", "Beta"],
-  ]);
+  const [headers, setHeaders] = useState<string[]>(PRESETS[0].headers);
+  const [alignments, setAlignments] = useState<TableAlignment[]>(PRESETS[0].alignments);
+  const [rows, setRows] = useState<string[][]>(PRESETS[0].rows);
+
   const [csvInput, setCsvInput] = useState("");
   const [showCsvModal, setShowCsvModal] = useState(false);
 
@@ -50,74 +94,47 @@ export default function MarkdownTableGenerator() {
   const toggleAlignment = (colIdx: number) => {
     setAlignments((prev) => {
       const copy = [...prev];
-      const cur = copy[colIdx];
+      const cur = copy[colIdx] || "left";
       copy[colIdx] = cur === "left" ? "center" : cur === "center" ? "right" : "left";
       return copy;
     });
   };
 
-  // Generate GitHub-flavored markdown table with aligned padding
+  // Apply preset
+  const handleApplyPreset = (preset: typeof PRESETS[0]) => {
+    setHeaders(preset.headers);
+    setAlignments(preset.alignments);
+    setRows(preset.rows);
+  };
+
+  // Generate GitHub-flavored markdown table via engine
   const markdownTable = useMemo(() => {
-    const colWidths = headers.map((h, i) => {
-      const maxRowLen = rows.reduce((max, r) => Math.max(max, (r[i] || "").length), 0);
-      return Math.max(h.length, maxRowLen, 3);
-    });
-
-    const formatRow = (cells: string[]) => {
-      const padded = cells.map((cell, i) => {
-        const width = colWidths[i];
-        const val = cell || "";
-        const align = alignments[i];
-        if (align === "right") return val.padStart(width, " ");
-        if (align === "center") {
-          const totalPad = width - val.length;
-          const leftPad = Math.floor(totalPad / 2);
-          const rightPad = totalPad - leftPad;
-          return " ".repeat(leftPad) + val + " ".repeat(rightPad);
-        }
-        return val.padEnd(width, " ");
-      });
-      return `| ${padded.join(" | ")} |`;
-    };
-
-    const headerLine = formatRow(headers);
-    const separatorLine = `| ${colWidths
-      .map((w, i) => {
-        const align = alignments[i];
-        if (align === "center") return `:${"-".repeat(w - 2)}:`;
-        if (align === "right") return `${"-".repeat(w - 1)}:`;
-        return `:${"-".repeat(w - 1)}`;
-      })
-      .join(" | ")} |`;
-
-    const bodyLines = rows.map(formatRow).join("\n");
-
-    return `${headerLine}\n${separatorLine}\n${bodyLines}`;
+    return generateMarkdownTable(headers, alignments, rows);
   }, [headers, alignments, rows]);
 
-  // Handle CSV import
+  // Handle CSV/TSV import via engine
   const handleImportCsv = () => {
     if (!csvInput.trim()) return;
-    const lines = csvInput.trim().split("\n");
-    if (lines.length === 0) return;
-
-    const parsed = lines.map((l) => l.split(",").map((c) => c.trim().replace(/^"|"$/g, "")));
-    const newHeaders = parsed[0];
-    const newRows = parsed.slice(1);
-
-    if (newHeaders.length > 0) {
-      setHeaders(newHeaders);
-      setAlignments(new Array(newHeaders.length).fill("left"));
-      setRows(newRows.length > 0 ? newRows : [new Array(newHeaders.length).fill("")]);
+    const parsed = parseDelimitedTextToGrid(csvInput);
+    if (parsed.headers.length > 0) {
+      setHeaders(parsed.headers);
+      setAlignments(parsed.alignments);
+      setRows(parsed.rows);
       setShowCsvModal(false);
       setCsvInput("");
       confetti({ particleCount: 20, spread: 40, origin: { y: 0.8 } });
     }
   };
 
-  const handleDownload = () => {
+  const handleDownloadMd = () => {
     downloadFile(markdownTable, "table.md", "text/markdown");
     confetti({ particleCount: 25, spread: 50, origin: { y: 0.8 } });
+  };
+
+  const handleDownloadCsv = () => {
+    const csvContent = exportGridToCsv(headers, rows);
+    downloadFile(csvContent, "table.csv", "text/csv");
+    confetti({ particleCount: 20, spread: 40, origin: { y: 0.8 } });
   };
 
   return (
@@ -147,40 +164,70 @@ export default function MarkdownTableGenerator() {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors shadow-xs"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-purple-500" />
-            <span>Import CSV</span>
+            <span>Import CSV/TSV</span>
           </button>
+
+          {/* Quick Presets Dropdown/Pills */}
+          <div className="hidden md:flex items-center gap-1 border-l border-zinc-200 dark:border-zinc-800 pl-2">
+            <span className="text-[11px] text-zinc-400 mr-1">Presets:</span>
+            {PRESETS.map((p) => (
+              <button
+                key={p.name}
+                type="button"
+                onClick={() => handleApplyPreset(p)}
+                className="px-2 py-1 rounded text-[11px] font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400"
+              >
+                {p.name}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
           <CopyButton
             text={markdownTable}
-            label="Copy Markdown Table"
+            label="Copy Markdown"
             variant="primary"
             size="sm"
             triggerConfetti
           />
           <button
             type="button"
-            onClick={handleDownload}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-medium"
+            onClick={handleDownloadMd}
+            title="Download .md file"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-medium"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>.md</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleDownloadCsv}
+            title="Export CSV file"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-medium"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Download .md</span>
+            <span>.csv</span>
           </button>
         </div>
       </div>
 
-      {/* CSV Import Drawer */}
+      {/* CSV Import Modal / Drawer */}
       {showCsvModal && (
         <div className="p-4 rounded-xl border border-purple-200 dark:border-purple-900/60 bg-purple-50/50 dark:bg-purple-950/20 space-y-3">
-          <label className="block text-xs font-semibold text-purple-900 dark:text-purple-300">
-            Paste CSV Text to Convert
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="block text-xs font-semibold text-purple-900 dark:text-purple-300">
+              Paste CSV or TSV (Tab-separated) Data
+            </label>
+            <span className="text-[11px] text-purple-700 dark:text-purple-400">
+              Supports quoted fields and auto-detects delimiter
+            </span>
+          </div>
           <textarea
-            rows={3}
+            rows={4}
             value={csvInput}
             onChange={(e) => setCsvInput(e.target.value)}
-            placeholder="Name, Role, Location&#10;Alice, Engineer, NYC&#10;Bob, Designer, SF"
+            placeholder={'Feature,"Starter Tier","Pro Tier",Status\n"Privacy Shield",Yes,Yes,Active\n"Max Export",512px,4096px,Active'}
             className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-purple-200 dark:border-purple-800 bg-white dark:bg-zinc-900"
           />
           <div className="flex justify-end gap-2">
@@ -194,7 +241,7 @@ export default function MarkdownTableGenerator() {
               onClick={handleImportCsv}
               className="px-3 py-1 text-xs font-semibold rounded-lg bg-purple-600 hover:bg-purple-500 text-white"
             >
-              Import CSV
+              Parse & Load Grid
             </button>
           </div>
         </div>
@@ -207,7 +254,7 @@ export default function MarkdownTableGenerator() {
             <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60">
               <th className="p-2 w-10 text-center font-mono text-zinc-400 text-[10px]">#</th>
               {headers.map((header, cIdx) => (
-                <th key={cIdx} className="p-2 min-w-[140px]">
+                <th key={cIdx} className="p-2 min-w-[150px]">
                   <div className="flex items-center gap-1.5">
                     <input
                       type="text"
@@ -222,12 +269,16 @@ export default function MarkdownTableGenerator() {
                     <button
                       type="button"
                       onClick={() => toggleAlignment(cIdx)}
-                      title={`Alignment: ${alignments[cIdx]}`}
+                      title={`Alignment: ${alignments[cIdx] || "left"} (click to toggle)`}
                       className="p-1 text-zinc-400 hover:text-blue-500 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 shrink-0"
                     >
-                      {alignments[cIdx] === "left" && <AlignLeft className="w-3.5 h-3.5" />}
-                      {alignments[cIdx] === "center" && <AlignCenter className="w-3.5 h-3.5" />}
-                      {alignments[cIdx] === "right" && <AlignRight className="w-3.5 h-3.5" />}
+                      {alignments[cIdx] === "center" ? (
+                        <AlignCenter className="w-3.5 h-3.5 text-blue-500" />
+                      ) : alignments[cIdx] === "right" ? (
+                        <AlignRight className="w-3.5 h-3.5 text-blue-500" />
+                      ) : (
+                        <AlignLeft className="w-3.5 h-3.5" />
+                      )}
                     </button>
                     <button
                       type="button"
@@ -282,7 +333,7 @@ export default function MarkdownTableGenerator() {
       <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 overflow-hidden">
         <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
           <span className="text-xs font-mono text-zinc-500">Live Markdown Preview</span>
-          <CopyButton text={markdownTable} label="Copy Raw Markdown" size="sm" variant="ghost" />
+          <CopyButton text={markdownTable} label="Copy Markdown" size="sm" variant="ghost" />
         </div>
         <div className="p-4 overflow-x-auto">
           <pre className="font-mono text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre">

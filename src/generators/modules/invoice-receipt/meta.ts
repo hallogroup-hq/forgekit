@@ -8,5 +8,6 @@ export const meta: ToolMeta = {
   category: "growth",
   tags: ["invoice", "receipt", "billing", "pdf", "finance", "business", "calculator"],
   icon: "Receipt",
+  lifecycle: "ready",
   isPopular: true,
 };

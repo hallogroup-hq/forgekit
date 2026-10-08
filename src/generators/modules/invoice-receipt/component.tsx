@@ -1,20 +1,23 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Plus, Trash2, Printer } from "lucide-react";
-
-interface LineItem {
-  id: string;
-  description: string;
-  quantity: number;
-  unitPrice: number;
-}
+import { Plus, Trash2, Printer, Download, FileText } from "lucide-react";
+import confetti from "canvas-confetti";
+import { CopyButton } from "@/components/shared/CopyButton";
+import { downloadFile } from "@/lib/utils";
+import {
+  InvoiceLineItem,
+  InvoiceData,
+  calculateInvoiceTotals,
+  formatCurrencyAmount,
+  generateInvoiceSummaryText,
+} from "./engine";
 
 export default function InvoiceReceiptGenerator() {
   const [invoiceNumber, setInvoiceNumber] = useState("INV-2026-001");
   const [issueDate, setIssueDate] = useState("2026-10-08");
   const [dueDate, setDueDate] = useState("2026-10-22");
-  const [currency, setCurrency] = useState("$");
+  const [currencySymbol, setCurrencySymbol] = useState("$");
 
   React.useEffect(() => {
     setIssueDate(new Date().toISOString().split("T")[0]);
@@ -32,7 +35,7 @@ export default function InvoiceReceiptGenerator() {
   const [clientAddress, setClientAddress] = useState("500 Tech Boulevard, New York, NY");
 
   // Items
-  const [items, setItems] = useState<LineItem[]>([
+  const [items, setItems] = useState<InvoiceLineItem[]>([
     { id: "1", description: "Design System Architecture & Tokens", quantity: 1, unitPrice: 2400 },
     { id: "2", description: "Fullstack Web Application Development (Sprint 1)", quantity: 40, unitPrice: 95 },
     { id: "3", description: "Cloud Infrastructure Setup & CI/CD", quantity: 1, unitPrice: 850 },
@@ -55,25 +58,40 @@ export default function InvoiceReceiptGenerator() {
     setItems((prev) => prev.filter((i) => i.id !== id));
   };
 
-  const updateItem = (id: string, updates: Partial<LineItem>) => {
+  const updateItem = (id: string, updates: Partial<InvoiceLineItem>) => {
     setItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...updates } : item)));
   };
 
-  // Computations
-  const subtotal = useMemo(() => {
-    return items.reduce((acc, cur) => acc + cur.quantity * cur.unitPrice, 0);
-  }, [items]);
+  // Computations via pure engine
+  const totals = useMemo(() => {
+    return calculateInvoiceTotals(items, taxPercent, discountAmount);
+  }, [items, taxPercent, discountAmount]);
 
-  const taxAmount = useMemo(() => {
-    return (subtotal * taxPercent) / 100;
-  }, [subtotal, taxPercent]);
+  const invoiceData: InvoiceData = useMemo(() => ({
+    invoiceNumber,
+    issueDate,
+    dueDate,
+    currencySymbol,
+    sender: { name: senderName, email: senderEmail, address: senderAddress },
+    client: { name: clientName, email: clientEmail, address: clientAddress },
+    items,
+    taxPercent,
+    discountAmount,
+    notes,
+  }), [invoiceNumber, issueDate, dueDate, currencySymbol, senderName, senderEmail, senderAddress, clientName, clientEmail, clientAddress, items, taxPercent, discountAmount, notes]);
 
-  const total = useMemo(() => {
-    return Math.max(0, subtotal + taxAmount - discountAmount);
-  }, [subtotal, taxAmount, discountAmount]);
+  const summaryText = useMemo(() => {
+    return generateInvoiceSummaryText(invoiceData, totals);
+  }, [invoiceData, totals]);
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadJson = () => {
+    const payload = JSON.stringify({ ...invoiceData, totals }, null, 2);
+    downloadFile(payload, `${invoiceNumber.toLowerCase()}-data.json`, "application/json");
+    confetti({ particleCount: 20, spread: 40, origin: { y: 0.8 } });
   };
 
   return (
@@ -85,8 +103,8 @@ export default function InvoiceReceiptGenerator() {
             Currency:
           </label>
           <select
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
+            value={currencySymbol}
+            onChange={(e) => setCurrencySymbol(e.target.value)}
             className="px-2.5 py-1 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
           >
             <option value="$">USD ($)</option>
@@ -94,17 +112,30 @@ export default function InvoiceReceiptGenerator() {
             <option value="€">EUR (€)</option>
             <option value="£">GBP (£)</option>
             <option value="S$">SGD (S$)</option>
+            <option value="¥">JPY / CNY (¥)</option>
           </select>
         </div>
 
-        <button
-          type="button"
-          onClick={handlePrint}
-          className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all active:scale-95 cursor-pointer"
-        >
-          <Printer className="w-4 h-4" />
-          <span>Print / Save as PDF</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <CopyButton text={summaryText} label="Copy Text Summary" size="sm" variant="secondary" />
+          <button
+            type="button"
+            onClick={handleDownloadJson}
+            title="Download JSON schema"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-medium"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>JSON</span>
+          </button>
+          <button
+            type="button"
+            onClick={handlePrint}
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all active:scale-95 cursor-pointer"
+          >
+            <Printer className="w-4 h-4" />
+            <span>Print / Save as PDF</span>
+          </button>
+        </div>
       </div>
 
       {/* Printable Invoice Sheet */}
@@ -212,50 +243,53 @@ export default function InvoiceReceiptGenerator() {
               </tr>
             </thead>
             <tbody>
-              {items.map((item) => (
-                <tr key={item.id} className="border-b border-zinc-100 dark:border-zinc-900">
-                  <td className="py-3">
-                    <input
-                      type="text"
-                      value={item.description}
-                      onChange={(e) => updateItem(item.id, { description: e.target.value })}
-                      className="w-full bg-transparent text-zinc-800 dark:text-zinc-200 font-medium"
-                    />
-                  </td>
-                  <td className="py-3 text-center">
-                    <input
-                      type="number"
-                      min="1"
-                      value={item.quantity}
-                      onChange={(e) => updateItem(item.id, { quantity: Number(e.target.value) })}
-                      className="w-14 text-center bg-transparent border border-zinc-200 dark:border-zinc-800 rounded py-0.5 text-zinc-800 dark:text-zinc-200"
-                    />
-                  </td>
-                  <td className="py-3 text-right">
-                    <input
-                      type="number"
-                      min="0"
-                      value={item.unitPrice}
-                      onChange={(e) => updateItem(item.id, { unitPrice: Number(e.target.value) })}
-                      className="w-20 text-right bg-transparent border border-zinc-200 dark:border-zinc-800 rounded py-0.5 text-zinc-800 dark:text-zinc-200"
-                    />
-                  </td>
-                  <td className="py-3 text-right font-mono font-semibold text-zinc-900 dark:text-zinc-100">
-                    {currency}
-                    {(item.quantity * item.unitPrice).toLocaleString()}
-                  </td>
-                  <td className="py-3 text-center print:hidden">
-                    <button
-                      type="button"
-                      onClick={() => removeItem(item.id)}
-                      disabled={items.length <= 1}
-                      className="p-1 text-zinc-400 hover:text-rose-500 disabled:opacity-20"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {items.map((item, idx) => {
+                const lineTotal = totals.lineTotals[idx]?.amount ?? item.quantity * item.unitPrice;
+                return (
+                  <tr key={item.id} className="border-b border-zinc-100 dark:border-zinc-900">
+                    <td className="py-3">
+                      <input
+                        type="text"
+                        value={item.description}
+                        onChange={(e) => updateItem(item.id, { description: e.target.value })}
+                        className="w-full bg-transparent text-zinc-800 dark:text-zinc-200 font-medium"
+                      />
+                    </td>
+                    <td className="py-3 text-center">
+                      <input
+                        type="number"
+                        min="1"
+                        value={item.quantity}
+                        onChange={(e) => updateItem(item.id, { quantity: Number(e.target.value) })}
+                        className="w-14 text-center bg-transparent border border-zinc-200 dark:border-zinc-800 rounded py-0.5 text-zinc-800 dark:text-zinc-200"
+                      />
+                    </td>
+                    <td className="py-3 text-right">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={item.unitPrice}
+                        onChange={(e) => updateItem(item.id, { unitPrice: Number(e.target.value) })}
+                        className="w-20 text-right bg-transparent border border-zinc-200 dark:border-zinc-800 rounded py-0.5 text-zinc-800 dark:text-zinc-200"
+                      />
+                    </td>
+                    <td className="py-3 text-right font-mono font-semibold text-zinc-900 dark:text-zinc-100">
+                      {formatCurrencyAmount(lineTotal, currencySymbol)}
+                    </td>
+                    <td className="py-3 text-center print:hidden">
+                      <button
+                        type="button"
+                        onClick={() => removeItem(item.id)}
+                        disabled={items.length <= 1}
+                        className="p-1 text-zinc-400 hover:text-rose-500 disabled:opacity-20"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
 
@@ -286,7 +320,7 @@ export default function InvoiceReceiptGenerator() {
           <div className="w-full sm:w-72 space-y-2 text-xs">
             <div className="flex justify-between py-1 text-zinc-600 dark:text-zinc-400">
               <span>Subtotal:</span>
-              <span className="font-mono font-medium">{currency}{subtotal.toLocaleString()}</span>
+              <span className="font-mono font-medium">{formatCurrencyAmount(totals.subtotal, currencySymbol)}</span>
             </div>
 
             <div className="flex justify-between items-center py-1 text-zinc-600 dark:text-zinc-400">
@@ -294,12 +328,14 @@ export default function InvoiceReceiptGenerator() {
                 <span>Tax (%):</span>
                 <input
                   type="number"
+                  min="0"
+                  step="0.1"
                   value={taxPercent}
                   onChange={(e) => setTaxPercent(Number(e.target.value))}
-                  className="w-12 text-center py-0.5 rounded border border-zinc-200 dark:border-zinc-800 bg-transparent text-xs"
+                  className="w-14 text-center py-0.5 rounded border border-zinc-200 dark:border-zinc-800 bg-transparent text-xs"
                 />
               </div>
-              <span className="font-mono">{currency}{taxAmount.toLocaleString()}</span>
+              <span className="font-mono">{formatCurrencyAmount(totals.taxAmount, currencySymbol)}</span>
             </div>
 
             <div className="flex justify-between items-center py-1 text-zinc-600 dark:text-zinc-400">
@@ -307,17 +343,19 @@ export default function InvoiceReceiptGenerator() {
                 <span>Discount:</span>
                 <input
                   type="number"
+                  min="0"
+                  step="1"
                   value={discountAmount}
                   onChange={(e) => setDiscountAmount(Number(e.target.value))}
                   className="w-16 text-right py-0.5 rounded border border-zinc-200 dark:border-zinc-800 bg-transparent text-xs"
                 />
               </div>
-              <span className="font-mono text-rose-500">-{currency}{discountAmount.toLocaleString()}</span>
+              <span className="font-mono text-rose-500">-{formatCurrencyAmount(totals.discountAmount, currencySymbol)}</span>
             </div>
 
             <div className="flex justify-between py-2 border-t-2 border-zinc-900 dark:border-zinc-100 font-bold text-sm text-zinc-900 dark:text-zinc-100">
               <span>Total Balance Due:</span>
-              <span className="font-mono text-base">{currency}{total.toLocaleString()}</span>
+              <span className="font-mono text-base">{formatCurrencyAmount(totals.total, currencySymbol)}</span>
             </div>
           </div>
         </div>

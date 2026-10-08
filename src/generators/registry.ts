@@ -103,6 +103,15 @@ import WhatsappLinkGenerator from "./modules/whatsapp-link/component";
 import { meta as campaignQaMeta } from "./modules/campaign-url-qa/meta";
 import CampaignUrlQaGenerator from "./modules/campaign-url-qa/component";
 
+import { meta as quotationMeta } from "./modules/quotation-generator/meta";
+import QuotationGenerator from "./modules/quotation-generator/component";
+
+import { meta as csvCleanerMeta } from "./modules/csv-cleaner/meta";
+import CsvCleanerGenerator from "./modules/csv-cleaner/component";
+
+import { meta as bulkRenamerMeta } from "./modules/bulk-filename-builder/meta";
+import BulkFilenameBuilderGenerator from "./modules/bulk-filename-builder/component";
+
 export const registry: GeneratorModule[] = [
   // Flagship Workstation Modules
   { meta: qrMeta, component: QrCodeGenerator },
@@ -135,8 +144,11 @@ export const registry: GeneratorModule[] = [
   { meta: dockerMeta, component: DockerGitignoreGenerator },
   { meta: hashMeta, component: HashSecretGenerator },
   { meta: tableMeta, component: MarkdownTableGenerator },
+  { meta: csvCleanerMeta, component: CsvCleanerGenerator },
+  { meta: bulkRenamerMeta, component: BulkFilenameBuilderGenerator },
   { meta: ogMeta, component: OpenGraphPreviewGenerator },
   { meta: invoiceMeta, component: InvoiceReceiptGenerator },
+  { meta: quotationMeta, component: QuotationGenerator },
   { meta: agendaMeta, component: MeetingAgendaGenerator },
   { meta: emailSigMeta, component: EmailSignatureGenerator },
 ];

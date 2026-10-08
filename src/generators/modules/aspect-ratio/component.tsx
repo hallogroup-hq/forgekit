@@ -5,10 +5,13 @@ import { Download, Maximize2, Lock, Unlock, Code, Layers, FileCode } from "lucid
 import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { downloadFile } from "@/lib/utils";
-
-function gcd(a: number, b: number): number {
-  return b === 0 ? a : gcd(b, a % b);
-}
+import {
+  calculateAspectRatioMetrics,
+  scalePreservingRatio,
+  generateCssSnippet,
+  generateTailwindSnippet,
+  generateSrcsetSnippet,
+} from "./engine";
 
 interface RatioPreset {
   id: string;
@@ -83,14 +86,9 @@ export default function AspectRatioGenerator() {
   const [isLocked, setIsLocked] = useState(true);
   const [activeTab, setActiveTab] = useState<"css" | "tailwind" | "srcset" | "react">("css");
 
-  const divisor = useMemo(() => {
-    return gcd(Math.round(width), Math.round(height)) || 1;
+  const metrics = useMemo(() => {
+    return calculateAspectRatioMetrics(width, height);
   }, [width, height]);
-
-  const simplifiedW = Math.round(width / divisor);
-  const simplifiedH = Math.round(height / divisor);
-  const paddingTopPct = ((height / (width || 1)) * 100).toFixed(3);
-  const decimalRatio = (width / (height || 1)).toFixed(3);
 
   const applyPreset = (preset: RatioPreset) => {
     setWidth(preset.defaultW);
@@ -101,83 +99,30 @@ export default function AspectRatioGenerator() {
   const handleWidthChange = (newW: number) => {
     setWidth(newW);
     if (isLocked && width > 0) {
-      const ratio = height / width;
-      setHeight(Math.round(newW * ratio));
+      const scaledH = scalePreservingRatio(newW, "width", width, height);
+      setHeight(scaledH);
     }
   };
 
   const handleHeightChange = (newH: number) => {
     setHeight(newH);
     if (isLocked && height > 0) {
-      const ratio = width / height;
-      setWidth(Math.round(newH * ratio));
+      const scaledW = scalePreservingRatio(newH, "height", width, height);
+      setWidth(scaledW);
     }
   };
 
   const cssCode = useMemo(() => {
-    return `/* Modern CSS aspect-ratio */
-.media-container {
-  aspect-ratio: ${simplifiedW} / ${simplifiedH};
-  width: 100%;
-  max-width: ${width}px;
-  object-fit: cover;
-}
-
-/* Classic Intrinsic Ratio Hack (for legacy browsers & iframes) */
-.intrinsic-wrapper {
-  position: relative;
-  width: 100%;
-  padding-top: ${paddingTopPct}%; /* (${simplifiedH} / ${simplifiedW}) * 100% */
-}
-
-.intrinsic-wrapper > iframe,
-.intrinsic-wrapper > img,
-.intrinsic-wrapper > video {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}`;
-  }, [simplifiedW, simplifiedH, width, paddingTopPct]);
+    return generateCssSnippet(metrics);
+  }, [metrics]);
 
   const tailwindCode = useMemo(() => {
-    let presetClass = `aspect-[${simplifiedW}/${simplifiedH}]`;
-    if (simplifiedW === 16 && simplifiedH === 9) presetClass = "aspect-video";
-    if (simplifiedW === 1 && simplifiedH === 1) presetClass = "aspect-square";
-
-    return `<!-- Tailwind CSS Container -->
-<div className="${presetClass} w-full max-w-[${width}px] overflow-hidden rounded-2xl relative">
-  <img
-    src="/path-to-image.webp"
-    alt="Responsive media"
-    className="w-full h-full object-cover"
-    loading="lazy"
-  />
-</div>`;
-  }, [simplifiedW, simplifiedH, width]);
+    return generateTailwindSnippet(metrics);
+  }, [metrics]);
 
   const srcsetCode = useMemo(() => {
-    return `<!-- High-Performance Responsive HTML srcset -->
-<img
-  src="/images/photo-${width}.webp"
-  srcset="
-    /images/photo-640.webp 640w,
-    /images/photo-768.webp 768w,
-    /images/photo-1024.webp 1024w,
-    /images/photo-1280.webp 1280w,
-    /images/photo-1920.webp 1920w
-  "
-  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-  width="${width}"
-  height="${height}"
-  alt="Responsive media cover"
-  loading="lazy"
-  decoding="async"
-  style={{ aspectRatio: "${simplifiedW} / ${simplifiedH}" }}
-/>`;
-  }, [width, height, simplifiedW, simplifiedH]);
+    return generateSrcsetSnippet(metrics);
+  }, [metrics]);
 
   const reactCode = useMemo(() => {
     return `// React Inline Style Component
@@ -185,8 +130,8 @@ export function ResponsiveBox({ children }: { children?: React.ReactNode }) {
   return (
     <div
       style={{
-        aspectRatio: "${simplifiedW} / ${simplifiedH}",
-        maxWidth: "${width}px",
+        aspectRatio: "${metrics.simplifiedW} / ${metrics.simplifiedH}",
+        maxWidth: "${metrics.width}px",
         width: "100%",
         position: "relative",
       }}
@@ -195,7 +140,7 @@ export function ResponsiveBox({ children }: { children?: React.ReactNode }) {
     </div>
   );
 }`;
-  }, [simplifiedW, simplifiedH, width]);
+  }, [metrics]);
 
   const activeSnippet = useMemo(() => {
     switch (activeTab) {
@@ -211,7 +156,7 @@ export function ResponsiveBox({ children }: { children?: React.ReactNode }) {
   }, [activeTab, cssCode, tailwindCode, srcsetCode, reactCode]);
 
   const handleDownload = () => {
-    downloadFile(activeSnippet, `aspect-ratio-${simplifiedW}x${simplifiedH}.txt`, "text/plain");
+    downloadFile(activeSnippet, `aspect-ratio-${metrics.simplifiedW}x${metrics.simplifiedH}.txt`, "text/plain");
     confetti({ particleCount: 30, spread: 60, origin: { y: 0.8 } });
   };
 
@@ -300,19 +245,19 @@ export function ResponsiveBox({ children }: { children?: React.ReactNode }) {
             <div className="p-2 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/50 dark:border-zinc-800/50">
               <div className="text-[10px] text-zinc-400">Ratio</div>
               <div className="text-xs font-bold text-zinc-900 dark:text-zinc-100 mt-0.5">
-                {simplifiedW}:{simplifiedH}
+                {metrics.ratioString}
               </div>
             </div>
             <div className="p-2 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/50 dark:border-zinc-800/50">
               <div className="text-[10px] text-zinc-400">Decimal</div>
               <div className="text-xs font-bold text-blue-600 dark:text-blue-400 mt-0.5">
-                {decimalRatio}
+                {metrics.decimalRatioFormatted}
               </div>
             </div>
             <div className="p-2 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/50 dark:border-zinc-800/50">
               <div className="text-[10px] text-zinc-400">Padding-Top</div>
               <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">
-                {paddingTopPct}%
+                {metrics.paddingTopPct}%
               </div>
             </div>
           </div>
@@ -323,20 +268,20 @@ export function ResponsiveBox({ children }: { children?: React.ReactNode }) {
           <div className="flex items-center justify-between text-xs font-bold text-zinc-700 dark:text-zinc-300">
             <span>Visual Box Scale</span>
             <span className="text-zinc-400 font-mono text-[11px]">
-              {simplifiedW}:{simplifiedH} ({width} x {height})
+              {metrics.ratioString} ({width} x {height})
             </span>
           </div>
 
           <div className="p-4 rounded-xl bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center min-h-[160px] overflow-hidden">
             <div
               style={{
-                aspectRatio: `${simplifiedW} / ${simplifiedH}`,
+                aspectRatio: `${metrics.simplifiedW} / ${metrics.simplifiedH}`,
                 maxHeight: "130px",
                 maxWidth: "240px",
               }}
               className="w-full h-full bg-blue-500/15 border-2 border-dashed border-blue-500/50 rounded-lg flex items-center justify-center text-[11px] font-mono font-bold text-blue-600 dark:text-blue-400 shadow-2xs transition-all duration-200"
             >
-              {simplifiedW}:{simplifiedH}
+              {metrics.ratioString}
             </div>
           </div>
         </div>

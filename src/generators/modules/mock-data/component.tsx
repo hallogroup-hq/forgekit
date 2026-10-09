@@ -134,7 +134,7 @@ export default function MockDataGenerator() {
           <button
             type="button"
             onClick={addField}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:border-blue-500 hover:text-blue-600 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:border-zinc-400 dark:hover:border-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Field</span>
@@ -143,7 +143,7 @@ export default function MockDataGenerator() {
           <button
             type="button"
             onClick={() => setSeed((prev) => prev + 1)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-xs font-medium text-zinc-700 dark:text-zinc-300 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-xs font-medium text-zinc-700 dark:text-zinc-300 transition-colors cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Regenerate Values</span>
@@ -158,9 +158,9 @@ export default function MockDataGenerator() {
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setOutputTab("json")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                 outputTab === "json"
-                  ? "bg-zinc-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-400"
+                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-semibold shadow-2xs"
                   : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
               }`}
             >
@@ -169,9 +169,9 @@ export default function MockDataGenerator() {
             </button>
             <button
               onClick={() => setOutputTab("csv")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                 outputTab === "csv"
-                  ? "bg-zinc-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-400"
+                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-semibold shadow-2xs"
                   : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
               }`}
             >
@@ -190,7 +190,7 @@ export default function MockDataGenerator() {
             />
             <button
               onClick={() => handleDownload(outputTab)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium shadow-sm transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-white text-white dark:text-zinc-950 text-xs font-medium shadow-xs transition-colors cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Download .{outputTab}</span>
@@ -200,7 +200,7 @@ export default function MockDataGenerator() {
 
         {/* Content Box */}
         <div className="p-4 flex-1 max-h-[500px] overflow-y-auto">
-          <pre className="font-mono text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap selection:bg-blue-500/20">
+          <pre className="font-mono text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap selection:bg-zinc-200 dark:selection:bg-zinc-800 leading-relaxed">
             {outputTab === "json" ? jsonString : csvString}
           </pre>
         </div>

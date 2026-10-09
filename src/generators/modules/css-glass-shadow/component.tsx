@@ -37,7 +37,7 @@ export default function CssGlassShadowGenerator() {
       {/* Controls (Left) */}
       <div className="lg:col-span-5 space-y-5">
         <div className="flex items-center gap-2 pb-2 border-b border-zinc-200 dark:border-zinc-800">
-          <Sliders className="w-4 h-4 text-blue-500" />
+          <Sliders className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
           <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             Effect Adjustments
           </h3>
@@ -55,7 +55,7 @@ export default function CssGlassShadowGenerator() {
               max="40"
               value={blur}
               onChange={(e) => setBlur(Number(e.target.value))}
-              className="w-full accent-blue-600"
+              className="w-full accent-zinc-900 dark:accent-zinc-100"
             />
           </div>
 
@@ -70,7 +70,7 @@ export default function CssGlassShadowGenerator() {
               max="95"
               value={opacity}
               onChange={(e) => setOpacity(Number(e.target.value))}
-              className="w-full accent-blue-600"
+              className="w-full accent-zinc-900 dark:accent-zinc-100"
             />
           </div>
 
@@ -85,7 +85,7 @@ export default function CssGlassShadowGenerator() {
               max="80"
               value={borderOpacity}
               onChange={(e) => setBorderOpacity(Number(e.target.value))}
-              className="w-full accent-blue-600"
+              className="w-full accent-zinc-900 dark:accent-zinc-100"
             />
           </div>
 
@@ -100,7 +100,7 @@ export default function CssGlassShadowGenerator() {
               max="5"
               value={elevation}
               onChange={(e) => setElevation(Number(e.target.value))}
-              className="w-full accent-blue-600"
+              className="w-full accent-zinc-900 dark:accent-zinc-100"
             />
           </div>
 
@@ -139,10 +139,10 @@ export default function CssGlassShadowGenerator() {
                     key={bg.id}
                     type="button"
                     onClick={() => setBgType(bg.id as "gradient" | "dark" | "mesh")}
-                    className={`py-1 px-2 rounded-lg text-xs font-medium transition-all ${
+                    className={`py-1 px-2 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                       bgType === bg.id
-                        ? "bg-blue-600 text-white shadow-xs"
-                        : "bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700"
+                        ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-semibold shadow-2xs"
+                        : "bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 hover:text-zinc-900 dark:hover:text-zinc-100"
                     }`}
                   >
                     {bg.label}

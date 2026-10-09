@@ -29,7 +29,7 @@ export function GeneratorHarness({ meta, children }: GeneratorHarnessProps) {
                 href="/"
                 className="hover:text-zinc-900 dark:hover:text-zinc-100 flex items-center gap-1.5 transition-colors font-semibold group"
               >
-                <span className="w-5 h-5 rounded-md bg-blue-600 text-white text-[9px] font-black flex items-center justify-center tracking-tighter shadow-2xs group-hover:scale-105 transition-transform">
+                <span className="w-5 h-5 rounded-md bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 text-[9px] font-black flex items-center justify-center tracking-tighter shadow-2xs group-hover:scale-105 transition-transform">
                   FK
                 </span>
                 <span>ForgeKit Home</span>

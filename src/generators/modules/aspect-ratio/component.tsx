@@ -163,14 +163,14 @@ export function ResponsiveBox({ children }: { children?: React.ReactNode }) {
   return (
     <div className="space-y-6">
       {/* Notice distinguishing mathematical ratio calculator from physical image resizing */}
-      <div className="p-3.5 rounded-2xl border border-blue-500/30 bg-blue-500/5 dark:bg-blue-500/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+      <div className="p-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
         <div className="text-zinc-600 dark:text-zinc-300">
-          <span className="font-bold text-blue-600 dark:text-blue-400">Layout & Math Calculator: </span>
+          <span className="font-semibold text-zinc-900 dark:text-zinc-100">Layout & Math Calculator: </span>
           This tool computes CSS aspect-ratios, responsive srcset specs, and viewport dimensions. Looking to resize actual image files on your computer?
         </div>
         <a
           href="/tools/batch-image-resizer"
-          className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shrink-0 transition-colors text-center"
+          className="px-3 py-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-white text-white dark:text-zinc-950 font-medium text-xs shrink-0 transition-colors text-center cursor-pointer"
         >
           Launch Batch Image Resizer →
         </a>
@@ -294,7 +294,7 @@ export function ResponsiveBox({ children }: { children?: React.ReactNode }) {
                 maxHeight: "130px",
                 maxWidth: "240px",
               }}
-              className="w-full h-full bg-blue-500/15 border-2 border-dashed border-blue-500/50 rounded-lg flex items-center justify-center text-[11px] font-mono font-bold text-blue-600 dark:text-blue-400 shadow-2xs transition-all duration-200"
+              className="w-full h-full bg-zinc-200/60 dark:bg-zinc-800/60 border-2 border-dashed border-zinc-400 dark:border-zinc-600 rounded-lg flex items-center justify-center text-[11px] font-mono font-bold text-zinc-800 dark:text-zinc-200 shadow-2xs transition-all duration-200"
             >
               {metrics.ratioString}
             </div>
@@ -372,7 +372,7 @@ export function ResponsiveBox({ children }: { children?: React.ReactNode }) {
 
         {/* Code Output Viewer */}
         <div className="flex-1 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 p-5 overflow-hidden shadow-2xs flex flex-col">
-          <pre className="flex-1 font-mono text-xs text-zinc-800 dark:text-zinc-200 p-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed border border-zinc-200/60 dark:border-zinc-800/60 max-h-[600px] overflow-y-auto selection:bg-blue-500/20">
+          <pre className="flex-1 font-mono text-xs text-zinc-800 dark:text-zinc-200 p-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed border border-zinc-200/60 dark:border-zinc-800/60 max-h-[600px] overflow-y-auto selection:bg-zinc-200 dark:selection:bg-zinc-800">
             {activeSnippet}
           </pre>
           </div>

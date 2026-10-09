@@ -390,7 +390,7 @@ console.log("Response:", data);`;
               type="text"
               value={endpointUrl}
               onChange={(e) => setEndpointUrl(e.target.value)}
-              className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-600"
             />
           </div>
 
@@ -402,7 +402,7 @@ console.log("Response:", data);`;
               type="text"
               value={webhookSecret}
               onChange={(e) => setWebhookSecret(e.target.value)}
-              className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-600"
             />
           </div>
 
@@ -420,7 +420,7 @@ console.log("Response:", data);`;
             type="button"
             onClick={handleSendLiveTest}
             disabled={isSending}
-            className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-[0.98] disabled:opacity-60 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
+            className="w-full py-2.5 px-4 rounded-xl bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-white active:scale-[0.98] disabled:opacity-60 text-white dark:text-zinc-950 font-medium text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
           >
             {isSending ? (
               <>
@@ -429,7 +429,7 @@ console.log("Response:", data);`;
               </>
             ) : (
               <>
-                <Play className="w-4 h-4 fill-white" />
+                <Play className="w-4 h-4 fill-current" />
                 Dispatch Test to Endpoint
               </>
             )}
@@ -544,7 +544,7 @@ console.log("Response:", data);`;
                 rows={22}
                 value={rawJson}
                 onChange={(e) => handleJsonChange(e.target.value)}
-                className="flex-1 font-mono text-xs text-zinc-800 dark:text-zinc-200 p-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-200/60 dark:border-zinc-800/60 mt-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 font-mono text-xs text-zinc-800 dark:text-zinc-200 p-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-200/60 dark:border-zinc-800/60 mt-3 resize-none focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-600"
               />
             </div>
           )}
@@ -594,7 +594,7 @@ console.log("Response:", data);`;
               )}
               {isSending && (
                 <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-zinc-400">
-                  <Radio className="w-8 h-8 mb-2 animate-spin text-blue-500" />
+                  <Radio className="w-8 h-8 mb-2 animate-spin text-zinc-600 dark:text-zinc-400" />
                   <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
                     Sending POST to {endpointUrl}...
                   </p>

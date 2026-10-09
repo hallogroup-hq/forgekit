@@ -250,7 +250,7 @@ export default function ImageConverterGenerator() {
               Input Images
             </span>
             {items.length > 0 && (
-              <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium">
+              <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60 font-medium">
                 {items.length} images loaded
               </span>
             )}
@@ -279,9 +279,9 @@ export default function ImageConverterGenerator() {
           />
           <label
             htmlFor="converter-file-upload"
-            className="border-2 border-dashed border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 bg-zinc-50/50 dark:bg-zinc-900/40 rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors text-center"
+            className="border-2 border-dashed border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 bg-zinc-50/50 dark:bg-zinc-900/40 rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors text-center"
           >
-            <div className="w-11 h-11 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+            <div className="w-11 h-11 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 flex items-center justify-center">
               <Upload className="w-5 h-5" />
             </div>
             <div className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
@@ -314,10 +314,10 @@ export default function ImageConverterGenerator() {
                   key={f.mime}
                   type="button"
                   onClick={() => setTargetFormat(f.mime as ImageTargetFormat)}
-                  className={`p-3 rounded-xl border text-center transition-all ${
+                  className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
                     targetFormat === f.mime
-                      ? "border-blue-500 bg-white dark:bg-zinc-950 text-blue-600 dark:text-blue-400 shadow-xs ring-1 ring-blue-500"
-                      : "border-zinc-200 dark:border-zinc-800 bg-white/60 dark:bg-zinc-900/40 text-zinc-700 dark:text-zinc-300 hover:border-zinc-300"
+                      ? "border-zinc-900 dark:border-zinc-100 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 font-semibold shadow-2xs"
+                      : "border-zinc-200 dark:border-zinc-800 bg-white/60 dark:bg-zinc-900/40 text-zinc-700 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-700"
                   }`}
                 >
                   <div className="font-bold text-sm">{f.label}</div>
@@ -333,7 +333,7 @@ export default function ImageConverterGenerator() {
               <label className="text-zinc-600 dark:text-zinc-400 font-medium">
                 Compression Quality
               </label>
-              <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
+              <span className="font-mono font-bold text-zinc-900 dark:text-zinc-100">
                 {targetFormat === "image/png" ? "Lossless (100%)" : `${Math.round(quality * 100)}%`}
               </span>
             </div>
@@ -346,7 +346,7 @@ export default function ImageConverterGenerator() {
               value={quality}
               disabled={targetFormat === "image/png"}
               onChange={(e) => setQuality(parseFloat(e.target.value))}
-              className="w-full accent-blue-600 disabled:opacity-40"
+              className="w-full accent-zinc-900 dark:accent-zinc-100 disabled:opacity-40"
             />
 
             <div className="flex gap-2 pt-1">
@@ -356,10 +356,10 @@ export default function ImageConverterGenerator() {
                   type="button"
                   disabled={targetFormat === "image/png"}
                   onClick={() => setQuality(p.quality)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] border font-medium transition-all ${
+                  className={`px-2.5 py-1 rounded-lg text-[11px] border font-medium transition-all cursor-pointer ${
                     Math.abs(quality - p.quality) < 0.01 && targetFormat !== "image/png"
-                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
-                      : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300"
+                      ? "border-zinc-900 dark:border-zinc-100 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-semibold shadow-2xs"
+                      : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700"
                   } disabled:opacity-40`}
                 >
                   {p.label}
@@ -396,7 +396,7 @@ export default function ImageConverterGenerator() {
             type="button"
             onClick={handleDownloadAllZip}
             disabled={isZipping}
-            className="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white shadow-xs cursor-pointer transition-all self-start sm:self-auto"
+            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-white disabled:opacity-50 text-white dark:text-zinc-950 shadow-xs cursor-pointer transition-colors self-start sm:self-auto"
           >
             {isZipping ? (
               <>
@@ -458,7 +458,7 @@ export default function ImageConverterGenerator() {
                     <td className="px-3 py-2">
                       {item.convertedSize ? (
                         <div className="flex items-center gap-2 font-mono text-[11px]">
-                          <span className="font-semibold text-blue-600 dark:text-blue-400">
+                          <span className="font-semibold text-zinc-900 dark:text-zinc-100">
                             {formatFileSize(item.convertedSize)}
                           </span>
                           {savings && savings.isSmaller && (

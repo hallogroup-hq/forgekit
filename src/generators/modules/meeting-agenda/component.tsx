@@ -211,13 +211,13 @@ export default function MeetingAgendaGenerator() {
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500 flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-blue-500" />
+              <Clock className="w-3.5 h-3.5 text-zinc-400" />
               <span>Timeboxed Topics ({timeboxAnalysis.timeline.length})</span>
             </span>
             <button
               type="button"
               onClick={addTopic}
-              className="flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+              className="flex items-center gap-1 text-xs font-medium text-zinc-900 dark:text-zinc-100 hover:underline cursor-pointer"
             >
               <Plus className="w-3 h-3" />
               <span>Add Topic</span>
@@ -240,9 +240,9 @@ export default function MeetingAgendaGenerator() {
                       copy[i].title = e.target.value;
                       setTopics(copy);
                     }}
-                    className="w-full px-2 py-0.5 text-xs font-medium rounded border border-transparent hover:border-zinc-300 focus:border-blue-500 bg-transparent text-zinc-800 dark:text-zinc-200"
+                    className="w-full px-2 py-0.5 text-xs font-medium rounded border border-transparent hover:border-zinc-300 focus:border-zinc-500 bg-transparent text-zinc-800 dark:text-zinc-200"
                   />
-                  <div className="px-2 text-[10px] font-mono text-blue-600 dark:text-blue-400">
+                  <div className="px-2 text-[10px] font-mono text-zinc-500 dark:text-zinc-400">
                     {topic.timeRangeFormatted}
                   </div>
                 </div>
@@ -296,7 +296,7 @@ export default function MeetingAgendaGenerator() {
             <button
               type="button"
               onClick={addAction}
-              className="flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+              className="flex items-center gap-1 text-xs font-medium text-zinc-900 dark:text-zinc-100 hover:underline cursor-pointer"
             >
               <Plus className="w-3 h-3" />
               <span>Add Action</span>
@@ -318,7 +318,7 @@ export default function MeetingAgendaGenerator() {
                     setActions(copy);
                   }}
                   placeholder="Task description"
-                  className="flex-1 min-w-0 px-2 py-1 text-xs rounded border border-transparent hover:border-zinc-300 focus:border-blue-500 bg-transparent text-zinc-800 dark:text-zinc-200"
+                  className="flex-1 min-w-0 px-2 py-1 text-xs rounded border border-transparent hover:border-zinc-300 focus:border-zinc-500 bg-transparent text-zinc-800 dark:text-zinc-200"
                 />
                 <input
                   type="text"
@@ -394,7 +394,7 @@ export default function MeetingAgendaGenerator() {
             {activeTab === "markdown" && (
               <button
                 onClick={handleDownload}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium shadow-sm transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-white text-white dark:text-zinc-950 text-xs font-medium shadow-xs transition-colors cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Download .md</span>
@@ -404,7 +404,7 @@ export default function MeetingAgendaGenerator() {
         </div>
 
         <div className="p-4 flex-1 max-h-[620px] overflow-y-auto">
-          <pre className="font-mono text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap selection:bg-blue-500/20 leading-relaxed">
+          <pre className="font-mono text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap selection:bg-zinc-200 dark:selection:bg-zinc-800 leading-relaxed">
             {activeTab === "markdown" ? markdownAgenda : slackAgenda}
           </pre>
         </div>

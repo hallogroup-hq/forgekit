@@ -132,7 +132,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                     onMouseEnter={() => setSelectedIndex(idx)}
                     className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer text-sm transition-colors ${
                       isSelected
-                        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 dark:bg-blue-500/15"
+                        ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
                         : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
                     }`}
                   >
@@ -140,7 +140,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                       <div
                         className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
                           isSelected
-                            ? "bg-blue-500 text-white border-blue-500"
+                            ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-zinc-900 dark:border-zinc-100"
                             : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700"
                         }`}
                       >

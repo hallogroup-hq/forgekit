@@ -503,20 +503,17 @@ export default function DesignMdGenerator() {
   return (
     <div className="space-y-6">
       {/* 3-Mode Primary Header Selector */}
-      <div className="p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs space-y-3">
+      <div className="p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/70 shadow-xs space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              <Palette className="w-4 h-4 text-blue-500" />
-              <span>Design.md Strategic Studio</span>
+            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <Palette className="w-4 h-4 text-zinc-400" />
+              <span>Design System Studio</span>
             </h2>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-              Choose your operating mode: empirical inspection, full manual system authoring, or instant archetype synthesis.
+              Inspect live websites, author comprehensive design specifications, or synthesize archetype baselines.
             </p>
           </div>
-          <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 self-start sm:self-auto">
-            DTCG 2025.10 Spec
-          </span>
         </div>
 
         {/* 3 Distinct Mode Tabs */}
@@ -526,13 +523,13 @@ export default function DesignMdGenerator() {
             onClick={() => setCurrentMode("analyze")}
             className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
               currentMode === "analyze"
-                ? "border-indigo-500 bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500/30"
-                : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-700 dark:text-zinc-300"
+                ? "border-zinc-400 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-zinc-50 shadow-2xs"
+                : "border-zinc-200 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700 bg-white/40 dark:bg-zinc-900/40 text-zinc-600 dark:text-zinc-400"
             }`}
           >
             <div className="flex items-center gap-2 mb-1">
-              <Globe className="w-4 h-4 text-indigo-500" />
-              <span className="text-xs font-bold">1. Analyze Reference</span>
+              <Globe className={`w-4 h-4 ${currentMode === "analyze" ? "text-zinc-950 dark:text-zinc-100" : "text-zinc-400"}`} />
+              <span className="text-xs font-semibold">1. Analyze Reference</span>
             </div>
             <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-tight">
               Evidence-based analysis from live URLs & screenshots with strict observed attribution.
@@ -544,13 +541,13 @@ export default function DesignMdGenerator() {
             onClick={() => setCurrentMode("manual")}
             className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
               currentMode === "manual"
-                ? "border-blue-500 bg-blue-500/10 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/30"
-                : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-700 dark:text-zinc-300"
+                ? "border-zinc-400 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-zinc-50 shadow-2xs"
+                : "border-zinc-200 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700 bg-white/40 dark:bg-zinc-900/40 text-zinc-600 dark:text-zinc-400"
             }`}
           >
             <div className="flex items-center gap-2 mb-1">
-              <Sliders className="w-4 h-4 text-blue-500" />
-              <span className="text-xs font-bold">2. Manual Design System</span>
+              <Sliders className={`w-4 h-4 ${currentMode === "manual" ? "text-zinc-950 dark:text-zinc-100" : "text-zinc-400"}`} />
+              <span className="text-xs font-semibold">2. Manual Design System</span>
             </div>
             <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-tight">
               Comprehensive 14-section editor with full progressive disclosure and token customization.
@@ -562,13 +559,13 @@ export default function DesignMdGenerator() {
             onClick={() => setCurrentMode("archetype")}
             className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
               currentMode === "archetype"
-                ? "border-emerald-500 bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500/30"
-                : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-700 dark:text-zinc-300"
+                ? "border-zinc-400 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-zinc-50 shadow-2xs"
+                : "border-zinc-200 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700 bg-white/40 dark:bg-zinc-900/40 text-zinc-600 dark:text-zinc-400"
             }`}
           >
             <div className="flex items-center gap-2 mb-1">
-              <Layers className="w-4 h-4 text-emerald-500" />
-              <span className="text-xs font-bold">3. Quick Archetype</span>
+              <Layers className={`w-4 h-4 ${currentMode === "archetype" ? "text-zinc-950 dark:text-zinc-100" : "text-zinc-400"}`} />
+              <span className="text-xs font-semibold">3. Quick Archetype</span>
             </div>
             <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-tight">
               Synthesize production-grade design systems from scratch using 6 verified aesthetic archetypes.
@@ -579,14 +576,11 @@ export default function DesignMdGenerator() {
 
       {/* Mode-Specific Header Panels */}
       {currentMode === "analyze" && (
-        <div className="p-4 rounded-xl border border-indigo-500/30 bg-indigo-500/5 dark:bg-indigo-500/10 space-y-3 animate-in fade-in">
+        <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40 space-y-3 animate-in fade-in">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
-              <Globe className="w-3.5 h-3.5" />
-              <span>Analyze Reference Website (SSRF-Guarded Live Inspection)</span>
-            </span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-600 dark:text-indigo-300">
-              Zero Synthetic Claims
+            <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+              <Globe className="w-3.5 h-3.5 text-zinc-400" />
+              <span>Inspect Reference Website</span>
             </span>
           </div>
 
@@ -597,13 +591,13 @@ export default function DesignMdGenerator() {
               onChange={(e) => setUrlInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleExtractFromUrl()}
               placeholder="e.g. linear.app, theatlantic.com, shopify.com, vercel.com"
-              className="flex-1 px-3 py-2 text-xs rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="flex-1 px-3 py-2 text-xs rounded-xl border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-600"
             />
             <button
               type="button"
               onClick={() => handleExtractFromUrl()}
               disabled={isExtracting}
-              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-white disabled:opacity-50 text-white dark:text-zinc-950 text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
             >
               {isExtracting ? (
                 <>
@@ -634,8 +628,8 @@ export default function DesignMdGenerator() {
 
           {/* 6 Real Reference Website Baselines */}
           <div className="space-y-1.5 pt-2">
-            <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold block">
-              6 Verified Reference Website Baselines:
+            <span className="text-[11px] text-zinc-500 font-medium block">
+              Reference baselines:
             </span>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
               {Object.keys(REFERENCE_SITES).map((key) => {
@@ -645,9 +639,9 @@ export default function DesignMdGenerator() {
                     key={key}
                     type="button"
                     onClick={() => handleLoadReferenceSite(key)}
-                    className="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-indigo-500/50 text-left transition-all cursor-pointer shadow-2xs"
+                    className="p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-left transition-all cursor-pointer shadow-2xs"
                   >
-                    <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 block truncate">
+                    <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 block truncate">
                       {site.name}
                     </span>
                     <span className="text-[10px] text-zinc-400 block truncate">
@@ -660,12 +654,12 @@ export default function DesignMdGenerator() {
           </div>
 
           {/* Screenshot Upload with Canvas Sampling */}
-          <div className="pt-2 border-t border-indigo-500/20 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="text-xs text-zinc-600 dark:text-zinc-400 flex items-center gap-2">
-              <Camera className="w-4 h-4 text-indigo-500" />
+              <Camera className="w-4 h-4 text-zinc-400" />
               <span>Reference Mockup Sampling:</span>
             </div>
-            <label className="px-3 py-1.5 rounded-lg border border-dashed border-indigo-300 dark:border-indigo-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 cursor-pointer text-xs font-medium text-zinc-600 dark:text-zinc-300 transition-colors">
+            <label className="px-3 py-1.5 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-850 cursor-pointer text-xs font-medium text-zinc-600 dark:text-zinc-300 transition-colors">
               <input type="file" accept="image/*" onChange={handleScreenshotUpload} className="hidden" />
               {screenshotName ? `📎 ${screenshotName} (Canvas sampled)` : "Upload Screenshot (HTML5 Canvas Pixel Clustering)"}
             </label>
@@ -676,7 +670,7 @@ export default function DesignMdGenerator() {
             </div>
           )}
           {screenshotPreviewUrl && (
-            <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-900 border border-indigo-200 dark:border-indigo-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+            <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="relative w-20 h-14 rounded overflow-hidden border border-zinc-200 dark:border-zinc-800 shrink-0 bg-zinc-950">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -689,7 +683,7 @@ export default function DesignMdGenerator() {
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
                     <span>Visual Evidence Attached</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-mono">
+                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-mono">
                       {lastEvidence?.inspectionMethod || "Captured"}
                     </span>
                   </div>
@@ -701,7 +695,7 @@ export default function DesignMdGenerator() {
               <button
                 type="button"
                 onClick={handleExportEvidenceBundle}
-                className="px-2.5 py-1.5 rounded-lg border border-indigo-300 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 text-xs font-semibold flex items-center gap-1.5 cursor-pointer shrink-0 self-start sm:self-auto"
+                className="px-2.5 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-100 text-xs font-semibold flex items-center gap-1.5 cursor-pointer shrink-0 self-start sm:self-auto"
                 title="Download complete evidence bundle (JSON, screenshots & tokens)"
               >
                 <Download className="w-3.5 h-3.5" />
@@ -713,14 +707,11 @@ export default function DesignMdGenerator() {
       )}
 
       {currentMode === "archetype" && (
-        <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-500/10 space-y-3 animate-in fade-in">
+        <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40 space-y-3 animate-in fade-in">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5" />
-              <span>Quick Archetype Preset (Synthesized from Scratch)</span>
-            </span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
-              Synthetic Baseline
+            <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-zinc-400" />
+              <span>Design Archetype Baselines</span>
             </span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
@@ -734,8 +725,8 @@ export default function DesignMdGenerator() {
                   onClick={() => handleArchetypeChange(archKey)}
                   className={`flex flex-col p-2.5 rounded-xl text-left border transition-all cursor-pointer ${
                     isSelected
-                      ? "border-emerald-500 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold shadow-xs"
-                      : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300"
+                      ? "border-zinc-400 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-zinc-50 font-bold shadow-2xs"
+                      : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-700"
                   }`}
                 >
                   <span className="text-xs truncate">{arch.name.split("/")[0]}</span>
@@ -752,12 +743,9 @@ export default function DesignMdGenerator() {
         {/* Left Column: 14-Section Comprehensive Progressive Disclosure Studio */}
         <div className="lg:col-span-6 space-y-4">
           <div className="flex items-center justify-between px-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-1.5">
-              <Sliders className="w-3.5 h-3.5 text-blue-500" />
-              <span>Full 14-Section Design System Editor</span>
-            </span>
-            <span className="text-[11px] font-mono text-zinc-400">
-              14/14 Configurable
+            <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+              <Sliders className="w-3.5 h-3.5 text-zinc-400" />
+              <span>System Specifications</span>
             </span>
           </div>
 
@@ -770,7 +758,7 @@ export default function DesignMdGenerator() {
                 className="w-full px-4 py-2.5 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-850/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer text-left"
               >
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center">1</span>
+                  <span className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60 font-mono text-xs font-bold flex items-center justify-center">1</span>
                   <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">1. Identity & Brand Foundations</span>
                 </div>
                 {expandedSection === 1 ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
@@ -841,7 +829,7 @@ export default function DesignMdGenerator() {
                 className="w-full px-4 py-2.5 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-850/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer text-left"
               >
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center">2</span>
+                  <span className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60 font-mono text-xs font-bold flex items-center justify-center">2</span>
                   <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">2. Color System & Semantic Palette</span>
                 </div>
                 {expandedSection === 2 ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
@@ -1032,7 +1020,7 @@ export default function DesignMdGenerator() {
                 className="w-full px-4 py-2.5 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-850/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer text-left"
               >
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center">3</span>
+                  <span className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60 font-mono text-xs font-bold flex items-center justify-center">3</span>
                   <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">3. Typography System</span>
                 </div>
                 {expandedSection === 3 ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
@@ -1147,7 +1135,7 @@ export default function DesignMdGenerator() {
                 className="w-full px-4 py-2.5 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-850/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer text-left"
               >
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center">4</span>
+                  <span className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60 font-mono text-xs font-bold flex items-center justify-center">4</span>
                   <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">4. Grid & Container Layout</span>
                 </div>
                 {expandedSection === 4 ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
@@ -1208,7 +1196,7 @@ export default function DesignMdGenerator() {
                 className="w-full px-4 py-2.5 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-850/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer text-left"
               >
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center">5</span>
+                  <span className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60 font-mono text-xs font-bold flex items-center justify-center">5</span>
                   <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">5. Spacing Scale & Density</span>
                 </div>
                 {expandedSection === 5 ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
@@ -1263,7 +1251,7 @@ export default function DesignMdGenerator() {
                 className="w-full px-4 py-2.5 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-850/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer text-left"
               >
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center">6</span>
+                  <span className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60 font-mono text-xs font-bold flex items-center justify-center">6</span>
                   <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">6. Surfaces, Elevation & Borders</span>
                 </div>
                 {expandedSection === 6 ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
@@ -1381,7 +1369,7 @@ export default function DesignMdGenerator() {
                 className="w-full px-4 py-2.5 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-850/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer text-left"
               >
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center">7</span>
+                  <span className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60 font-mono text-xs font-bold flex items-center justify-center">7</span>
                   <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">7. Button Hierarchy & Variants</span>
                 </div>
                 {expandedSection === 7 ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
@@ -1452,7 +1440,7 @@ export default function DesignMdGenerator() {
                 className="w-full px-4 py-2.5 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-850/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer text-left"
               >
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center">8</span>
+                  <span className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60 font-mono text-xs font-bold flex items-center justify-center">8</span>
                   <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">8. Form Controls & Inputs</span>
                 </div>
                 {expandedSection === 8 ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
@@ -1500,7 +1488,7 @@ export default function DesignMdGenerator() {
                 className="w-full px-4 py-2.5 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-850/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer text-left"
               >
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center">9</span>
+                  <span className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60 font-mono text-xs font-bold flex items-center justify-center">9</span>
                   <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">9. Navigation & App Shell</span>
                 </div>
                 {expandedSection === 9 ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
@@ -1552,7 +1540,7 @@ export default function DesignMdGenerator() {
                 className="w-full px-4 py-2.5 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-850/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer text-left"
               >
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center">10</span>
+                  <span className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60 font-mono text-xs font-bold flex items-center justify-center">10</span>
                   <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">10. Key Component Patterns</span>
                 </div>
                 {expandedSection === 10 ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
@@ -1611,7 +1599,7 @@ export default function DesignMdGenerator() {
                 className="w-full px-4 py-2.5 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-850/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer text-left"
               >
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center">11</span>
+                  <span className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60 font-mono text-xs font-bold flex items-center justify-center">11</span>
                   <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">11. Imagery, Media & Iconography</span>
                 </div>
                 {expandedSection === 11 ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
@@ -1659,7 +1647,7 @@ export default function DesignMdGenerator() {
                 className="w-full px-4 py-2.5 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-850/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer text-left"
               >
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center">12</span>
+                  <span className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60 font-mono text-xs font-bold flex items-center justify-center">12</span>
                   <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">12. Motion & Transitions</span>
                 </div>
                 {expandedSection === 12 ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
@@ -1716,7 +1704,7 @@ export default function DesignMdGenerator() {
                 className="w-full px-4 py-2.5 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-850/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer text-left"
               >
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center">13</span>
+                  <span className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60 font-mono text-xs font-bold flex items-center justify-center">13</span>
                   <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">13. Responsive Breakpoints</span>
                 </div>
                 {expandedSection === 13 ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
@@ -1782,7 +1770,7 @@ export default function DesignMdGenerator() {
                 className="w-full px-4 py-2.5 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-850/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer text-left"
               >
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center">14</span>
+                  <span className="w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60 font-mono text-xs font-bold flex items-center justify-center">14</span>
                   <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
                     <span>14. Accessibility & Contrast Audit</span>
@@ -1877,9 +1865,9 @@ export default function DesignMdGenerator() {
           {/* Live Component Preview Sandbox Card */}
           <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-950/60 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-1.5">
-                <Eye className="w-3.5 h-3.5" />
-                <span>Live Component Preview Sandbox</span>
+              <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+                <Eye className="w-3.5 h-3.5 text-zinc-400" />
+                <span>Component Preview</span>
               </span>
               <div className="flex items-center gap-1 bg-zinc-200 dark:bg-zinc-800 p-0.5 rounded-lg text-[10px]">
                 <button
@@ -2020,9 +2008,9 @@ export default function DesignMdGenerator() {
           {/* Multi-Format Export Studio */}
           <div className="flex-1 flex flex-col p-4 space-y-3">
             <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-1.5">
-                <Code className="w-3.5 h-3.5" />
-                <span>Multi-Format Token Exports</span>
+              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                <Code className="w-3.5 h-3.5 text-zinc-400" />
+                <span>Token Exports</span>
               </span>
               <div className="flex items-center gap-2">
                 <CopyButton
@@ -2059,10 +2047,10 @@ export default function DesignMdGenerator() {
                 <button
                   type="button"
                   onClick={handleExportEvidenceBundle}
-                  className="px-2 py-1 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 text-[11px] font-medium flex items-center gap-1.5 cursor-pointer"
+                  className="px-2 py-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 text-[11px] font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
                   title="Download Evidence Bundle (Tokens, Evidence & Screenshots)"
                 >
-                  <FileJson className="w-3.5 h-3.5" />
+                  <FileJson className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
                   <span>Evidence Bundle</span>
                 </button>
               </div>

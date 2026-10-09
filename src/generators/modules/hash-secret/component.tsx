@@ -62,9 +62,9 @@ export default function HashSecretGenerator() {
         <button
           type="button"
           onClick={() => setActiveTab("hash")}
-          className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-all ${
+          className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer ${
             activeTab === "hash"
-              ? "bg-white dark:bg-zinc-900 text-blue-600 dark:text-blue-400 shadow-xs"
+              ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 font-semibold shadow-xs"
               : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
           }`}
         >
@@ -73,9 +73,9 @@ export default function HashSecretGenerator() {
         <button
           type="button"
           onClick={() => setActiveTab("secret")}
-          className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-all ${
+          className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer ${
             activeTab === "secret"
-              ? "bg-white dark:bg-zinc-900 text-blue-600 dark:text-blue-400 shadow-xs"
+              ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 font-semibold shadow-xs"
               : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
           }`}
         >
@@ -147,10 +147,10 @@ export default function HashSecretGenerator() {
                     key={bytes}
                     type="button"
                     onClick={() => setSecretBytes(bytes)}
-                    className={`px-3 py-1 rounded-lg text-xs font-medium border ${
+                    className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
                       secretBytes === bytes
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400"
+                        ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 border-zinc-900 dark:border-zinc-100 font-semibold shadow-2xs"
+                        : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
                     }`}
                   >
                     {bytes} bytes ({bytes * 8} bits)
@@ -165,7 +165,7 @@ export default function HashSecretGenerator() {
                 setSecretSeed((prev) => prev + 1);
                 confetti({ particleCount: 20, spread: 40, origin: { y: 0.8 } });
               }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-white text-white dark:text-zinc-950 text-xs font-medium shadow-xs transition-colors cursor-pointer"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               <span>Regenerate Secrets</span>

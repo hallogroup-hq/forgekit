@@ -412,7 +412,7 @@ Provide actionable, well-documented solutions ready for immediate production dep
 
         {/* Output Pre Container */}
         <div className="flex-1 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 p-5 overflow-hidden shadow-2xs flex flex-col">
-          <pre className="flex-1 font-mono text-xs text-zinc-800 dark:text-zinc-200 p-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed border border-zinc-200/60 dark:border-zinc-800/60 max-h-[640px] overflow-y-auto selection:bg-blue-500/20">
+          <pre className="flex-1 font-mono text-xs text-zinc-800 dark:text-zinc-200 p-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed border border-zinc-200/60 dark:border-zinc-800/60 max-h-[640px] overflow-y-auto selection:bg-zinc-200 dark:selection:bg-zinc-800">
             {optimizedPrompt}
           </pre>
         </div>

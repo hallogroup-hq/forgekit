@@ -58,7 +58,7 @@ export function Navbar() {
             className="flex-1 max-w-md hidden md:flex items-center justify-between px-3.5 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/80 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all text-sm group"
           >
             <div className="flex items-center gap-2">
-              <Search className="w-4 h-4 group-hover:text-blue-500 transition-colors" />
+              <Search className="w-4 h-4 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors" />
               <span>Search any generator...</span>
             </div>
             <div className="flex items-center gap-1 font-mono text-[11px] bg-zinc-200/60 dark:bg-zinc-800/80 px-2 py-0.5 rounded border border-zinc-300/40 dark:border-zinc-700/60 text-zinc-500 dark:text-zinc-400">

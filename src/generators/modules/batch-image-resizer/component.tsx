@@ -218,7 +218,7 @@ export default function BatchImageResizerGenerator() {
               Image Batch Files
             </span>
             {items.length > 0 && (
-              <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium">
+              <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60 font-medium">
                 {items.length} images loaded
               </span>
             )}
@@ -247,9 +247,9 @@ export default function BatchImageResizerGenerator() {
           />
           <label
             htmlFor="batch-image-upload"
-            className="border-2 border-dashed border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 bg-zinc-50/50 dark:bg-zinc-900/40 rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors text-center"
+            className="border-2 border-dashed border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 bg-zinc-50/50 dark:bg-zinc-900/40 rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors text-center"
           >
-            <div className="w-11 h-11 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+            <div className="w-11 h-11 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 flex items-center justify-center">
               <Upload className="w-5 h-5" />
             </div>
             <div className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
@@ -273,9 +273,9 @@ export default function BatchImageResizerGenerator() {
             <button
               type="button"
               onClick={() => setMode("dimensions")}
-              className={`px-3 py-1 rounded-lg transition-all ${
+              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
                 mode === "dimensions"
-                  ? "bg-white dark:bg-zinc-950 text-blue-600 dark:text-blue-400 shadow-xs"
+                  ? "bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-semibold shadow-xs"
                   : "text-zinc-600 dark:text-zinc-400"
               }`}
             >
@@ -284,9 +284,9 @@ export default function BatchImageResizerGenerator() {
             <button
               type="button"
               onClick={() => setMode("percentage")}
-              className={`px-3 py-1 rounded-lg transition-all ${
+              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
                 mode === "percentage"
-                  ? "bg-white dark:bg-zinc-950 text-blue-600 dark:text-blue-400 shadow-xs"
+                  ? "bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-semibold shadow-xs"
                   : "text-zinc-600 dark:text-zinc-400"
               }`}
             >
@@ -295,9 +295,9 @@ export default function BatchImageResizerGenerator() {
             <button
               type="button"
               onClick={() => setMode("fit-box")}
-              className={`px-3 py-1 rounded-lg transition-all ${
+              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
                 mode === "fit-box"
-                  ? "bg-white dark:bg-zinc-950 text-blue-600 dark:text-blue-400 shadow-xs"
+                  ? "bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-semibold shadow-xs"
                   : "text-zinc-600 dark:text-zinc-400"
               }`}
             >
@@ -306,9 +306,9 @@ export default function BatchImageResizerGenerator() {
             <button
               type="button"
               onClick={() => setMode("preset")}
-              className={`px-3 py-1 rounded-lg transition-all ${
+              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
                 mode === "preset"
-                  ? "bg-white dark:bg-zinc-950 text-blue-600 dark:text-blue-400 shadow-xs"
+                  ? "bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-semibold shadow-xs"
                   : "text-zinc-600 dark:text-zinc-400"
               }`}
             >
@@ -354,10 +354,10 @@ export default function BatchImageResizerGenerator() {
                 <button
                   type="button"
                   onClick={() => setMaintainAspect(!maintainAspect)}
-                  className="flex items-center gap-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:text-blue-600 transition-colors"
+                  className="flex items-center gap-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer"
                 >
                   {maintainAspect ? (
-                    <Lock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <Lock className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />
                   ) : (
                     <Unlock className="w-4 h-4 text-zinc-400" />
                   )}
@@ -371,7 +371,7 @@ export default function BatchImageResizerGenerator() {
             <div className="sm:col-span-2">
               <div className="flex justify-between text-[11px] text-zinc-600 dark:text-zinc-400 mb-1">
                 <span className="font-medium">Scale Percentage</span>
-                <span className="font-mono font-bold text-blue-600 dark:text-blue-400">{percentage}%</span>
+                <span className="font-mono font-bold text-zinc-900 dark:text-zinc-100">{percentage}%</span>
               </div>
               <input
                 type="range"
@@ -380,7 +380,7 @@ export default function BatchImageResizerGenerator() {
                 step="5"
                 value={percentage}
                 onChange={(e) => setPercentage(Number(e.target.value))}
-                className="w-full accent-blue-600"
+                className="w-full accent-zinc-900 dark:accent-zinc-100"
               />
               <div className="flex gap-2 mt-2">
                 {[25, 50, 75, 100, 150, 200].map((p) => (
@@ -388,7 +388,7 @@ export default function BatchImageResizerGenerator() {
                     key={p}
                     type="button"
                     onClick={() => setPercentage(p)}
-                    className="px-2 py-0.5 rounded text-[10px] bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 hover:border-blue-500 font-mono"
+                    className="px-2 py-0.5 rounded text-[10px] bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 font-mono cursor-pointer transition-colors"
                   >
                     {p}%
                   </button>
@@ -504,7 +504,7 @@ export default function BatchImageResizerGenerator() {
               type="button"
               onClick={handleDownloadAllZip}
               disabled={isProcessing}
-              className="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white shadow-xs cursor-pointer transition-all self-start sm:self-auto"
+              className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-white disabled:opacity-50 text-white dark:text-zinc-950 shadow-xs cursor-pointer transition-colors self-start sm:self-auto"
             >
               {isProcessing ? (
                 <>
@@ -558,7 +558,7 @@ export default function BatchImageResizerGenerator() {
                       <td className="px-3 py-2 font-mono text-[11px] text-zinc-500">
                         {item.originalWidth} × {item.originalHeight} px
                       </td>
-                      <td className="px-3 py-2 font-mono text-[11px] font-semibold text-blue-600 dark:text-blue-400">
+                      <td className="px-3 py-2 font-mono text-[11px] font-semibold text-zinc-900 dark:text-zinc-100">
                         {newDims.width} × {newDims.height} px
                       </td>
                       <td className="px-3 py-2 text-right">

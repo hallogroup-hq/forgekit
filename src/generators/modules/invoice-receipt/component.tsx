@@ -130,7 +130,7 @@ export default function InvoiceReceiptGenerator() {
           <button
             type="button"
             onClick={handlePrint}
-            className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all active:scale-95 cursor-pointer"
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-white text-white dark:text-zinc-950 text-xs font-medium shadow-xs transition-colors cursor-pointer"
           >
             <Printer className="w-4 h-4" />
             <span>Print / Save as PDF</span>
@@ -152,7 +152,7 @@ export default function InvoiceReceiptGenerator() {
                 type="text"
                 value={invoiceNumber}
                 onChange={(e) => setInvoiceNumber(e.target.value)}
-                className="text-xs font-mono font-bold px-1.5 py-0.5 rounded border border-transparent hover:border-zinc-300 dark:hover:border-zinc-700 focus:border-blue-500 bg-transparent text-zinc-900 dark:text-zinc-100"
+                className="text-xs font-mono font-bold px-1.5 py-0.5 rounded border border-transparent hover:border-zinc-300 dark:hover:border-zinc-700 focus:border-zinc-500 bg-transparent text-zinc-900 dark:text-zinc-100"
               />
             </div>
           </div>
@@ -296,7 +296,7 @@ export default function InvoiceReceiptGenerator() {
           <button
             type="button"
             onClick={addItem}
-            className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline print:hidden cursor-pointer"
+            className="mt-3 flex items-center gap-1.5 text-xs font-medium text-zinc-900 dark:text-zinc-100 hover:underline print:hidden cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Item Row</span>

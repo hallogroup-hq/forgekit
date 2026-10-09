@@ -72,12 +72,12 @@ ${strictTypes ? "- TypeScript Strictness: NEVER use `any`. Always use explicit i
                 onClick={() => setTarget(t.id as TargetTool)}
                 className={`p-2.5 rounded-xl text-left border transition-all ${
                   target === t.id
-                    ? "border-violet-500 bg-violet-50/50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 font-semibold"
-                    : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300"
+                    ? "border-zinc-900 dark:border-zinc-100 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 font-semibold shadow-2xs"
+                    : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-700"
                 }`}
               >
                 <div className="text-xs">{t.label}</div>
-                <div className="text-[10px] text-zinc-400 font-mono mt-0.5">{t.file}</div>
+                <div className={`text-[10px] font-mono mt-0.5 ${target === t.id ? "text-zinc-600 dark:text-zinc-400" : "text-zinc-400"}`}>{t.file}</div>
               </button>
             ))}
           </div>
@@ -165,7 +165,7 @@ ${strictTypes ? "- TypeScript Strictness: NEVER use `any`. Always use explicit i
                 type="checkbox"
                 checked={strictTypes}
                 onChange={(e) => setStrictTypes(e.target.checked)}
-                className="rounded text-violet-600 focus:ring-violet-500"
+                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
               />
               <span>Zero Any: Ban `any` in TypeScript</span>
             </label>
@@ -174,7 +174,7 @@ ${strictTypes ? "- TypeScript Strictness: NEVER use `any`. Always use explicit i
                 type="checkbox"
                 checked={noSlopComments}
                 onChange={(e) => setNoSlopComments(e.target.checked)}
-                className="rounded text-violet-600 focus:ring-violet-500"
+                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
               />
               <span>Anti-Slop: Strip generic AI explanation comments</span>
             </label>
@@ -183,7 +183,7 @@ ${strictTypes ? "- TypeScript Strictness: NEVER use `any`. Always use explicit i
                 type="checkbox"
                 checked={earlyReturns}
                 onChange={(e) => setEarlyReturns(e.target.checked)}
-                className="rounded text-violet-600 focus:ring-violet-500"
+                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
               />
               <span>Clean Code: Guard clauses & early returns</span>
             </label>
@@ -192,7 +192,7 @@ ${strictTypes ? "- TypeScript Strictness: NEVER use `any`. Always use explicit i
                 type="checkbox"
                 checked={smallComponents}
                 onChange={(e) => setSmallComponents(e.target.checked)}
-                className="rounded text-violet-600 focus:ring-violet-500"
+                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
               />
               <span>Modularity: Max 150 lines per component</span>
             </label>
@@ -201,7 +201,7 @@ ${strictTypes ? "- TypeScript Strictness: NEVER use `any`. Always use explicit i
                 type="checkbox"
                 checked={mobileFirst}
                 onChange={(e) => setMobileFirst(e.target.checked)}
-                className="rounded text-violet-600 focus:ring-violet-500"
+                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
               />
               <span>Accessibility: Mobile responsive & WCAG AA</span>
             </label>
@@ -213,7 +213,7 @@ ${strictTypes ? "- TypeScript Strictness: NEVER use `any`. Always use explicit i
       <div className="lg:col-span-7 flex flex-col rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-950/60 overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
           <div className="flex items-center gap-2">
-            <FileCode2 className="w-4 h-4 text-violet-500" />
+            <FileCode2 className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
             <span className="text-xs font-mono font-medium text-zinc-700 dark:text-zinc-300">
               {target}
             </span>
@@ -229,7 +229,7 @@ ${strictTypes ? "- TypeScript Strictness: NEVER use `any`. Always use explicit i
             />
             <button
               onClick={handleDownload}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-medium shadow-sm transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-white text-white dark:text-zinc-950 text-xs font-medium shadow-xs transition-colors cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Download</span>
@@ -238,7 +238,7 @@ ${strictTypes ? "- TypeScript Strictness: NEVER use `any`. Always use explicit i
         </div>
 
         <div className="p-4 flex-1 max-h-[560px] overflow-y-auto">
-          <pre className="font-mono text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap selection:bg-violet-500/20 leading-relaxed">
+          <pre className="font-mono text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap selection:bg-zinc-200 dark:selection:bg-zinc-800 leading-relaxed">
             {generatedRules}
           </pre>
         </div>

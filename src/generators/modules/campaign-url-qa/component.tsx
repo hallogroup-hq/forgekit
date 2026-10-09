@@ -169,7 +169,7 @@ export default function CampaignUrlQaGenerator() {
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           placeholder="Paste URLs here..."
-          className="w-full p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950 font-mono text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+          className="w-full p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950 font-mono text-xs leading-relaxed focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-600 resize-y"
         />
 
         <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
@@ -183,9 +183,9 @@ export default function CampaignUrlQaGenerator() {
                 key={st}
                 type="button"
                 onClick={() => setFilterStatus(st)}
-                className={`px-2.5 py-1 text-xs rounded-lg font-medium capitalize border transition-colors ${
+                className={`px-2.5 py-1 text-xs rounded-lg font-medium capitalize border transition-colors cursor-pointer ${
                   filterStatus === st
-                    ? "bg-blue-600 border-blue-600 text-white"
+                    ? "bg-zinc-900 border-zinc-900 text-white dark:bg-zinc-100 dark:border-zinc-100 dark:text-zinc-950 font-semibold shadow-2xs"
                     : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
                 }`}
               >
@@ -203,7 +203,7 @@ export default function CampaignUrlQaGenerator() {
             <button
               type="button"
               onClick={handleDownloadCsv}
-              className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-white text-white dark:text-zinc-950 text-xs font-medium flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export Audit CSV</span>

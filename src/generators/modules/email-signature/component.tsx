@@ -85,7 +85,7 @@ export default function EmailSignatureGenerator() {
         {/* Layout Picker */}
         <div className="p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 space-y-2">
           <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
-            <LayoutTemplate className="w-3.5 h-3.5 text-blue-500" />
+            <LayoutTemplate className="w-3.5 h-3.5 text-zinc-400" />
             <span>Signature Layout</span>
           </label>
           <div className="grid grid-cols-3 gap-2">
@@ -98,10 +98,10 @@ export default function EmailSignatureGenerator() {
                 key={item.id}
                 type="button"
                 onClick={() => setLayout(item.id)}
-                className={`p-2.5 rounded-lg text-left border transition-all ${
+                className={`p-2.5 rounded-lg text-left border transition-all cursor-pointer ${
                   layout === item.id
-                    ? "border-blue-500 bg-blue-50/50 dark:bg-blue-950/30 text-blue-900 dark:text-blue-100 shadow-sm"
-                    : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-700 dark:text-zinc-300 hover:border-zinc-300"
+                    ? "border-zinc-900 dark:border-zinc-100 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 font-semibold shadow-2xs"
+                    : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-700 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-700"
                 }`}
               >
                 <div className="text-xs font-semibold">{item.label}</div>
@@ -281,7 +281,7 @@ export default function EmailSignatureGenerator() {
             <button
               type="button"
               onClick={handleCopyRichText}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-white text-white dark:text-zinc-950 text-xs font-medium shadow-xs transition-colors cursor-pointer"
             >
               {copiedRich ? (
                 <>

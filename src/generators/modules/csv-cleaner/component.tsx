@@ -126,7 +126,7 @@ export default function CsvCleanerGenerator() {
               <button
                 type="button"
                 onClick={handleLoadSample}
-                className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
+                className="text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 flex items-center gap-1 cursor-pointer"
               >
                 <RefreshCw className="w-3 h-3" />
                 <span>Reset to Dirty Sample</span>
@@ -146,9 +146,9 @@ export default function CsvCleanerGenerator() {
           />
           <label
             htmlFor="csv-file-upload-input"
-            className="border-2 border-dashed border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 bg-zinc-50/50 dark:bg-zinc-900/40 rounded-xl p-4 flex items-center justify-center gap-3 cursor-pointer transition-colors text-center"
+            className="border-2 border-dashed border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 bg-zinc-50/50 dark:bg-zinc-900/40 rounded-xl p-4 flex items-center justify-center gap-3 cursor-pointer transition-colors text-center"
           >
-            <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 flex items-center justify-center shrink-0">
               <Upload className="w-4 h-4" />
             </div>
             <div className="text-left">
@@ -174,7 +174,7 @@ export default function CsvCleanerGenerator() {
                 type="checkbox"
                 checked={trimCells}
                 onChange={(e) => setTrimCells(e.target.checked)}
-                className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4"
+                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500 w-4 h-4"
               />
               <span className="font-medium">Trim Whitespace</span>
             </label>
@@ -184,7 +184,7 @@ export default function CsvCleanerGenerator() {
                 type="checkbox"
                 checked={removeEmptyRows}
                 onChange={(e) => setRemoveEmptyRows(e.target.checked)}
-                className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4"
+                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500 w-4 h-4"
               />
               <span className="font-medium">Drop Empty Rows</span>
             </label>
@@ -194,7 +194,7 @@ export default function CsvCleanerGenerator() {
                 type="checkbox"
                 checked={removeDuplicates}
                 onChange={(e) => setRemoveDuplicates(e.target.checked)}
-                className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4"
+                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500 w-4 h-4"
               />
               <span className="font-medium">Deduplicate Records</span>
             </label>
@@ -253,7 +253,7 @@ export default function CsvCleanerGenerator() {
         </div>
         <div className="p-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-center shadow-xs">
           <div className="text-[10px] text-zinc-400 uppercase font-semibold">Clean Rows</div>
-          <div className="text-base font-bold text-blue-600 dark:text-blue-400 font-mono mt-0.5">
+          <div className="text-base font-bold text-zinc-900 dark:text-zinc-100 font-mono mt-0.5">
             {cleanResult.stats.finalRowCount}
           </div>
         </div>
@@ -271,7 +271,7 @@ export default function CsvCleanerGenerator() {
         </div>
         <div className="p-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-center col-span-2 sm:col-span-1 shadow-xs">
           <div className="text-[10px] text-zinc-400 uppercase font-semibold">Format Detected</div>
-          <div className="text-base font-bold text-purple-600 dark:text-purple-400 font-mono mt-0.5">
+          <div className="text-base font-bold text-zinc-800 dark:text-zinc-200 font-mono mt-0.5">
             {cleanResult.stats.detectedDelimiter === "\t"
               ? "TSV (Tab)"
               : cleanResult.stats.detectedDelimiter === ";"
@@ -299,7 +299,7 @@ export default function CsvCleanerGenerator() {
               setUploadedFileName(null);
             }}
             placeholder="Paste your unformatted CSV here..."
-            className="w-full p-3 font-mono text-xs rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200 leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 font-mono text-xs rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200 leading-relaxed focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-600"
           />
         </div>
 
@@ -344,7 +344,7 @@ export default function CsvCleanerGenerator() {
               <button
                 type="button"
                 onClick={handleDownload}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-white text-white dark:text-zinc-950 text-xs font-medium shadow-xs transition-colors cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Download .csv</span>

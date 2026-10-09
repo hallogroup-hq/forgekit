@@ -176,9 +176,9 @@ export default function BulkFilenameBuilderGenerator() {
               <button
                 type="button"
                 onClick={() => setMode("files")}
-                className={`px-3 py-1 rounded-md transition-all ${
+                className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
                   mode === "files"
-                    ? "bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 shadow-xs"
+                    ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-semibold shadow-xs"
                     : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                 }`}
               >
@@ -187,9 +187,9 @@ export default function BulkFilenameBuilderGenerator() {
               <button
                 type="button"
                 onClick={() => setMode("text")}
-                className={`px-3 py-1 rounded-md transition-all ${
+                className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
                   mode === "text"
-                    ? "bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 shadow-xs"
+                    ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-semibold shadow-xs"
                     : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                 }`}
               >
@@ -213,7 +213,7 @@ export default function BulkFilenameBuilderGenerator() {
             <button
               type="button"
               onClick={() => setInputFiles(SAMPLE_FILES)}
-              className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer self-start sm:self-auto"
+              className="text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 flex items-center gap-1 cursor-pointer self-start sm:self-auto"
             >
               <RefreshCw className="w-3 h-3" />
               <span>Reset Sample List</span>
@@ -233,9 +233,9 @@ export default function BulkFilenameBuilderGenerator() {
             />
             <label
               htmlFor="bulk-file-input"
-              className="border-2 border-dashed border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 bg-zinc-50/50 dark:bg-zinc-900/40 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors text-center"
+              className="border-2 border-dashed border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 bg-zinc-50/50 dark:bg-zinc-900/40 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors text-center"
             >
-              <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 flex items-center justify-center">
                 <Upload className="w-6 h-6" />
               </div>
               <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
@@ -255,7 +255,7 @@ export default function BulkFilenameBuilderGenerator() {
               value={inputFiles}
               onChange={(e) => setInputFiles(e.target.value)}
               placeholder="Paste filenames here (one per line)..."
-              className="w-full p-3 font-mono text-xs rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 text-zinc-800 dark:text-zinc-200 leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 font-mono text-xs rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 text-zinc-800 dark:text-zinc-200 leading-relaxed focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-600"
             />
           </div>
         )}
@@ -345,7 +345,7 @@ export default function BulkFilenameBuilderGenerator() {
                 type="checkbox"
                 checked={slugify}
                 onChange={(e) => setSlugify(e.target.checked)}
-                className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4"
+                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500 w-4 h-4"
               />
               <span className="font-medium">Clean Spaces & Symbols</span>
             </label>
@@ -357,7 +357,7 @@ export default function BulkFilenameBuilderGenerator() {
                 type="checkbox"
                 checked={numbering}
                 onChange={(e) => setNumbering(e.target.checked)}
-                className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4"
+                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500 w-4 h-4"
               />
               <span className="font-medium">Number Sequence (001, 002)</span>
             </label>
@@ -429,7 +429,7 @@ export default function BulkFilenameBuilderGenerator() {
                 type="button"
                 onClick={handleDownloadZip}
                 disabled={isZipping}
-                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white shadow-sm cursor-pointer transition-all"
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-white disabled:opacity-50 text-white dark:text-zinc-950 shadow-xs cursor-pointer transition-colors"
               >
                 {isZipping ? (
                   <>
@@ -532,7 +532,7 @@ export default function BulkFilenameBuilderGenerator() {
                       <ArrowRight className="w-3.5 h-3.5 inline text-zinc-400" />
                     </td>
                     <td
-                      className="px-3 py-2.5 font-semibold text-blue-600 dark:text-blue-400 truncate max-w-[260px]"
+                      className="px-3 py-2.5 font-medium text-zinc-900 dark:text-zinc-100 truncate max-w-[260px]"
                       title={m.newName}
                     >
                       {m.newName}

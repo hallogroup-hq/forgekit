@@ -77,12 +77,12 @@ export default function DockerGitignoreGenerator() {
                 onClick={() => handleSelectStack(key)}
                 className={`w-full p-3.5 rounded-xl text-left border transition-all ${
                   isSelected
-                    ? "border-blue-500 bg-blue-50/50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                    : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:border-zinc-300"
+                    ? "border-zinc-900 dark:border-zinc-100 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-2xs"
+                    : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-700"
                 }`}
               >
                 <div className="font-semibold text-xs">{stack.name}</div>
-                <div className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+                <div className={`text-[10px] mt-0.5 ${isSelected ? "text-zinc-600 dark:text-zinc-400" : "text-zinc-400 dark:text-zinc-500"}`}>
                   {stack.badge} • Default Port {stack.defaultPort}
                 </div>
               </button>
@@ -169,7 +169,7 @@ export default function DockerGitignoreGenerator() {
             />
             <button
               onClick={handleDownload}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium shadow-xs transition-all active:scale-[0.98]"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-white text-white dark:text-zinc-950 text-xs font-medium shadow-xs transition-colors cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Download</span>
@@ -179,7 +179,7 @@ export default function DockerGitignoreGenerator() {
 
         {/* Content */}
         <div className="p-4 flex-1 max-h-[520px] overflow-y-auto">
-          <pre className="font-mono text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre selection:bg-blue-500/20 leading-relaxed">
+          <pre className="font-mono text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre selection:bg-zinc-200 dark:selection:bg-zinc-800 leading-relaxed">
             {activeContent}
           </pre>
         </div>

@@ -123,7 +123,7 @@ export default function TextCleanerGenerator() {
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             placeholder="Paste your unformatted text, PDF excerpt, or spreadsheet list here..."
-            className="w-full p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 text-xs sm:text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+            className="w-full p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 text-xs sm:text-sm font-mono leading-relaxed focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-600 resize-y"
           />
           <div className="flex items-center justify-between text-[11px] text-zinc-400 px-1 pt-1">
             <span>
@@ -134,7 +134,7 @@ export default function TextCleanerGenerator() {
 
         {/* Action Toggles */}
         <div className="p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 space-y-4">
-          <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 block">
+          <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 block">
             Cleaning Rules
           </span>
 
@@ -144,7 +144,7 @@ export default function TextCleanerGenerator() {
                 type="checkbox"
                 checked={normalizeWhitespace}
                 onChange={(e) => setNormalizeWhitespace(e.target.checked)}
-                className="rounded text-blue-600 focus:ring-blue-500"
+                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
               />
               <span className="font-medium text-zinc-800 dark:text-zinc-200">
                 Normalize Spaces
@@ -156,7 +156,7 @@ export default function TextCleanerGenerator() {
                 type="checkbox"
                 checked={trimLines}
                 onChange={(e) => setTrimLines(e.target.checked)}
-                className="rounded text-blue-600 focus:ring-blue-500"
+                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
               />
               <span className="font-medium text-zinc-800 dark:text-zinc-200">
                 Trim Line Margins
@@ -168,7 +168,7 @@ export default function TextCleanerGenerator() {
                 type="checkbox"
                 checked={removeEmptyLines}
                 onChange={(e) => setRemoveEmptyLines(e.target.checked)}
-                className="rounded text-blue-600 focus:ring-blue-500"
+                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
               />
               <span className="font-medium text-zinc-800 dark:text-zinc-200">
                 Strip Blank Lines
@@ -180,7 +180,7 @@ export default function TextCleanerGenerator() {
                 type="checkbox"
                 checked={removeDuplicateLines}
                 onChange={(e) => setRemoveDuplicateLines(e.target.checked)}
-                className="rounded text-blue-600 focus:ring-blue-500"
+                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
               />
               <span className="font-medium text-zinc-800 dark:text-zinc-200">
                 Deduplicate Lines
@@ -192,7 +192,7 @@ export default function TextCleanerGenerator() {
                 type="checkbox"
                 checked={stripHtml}
                 onChange={(e) => setStripHtml(e.target.checked)}
-                className="rounded text-blue-600 focus:ring-blue-500"
+                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
               />
               <span className="font-medium text-zinc-800 dark:text-zinc-200">
                 Strip HTML Tags (&lt;p&gt;, &lt;div&gt;, etc.)
@@ -220,9 +220,9 @@ export default function TextCleanerGenerator() {
                   key={c.id}
                   type="button"
                   onClick={() => setCaseTransform(c.id as CaseTransform)}
-                  className={`px-2.5 py-1 text-xs rounded-lg font-medium border transition-colors ${
+                  className={`px-2.5 py-1 text-xs rounded-lg font-medium border transition-colors cursor-pointer ${
                     caseTransform === c.id
-                      ? "bg-blue-600 border-blue-600 text-white"
+                      ? "bg-zinc-900 border-zinc-900 text-white dark:bg-zinc-100 dark:border-zinc-100 dark:text-zinc-950 font-semibold"
                       : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
                   }`}
                 >
@@ -247,9 +247,9 @@ export default function TextCleanerGenerator() {
                   key={s.id}
                   type="button"
                   onClick={() => setSortLines(s.id as "none" | "asc" | "desc")}
-                  className={`px-2.5 py-1 text-xs rounded-lg font-medium border transition-colors ${
+                  className={`px-2.5 py-1 text-xs rounded-lg font-medium border transition-colors cursor-pointer ${
                     sortLines === s.id
-                      ? "bg-blue-600 border-blue-600 text-white"
+                      ? "bg-zinc-900 border-zinc-900 text-white dark:bg-zinc-100 dark:border-zinc-100 dark:text-zinc-950 font-semibold"
                       : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
                   }`}
                 >
@@ -264,8 +264,8 @@ export default function TextCleanerGenerator() {
       {/* Clean Output Panel (Right) */}
       <div className="lg:col-span-6 space-y-6">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-            <Check className="w-3.5 h-3.5" />
+          <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+            <Check className="w-3.5 h-3.5 text-zinc-400" />
             <span>Clean Output</span>
           </label>
           <div className="flex items-center gap-2">
@@ -273,7 +273,7 @@ export default function TextCleanerGenerator() {
               type="button"
               onClick={handleSwap}
               title="Use output as new input for further chained transformations"
-              className="px-2.5 py-1 text-xs font-medium rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center gap-1.5 transition-colors"
+              className="px-2.5 py-1 text-xs font-medium rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <ArrowRightLeft className="w-3 h-3" />
               <span>Use as Input</span>
@@ -282,7 +282,7 @@ export default function TextCleanerGenerator() {
             <button
               type="button"
               onClick={handleDownload}
-              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white flex items-center gap-1.5 transition-colors shadow-2xs"
+              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-white text-white dark:text-zinc-950 flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Download .txt</span>

@@ -65,12 +65,12 @@ export default function UuidNanoidGenerator() {
                 onClick={() => setType(item.id as IdType)}
                 className={`p-3 rounded-xl text-left border transition-all ${
                   type === item.id
-                    ? "border-blue-500 bg-blue-50/50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                    : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:border-zinc-300"
+                    ? "border-zinc-900 dark:border-zinc-100 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 font-semibold shadow-2xs"
+                    : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-700"
                 }`}
               >
                 <div className="font-semibold text-xs">{item.label}</div>
-                <div className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+                <div className={`text-[10px] mt-0.5 ${type === item.id ? "text-zinc-600 dark:text-zinc-400" : "text-zinc-400 dark:text-zinc-500"}`}>
                   {item.desc}
                 </div>
               </button>
@@ -90,7 +90,7 @@ export default function UuidNanoidGenerator() {
               max="50"
               value={count}
               onChange={(e) => setCount(Number(e.target.value))}
-              className="w-full accent-blue-600"
+              className="w-full accent-zinc-900 dark:accent-zinc-100"
             />
           </div>
 
@@ -106,7 +106,7 @@ export default function UuidNanoidGenerator() {
                 max="36"
                 value={nanoidLength}
                 onChange={(e) => setNanoidLength(Number(e.target.value))}
-                className="w-full accent-blue-600"
+                className="w-full accent-zinc-900 dark:accent-zinc-100"
               />
             </div>
           )}
@@ -117,7 +117,7 @@ export default function UuidNanoidGenerator() {
                 type="checkbox"
                 checked={uppercase}
                 onChange={(e) => setUppercase(e.target.checked)}
-                className="rounded text-blue-600 focus:ring-blue-500"
+                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
               />
               <span>Uppercase (A-Z)</span>
             </label>
@@ -128,7 +128,7 @@ export default function UuidNanoidGenerator() {
                   type="checkbox"
                   checked={hyphens}
                   onChange={(e) => setHyphens(e.target.checked)}
-                  className="rounded text-blue-600 focus:ring-blue-500"
+                  className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
                 />
                 <span>Include Hyphens</span>
               </label>
@@ -143,10 +143,10 @@ export default function UuidNanoidGenerator() {
               <button
                 type="button"
                 onClick={() => setFormat("lines")}
-                className={`py-1.5 px-3 rounded-lg text-xs font-medium border ${
+                className={`py-1.5 px-3 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
                   format === "lines"
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400"
+                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 border-zinc-900 dark:border-zinc-100"
+                    : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
                 }`}
               >
                 Line-by-Line
@@ -154,10 +154,10 @@ export default function UuidNanoidGenerator() {
               <button
                 type="button"
                 onClick={() => setFormat("json")}
-                className={`py-1.5 px-3 rounded-lg text-xs font-medium border ${
+                className={`py-1.5 px-3 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
                   format === "json"
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400"
+                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 border-zinc-900 dark:border-zinc-100"
+                    : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
                 }`}
               >
                 JSON Array
@@ -193,7 +193,7 @@ export default function UuidNanoidGenerator() {
             />
             <button
               onClick={handleDownload}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium shadow-sm transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-white text-white dark:text-zinc-950 text-xs font-medium shadow-xs transition-colors cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Download</span>
@@ -202,7 +202,7 @@ export default function UuidNanoidGenerator() {
         </div>
 
         <div className="p-4 flex-1 max-h-[460px] overflow-y-auto">
-          <pre className="font-mono text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre selection:bg-blue-500/20 leading-relaxed">
+          <pre className="font-mono text-xs text-zinc-800 dark:text-zinc-200 whitespace-pre selection:bg-zinc-200 dark:selection:bg-zinc-800 leading-relaxed">
             {outputText}
           </pre>
         </div>

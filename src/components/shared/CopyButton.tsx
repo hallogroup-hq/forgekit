@@ -32,10 +32,10 @@ export function CopyButton({
       setCopied(true);
       if (triggerConfetti) {
         confetti({
-          particleCount: 30,
-          spread: 60,
+          particleCount: 20,
+          spread: 50,
           origin: { y: 0.8 },
-          colors: ["#3b82f6", "#10b981", "#8b5cf6", "#f59e0b"],
+          colors: ["#18181b", "#71717a", "#e4e4e7"],
         });
       }
       setTimeout(() => setCopied(false), 2000);
@@ -49,7 +49,8 @@ export function CopyButton({
   }[size];
 
   const variantClasses = {
-    primary: "bg-blue-600 hover:bg-blue-500 text-white shadow-sm",
+    primary:
+      "bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white text-white dark:text-zinc-950 shadow-sm font-medium",
     secondary:
       "bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-100",
     outline:

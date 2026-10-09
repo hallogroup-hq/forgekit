@@ -191,9 +191,9 @@ export default function CharacterGenerator() {
             <button
               key={g}
               onClick={() => handleGenreChange(g)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                 genre === g
-                  ? "bg-blue-600 text-white shadow-xs"
+                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-semibold shadow-2xs"
                   : "bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 border border-zinc-200 dark:border-zinc-700"
               }`}
             >
@@ -205,7 +205,7 @@ export default function CharacterGenerator() {
         <div className="flex items-center gap-2">
           <button
             onClick={handleRandomize}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-sm transition-all active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-white text-white dark:text-zinc-950 text-xs font-medium shadow-xs transition-colors cursor-pointer"
           >
             <Dices className="w-4 h-4" />
             <span>Roll New Character</span>
@@ -220,7 +220,7 @@ export default function CharacterGenerator() {
           <button
             onClick={handleDownloadJson}
             title="Download JSON Card"
-            className="p-2 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300"
+            className="p-2 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 cursor-pointer"
           >
             <Download className="w-4 h-4" />
           </button>
@@ -236,7 +236,7 @@ export default function CharacterGenerator() {
               <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">
                 {char.name}
               </h2>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700">
                 {char.archetype}
               </span>
             </div>
@@ -295,7 +295,7 @@ export default function CharacterGenerator() {
         {/* Narrative Details */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
           <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 space-y-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
               Core Motivation
             </span>
             <p className="text-xs text-zinc-700 dark:text-zinc-300 font-medium">

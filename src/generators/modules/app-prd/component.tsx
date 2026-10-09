@@ -166,7 +166,7 @@ CREATE INDEX idx_${slug.replace(/-/g, "_")}_user ON ${slug.replace(/-/g, "_")}_i
 
 ---
 
-## 6. Step-by-Step Vibe Coder Implementation Plan
+## 6. Engineering Implementation Roadmap
 
 ### Phase 1: Foundation & Scaffold (Day 1)
 - Scaffold Next.js App Router project with Tailwind CSS and TypeScript strict mode.

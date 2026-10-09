@@ -49,7 +49,7 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
       {
         title: "Token Export",
         description: "Clean markdown ready for AI agents",
-        image: "https://images.unsplash.com/photo-1542744094-3a31727221eb?auto=format&fit=crop&w=400&h=250&q=80",
+        image: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=400&h=250&q=80",
       },
     ],
   },
@@ -637,14 +637,14 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     slug: "batch-image-resizer",
     title: "Batch Image Resizer",
     category: "DESIGN",
-    coverImage: "https://images.unsplash.com/photo-1542744094-3a31727221eb?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=80",
+    coverImage: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=600&h=600&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1452587925148-ce544e77e70d?auto=format&fit=crop&w=1920&q=80",
     tagline: "Batch resize photos and graphics to exact dimensions, aspect ratios, and ZIP export.",
     activities: [
       {
         title: "Multi-file Canvas Resizing",
         description: "Scale tens of images simultaneously with bicubic smoothing",
-        image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=400&h=250&q=80",
+        image: "https://images.unsplash.com/photo-1471341971476-ae15ff5dd4ea?auto=format&fit=crop&w=400&h=250&q=80",
       },
       {
         title: "Batch ZIP Export",
@@ -670,6 +670,146 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
         title: "Batch Compression ZIP",
         description: "Package optimized assets instantly without server upload",
         image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+    ],
+  },
+  "text-cleaner": {
+    slug: "text-cleaner",
+    title: "Text Cleaner & Normalizer",
+    category: "PRODUCTIVITY",
+    coverImage: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=600&h=600&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=1920&q=80",
+    tagline: "Strip zero-width artifacts, standardize line breaks, and normalize Unicode text.",
+    activities: [
+      {
+        title: "Invisible Character Sweep",
+        description: "Detect and remove hidden Unicode whitespace and zero-width spaces",
+        image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+      {
+        title: "Line Break Formatting",
+        description: "Normalize CRLF line breaks and clean multi-paragraph blocks",
+        image: "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+    ],
+  },
+  "whatsapp-link": {
+    slug: "whatsapp-link",
+    title: "WhatsApp Click-to-Chat Builder",
+    category: "MARKETING",
+    coverImage: "https://images.unsplash.com/photo-1512428559087-560fa5ceab42?auto=format&fit=crop&w=600&h=600&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1577563908411-5077b6dc7624?auto=format&fit=crop&w=1920&q=80",
+    tagline: "Create instant chat links with custom pre-filled message text and QR codes.",
+    activities: [
+      {
+        title: "Direct Chat URL",
+        description: "Format international phone numbers into instant wa.me links",
+        image: "https://images.unsplash.com/photo-1512428559087-560fa5ceab42?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+      {
+        title: "QR Code Export",
+        description: "Generate scannable codes for print packaging and marketing banners",
+        image: "https://images.unsplash.com/photo-1577563908411-5077b6dc7624?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+    ],
+  },
+  "campaign-url-qa": {
+    slug: "campaign-url-qa",
+    title: "Campaign URL QA & Inspector",
+    category: "MARKETING",
+    coverImage: "https://images.unsplash.com/photo-1533750349088-cd871a92f312?auto=format&fit=crop&w=600&h=600&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?auto=format&fit=crop&w=1920&q=80",
+    tagline: "Verify UTM tracking tags, inspect redirect chains, and eliminate broken query strings.",
+    activities: [
+      {
+        title: "UTM Audit",
+        description: "Validate source, medium, and campaign tracking parameters",
+        image: "https://images.unsplash.com/photo-1533750349088-cd871a92f312?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+      {
+        title: "URL Protocol Check",
+        description: "Ensure HTTPS security and detect malformed percent-encodings",
+        image: "https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+    ],
+  },
+  "quotation-generator": {
+    slug: "quotation-generator",
+    title: "Quotation & Scope Estimator",
+    category: "SALES",
+    coverImage: "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=600&h=600&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=1920&q=80",
+    tagline: "Draft commercial client quotes with line-item estimates, currency, and print styling.",
+    activities: [
+      {
+        title: "Line Item Calculations",
+        description: "Automated subtotal, tax rate, and milestone payment schedules",
+        image: "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+      {
+        title: "Print-Ready Export",
+        description: "Clean browser print stylesheets optimized for clean PDF export",
+        image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+    ],
+  },
+  "csv-cleaner": {
+    slug: "csv-cleaner",
+    title: "CSV Data Cleaner",
+    category: "PRODUCTIVITY",
+    coverImage: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&h=600&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1920&q=80",
+    tagline: "Diagnose delimiter discrepancies, normalize quotes, and export cleaned CSV records.",
+    activities: [
+      {
+        title: "Delimiter Detection",
+        description: "Identify commas, tabs, and semicolons across unstructured tabular data",
+        image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+      {
+        title: "Row Sanitization",
+        description: "Strip ragged rows, trim trailing delimiters, and format headers",
+        image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+    ],
+  },
+  "bulk-filename-builder": {
+    slug: "bulk-filename-builder",
+    title: "Bulk Filename Builder",
+    category: "PRODUCTIVITY",
+    coverImage: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&h=600&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1568667256549-094345857637?auto=format&fit=crop&w=1920&q=80",
+    tagline: "Format mass file renames with sequential numbering, kebab-case, and prefix rules.",
+    activities: [
+      {
+        title: "Regex Pattern Match",
+        description: "Search and replace target patterns with dynamic index counters",
+        image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+      {
+        title: "Batch Shell Script",
+        description: "Export instant bash/zsh mv command scripts for local terminal execution",
+        image: "https://images.unsplash.com/photo-1568667256549-094345857637?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+    ],
+  },
+  "contrast-checker": {
+    slug: "contrast-checker",
+    title: "WCAG Contrast Checker",
+    category: "DESIGN",
+    coverImage: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&h=600&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1920&q=80",
+    tagline: "Calculate precise luminance ratios and audit color pairs against WCAG AA and AAA.",
+    activities: [
+      {
+        title: "Luminance Formula",
+        description: "Precise relative luminance calculations conforming to WCAG 2.1",
+        image: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+      {
+        title: "Color Pair Matrix",
+        description: "Real-time compliance feedback for text, buttons, and UI components",
+        image: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=400&h=250&q=80",
       },
     ],
   },

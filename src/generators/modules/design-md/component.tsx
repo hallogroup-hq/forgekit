@@ -15,7 +15,6 @@ import {
   AlertCircle,
   Camera,
   Upload,
-  Sparkles,
   ShieldCheck,
   FileCode,
   ChevronDown,
@@ -568,7 +567,7 @@ export default function DesignMdGenerator() {
             }`}
           >
             <div className="flex items-center gap-2 mb-1">
-              <Sparkles className="w-4 h-4 text-emerald-500" />
+              <Layers className="w-4 h-4 text-emerald-500" />
               <span className="text-xs font-bold">3. Quick Archetype</span>
             </div>
             <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-tight">
@@ -717,7 +716,7 @@ export default function DesignMdGenerator() {
         <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-500/10 space-y-3 animate-in fade-in">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" />
+              <Layers className="w-3.5 h-3.5" />
               <span>Quick Archetype Preset (Synthesized from Scratch)</span>
             </span>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">

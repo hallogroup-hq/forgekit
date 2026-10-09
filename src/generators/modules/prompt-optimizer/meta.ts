@@ -6,7 +6,7 @@ export const meta: ToolMeta = {
   shortTitle: "Prompt Optimizer",
   description:
     "Refactor vague prompts into production-grade AI system prompts with context guards, chain-of-thought, and XML schemas.",
-  category: "vibe-coder",
+  category: "developer",
   tags: ["prompt", "ai", "llm", "claude", "cursor", "gpt", "system-prompt"],
   icon: "SlidersHorizontal",
   lifecycle: "development",

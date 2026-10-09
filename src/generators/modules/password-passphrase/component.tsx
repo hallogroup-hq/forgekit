@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { RefreshCw, ShieldCheck, ShieldAlert, Sparkles, Key, BookOpen, Layers } from "lucide-react";
+import { RefreshCw, ShieldCheck, ShieldAlert, Key, BookOpen, Layers } from "lucide-react";
 import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 

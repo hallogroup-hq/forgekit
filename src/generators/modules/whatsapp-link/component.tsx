@@ -7,7 +7,6 @@ import {
   Download,
   Code2,
   QrCode,
-  Sparkles,
   MessageCircle,
   Copy,
   Check,

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Download, Bot } from "lucide-react";
+import { Download, FileCode2 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { downloadFile } from "@/lib/utils";
@@ -10,7 +10,7 @@ type TargetTool = ".cursorrules" | "CLAUDE.md" | "SYSTEM_PROMPT.txt";
 
 export default function AiRulesGenerator() {
   const [target, setTarget] = useState<TargetTool>(".cursorrules");
-  const [projectName, setProjectName] = useState("My Awesome App");
+  const [projectName, setProjectName] = useState("ForgeKit Developer Suite");
   const [framework, setFramework] = useState("Next.js 15 (App Router, React 19)");
   const [styling, setStyling] = useState("Tailwind CSS v4");
   const [database, setDatabase] = useState("Supabase (PostgreSQL, Row Level Security)");
@@ -213,7 +213,7 @@ ${strictTypes ? "- TypeScript Strictness: NEVER use `any`. Always use explicit i
       <div className="lg:col-span-7 flex flex-col rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-950/60 overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
           <div className="flex items-center gap-2">
-            <Bot className="w-4 h-4 text-violet-500" />
+            <FileCode2 className="w-4 h-4 text-violet-500" />
             <span className="text-xs font-mono font-medium text-zinc-700 dark:text-zinc-300">
               {target}
             </span>

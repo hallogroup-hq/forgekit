@@ -15,7 +15,6 @@ import {
   Check,
   Upload,
   Image as ImageIcon,
-  Sparkles,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { downloadFile } from "@/lib/utils";

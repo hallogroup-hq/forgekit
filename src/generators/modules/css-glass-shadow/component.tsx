@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Sparkles, Sliders } from "lucide-react";
+import { Layers, Sliders } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
 import {
   hexToRgb,
@@ -184,7 +184,7 @@ export default function CssGlassShadowGenerator() {
           >
             <div className="flex items-center justify-between mb-4">
               <div className="w-8 h-8 rounded-lg bg-white/20 backdrop-blur-md flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
+                <Layers className="w-4 h-4 text-white" />
               </div>
               <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/20 text-white backdrop-blur-md">
                 Glass UI

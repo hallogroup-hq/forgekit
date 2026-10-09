@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useRef } from "react";
-import { Check, Sparkles, Download, Code, Eye, LayoutTemplate } from "lucide-react";
+import { Check, Download, Code, Eye, LayoutTemplate } from "lucide-react";
 import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { downloadFile } from "@/lib/utils";
@@ -290,7 +290,7 @@ export default function EmailSignatureGenerator() {
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <LayoutTemplate className="w-3.5 h-3.5" />
                   <span>Copy for Email Client</span>
                 </>
               )}

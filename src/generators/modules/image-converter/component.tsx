@@ -10,7 +10,6 @@ import {
   FileImage,
   ArrowRight,
   TrendingDown,
-  Sparkles,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import JSZip from "jszip";

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { Download, Bot, Plus, Trash2 } from "lucide-react";
+import { Download, FileText, Plus, Trash2 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { downloadFile } from "@/lib/utils";
@@ -18,17 +18,17 @@ interface PrdPreset {
 
 const PRESETS: PrdPreset[] = [
   {
-    name: "SaaS AI Copilot",
-    appName: "BrieflyAI",
-    pitch: "An AI-powered client meeting summarizer and task extractor for freelance design agencies.",
-    persona: "Solo agency owners and freelancers handling 10+ client calls per week.",
-    stack: "Next.js 15, Tailwind CSS, OpenAI / Gemini SDK, TanStack Query",
-    database: "Supabase (PostgreSQL with Row Level Security)",
+    name: "Invoicing & Billing Portal",
+    appName: "InvoiceFlow",
+    pitch: "A self-hosted billing engine for independent software agencies to generate quotes, track payment status, and reconcile invoices.",
+    persona: "Studio founders and finance managers managing multiple concurrent client retainers.",
+    stack: "Next.js 15, Tailwind CSS, PostgreSQL, Drizzle ORM, Stripe Connect",
+    database: "PostgreSQL on Neon with Row Level Security",
     features: [
-      "Upload audio or paste Zoom transcripts with drag-and-drop",
-      "One-click action item extraction with direct Notion integration",
-      "Client-shareable executive summaries with protected secret links",
-      "Stripe recurring subscription checkout (Free tier + $19/mo Pro)",
+      "Multi-currency invoice creation with custom tax and discount rules",
+      "Client-facing payment link portal with Stripe ACH & Card checkout",
+      "Automated PDF receipt and quotation generation with agency branding",
+      "Payment reconciliation webhook handler with audit event log",
     ],
   },
   {
@@ -62,16 +62,16 @@ const PRESETS: PrdPreset[] = [
 ];
 
 export default function AppPrdGenerator() {
-  const [appName, setAppName] = useState("BrieflyAI");
-  const [pitch, setPitch] = useState("An AI-powered client meeting summarizer and task extractor for freelance design agencies.");
-  const [persona, setPersona] = useState("Solo agency owners and freelancers handling 10+ client calls per week.");
-  const [stack, setStack] = useState("Next.js 15, Tailwind CSS, Gemini / OpenAI API, TanStack Query");
-  const [database, setDatabase] = useState("Supabase (PostgreSQL with Row Level Security)");
+  const [appName, setAppName] = useState("InvoiceFlow");
+  const [pitch, setPitch] = useState("A self-hosted billing engine for independent software agencies to generate quotes, track payment status, and reconcile invoices.");
+  const [persona, setPersona] = useState("Studio founders and finance managers managing multiple concurrent client retainers.");
+  const [stack, setStack] = useState("Next.js 15, Tailwind CSS, PostgreSQL, Drizzle ORM, Stripe Connect");
+  const [database, setDatabase] = useState("PostgreSQL on Neon with Row Level Security");
   const [features, setFeatures] = useState<string[]>([
-    "Upload audio or paste Zoom transcripts with drag-and-drop",
-    "One-click action item extraction with direct Notion integration",
-    "Client-shareable executive summaries with protected secret links",
-    "Stripe recurring subscription checkout (Free tier + $19/mo Pro)",
+    "Multi-currency invoice creation with custom tax and discount rules",
+    "Client-facing payment link portal with Stripe ACH & Card checkout",
+    "Automated PDF receipt and quotation generation with agency branding",
+    "Payment reconciliation webhook handler with audit event log",
   ]);
   const [newFeatureText, setNewFeatureText] = useState("");
   const [activeTab, setActiveTab] = useState<"spec" | "prompt" | "preview">("spec");
@@ -377,7 +377,7 @@ Begin by setting up the core data models and the primary interactive workspace c
                   : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
               }`}
             >
-              <Bot className="w-3.5 h-3.5" />
+              <FileText className="w-3.5 h-3.5" />
               Cursor Master Prompt
             </button>
           </div>

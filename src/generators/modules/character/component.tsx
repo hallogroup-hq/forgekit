@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Dices, Download, Sparkles, Shield, Zap, BookOpen, Heart, Eye } from "lucide-react";
+import { Dices, Download, Shield, Zap, BookOpen, Heart, Eye } from "lucide-react";
 import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { downloadFile } from "@/lib/utils";

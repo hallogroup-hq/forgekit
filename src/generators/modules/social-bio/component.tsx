@@ -25,28 +25,28 @@ interface BioPreset {
 
 const PRESETS: BioPreset[] = [
   {
-    id: "vibe-coder",
-    name: "Indie Founder & Vibe Coder",
-    archetype: "Builder",
-    headline: "Building AI tools with high craft",
-    proof: "Shipped 12 apps in 12 months | 40k+ users",
-    cta: "👇 Try my latest launch below",
-  },
-  {
-    id: "senior-dev",
-    name: "Full-Stack Dev & Open Source",
+    id: "lead-engineer",
+    name: "Staff Software Engineer",
     archetype: "Engineer",
-    headline: "Staff Engineer @ Next.js ecosystem",
-    proof: "Core contributor to open-source | 10k stars",
-    cta: "Building in public daily",
+    headline: "Staff Engineer | Distributed Systems & Web Standards",
+    proof: "Core contributor to open-source | 10k+ stars",
+    cta: "Writing notes on systems & architecture ✍️",
   },
   {
-    id: "growth-marketer",
-    name: "Growth Marketer & Copywriter",
+    id: "product-designer",
+    name: "Lead Product Designer",
+    archetype: "Design",
+    headline: "Lead Designer | Design Systems & Web Craft",
+    proof: "Crafting accessible interfaces for 2M+ users",
+    cta: "Explore my interactive case studies below 👇",
+  },
+  {
+    id: "growth-lead",
+    name: "Growth Marketing Lead",
     archetype: "Growth",
-    headline: "Scaling B2B SaaS from $0 to $1M ARR",
-    proof: "Obsessed with conversion & retention funnels",
-    cta: "Get my weekly tear-downs 📩",
+    headline: "Lead Growth Strategist | B2B SaaS Funnels",
+    proof: "Data-driven acquisition, SEO & lifecycle retention",
+    cta: "Weekly growth teardowns in your inbox 📩",
   },
 ];
 

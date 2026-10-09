@@ -5,7 +5,7 @@ export const meta: ToolMeta = {
   title: "System Prompt & Agent Rules (.cursorrules / CLAUDE.md)",
   shortTitle: "Agent Rules",
   description: "Generate tailored system instructions, tech-stack rules, and file constraints for Cursor, Claude Code, and Windsurf.",
-  category: "vibe-coder",
+  category: "developer",
   tags: ["cursorrules", "claude", "cursor", "developer", "prompt", "typescript", "rules"],
   icon: "FileCode2",
   lifecycle: "development",

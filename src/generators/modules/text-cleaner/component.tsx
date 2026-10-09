@@ -5,7 +5,6 @@ import {
   Download,
   Trash2,
   RotateCcw,
-  Sparkles,
   AlignLeft,
   ArrowRightLeft,
   Check,
@@ -266,7 +265,7 @@ export default function TextCleanerGenerator() {
       <div className="lg:col-span-6 space-y-6">
         <div className="flex items-center justify-between">
           <label className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" />
+            <Check className="w-3.5 h-3.5" />
             <span>Clean Output</span>
           </label>
           <div className="flex items-center gap-2">

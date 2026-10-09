@@ -10,7 +10,6 @@ import {
   AlertTriangle,
   FileText,
   MessageSquare,
-  Sparkles,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
@@ -199,7 +198,7 @@ export default function MeetingAgendaGenerator() {
         ) : (
           <div className="flex items-center justify-between px-3 py-2 rounded-xl border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300 text-xs">
             <span className="flex items-center gap-1.5 font-medium">
-              <Sparkles className="w-3.5 h-3.5" />
+              <CheckCircle2 className="w-3.5 h-3.5" />
               <span>Timebox within planned duration: {timeboxAnalysis.totalTopicMinutes} / {timeboxAnalysis.plannedMinutes} min</span>
             </span>
             <span className="font-mono text-[11px]">

@@ -7,7 +7,6 @@ import {
   XCircle,
   Download,
   RotateCcw,
-  Sparkles,
   Copy,
   ExternalLink,
   ShieldCheck,

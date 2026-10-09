@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Download, RefreshCw, Eye, Code, Palette, Layers, Sparkles } from "lucide-react";
+import { Download, RefreshCw, Eye, Code, Palette, Layers } from "lucide-react";
 import confetti from "canvas-confetti";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { downloadFile } from "@/lib/utils";
@@ -119,7 +119,7 @@ background-position: center;`;
                   : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300"
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Palette className="w-3.5 h-3.5" />
               Organic Closed Blob
             </button>
             <button

@@ -19,15 +19,15 @@ interface Preset {
 
 const PRESETS: Preset[] = [
   {
-    id: "fullstack-agent",
-    name: "Autonomous Coding Agent",
-    role: "Staff Software Engineer and Systems Architect",
-    goal: "Build scalable, type-safe full-stack features using Next.js 15, TypeScript, and Tailwind CSS with strict error boundaries.",
+    id: "systems-architect",
+    name: "Systems Architect & Reviewer",
+    role: "Principal Systems Architect and Senior Code Reviewer",
+    goal: "Review pull requests and architectural proposals for concurrency bottlenecks, state consistency, and security boundaries.",
     constraints: [
-      "Strict TypeScript with zero 'any' types",
-      "No placeholder comments like '// add logic here'",
-      "Include unit tests and edge-case handling",
-      "Prioritize performance and minimal bundle size",
+      "Enforce strict invariant validation and defensive error handling",
+      "Profile CPU and memory allocation hotspots before introducing abstractions",
+      "Ensure 100% test coverage on edge cases and failure modes",
+      "No unverified assumptions about network or database reliability",
     ],
   },
   {

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { CheckCircle2, XCircle, ArrowLeftRight, Sparkles } from "lucide-react";
+import { CheckCircle2, XCircle, ArrowLeftRight } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { calculateContrastRatio } from "./engine";
 

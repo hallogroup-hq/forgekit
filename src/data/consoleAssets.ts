@@ -813,6 +813,46 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
       },
     ],
   },
+  "document-scanner": {
+    slug: "document-scanner",
+    title: "Document Scanner to PDF",
+    category: "PRODUCTIVITY",
+    coverImage: "https://images.unsplash.com/photo-1568667256549-094345857637?auto=format&fit=crop&w=600&h=600&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=1920&q=80",
+    tagline: "Scan paper documents, notes, and receipts directly from mobile camera or upload to high-res PDF.",
+    activities: [
+      {
+        title: "4-Point Perspective Warp",
+        description: "Unroll angled phone photos into flat, crisp 2D sheets with touch loupe controls",
+        image: "https://images.unsplash.com/photo-1507925921958-8a62f3d1a50d?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+      {
+        title: "Magic Scanner Filter",
+        description: "Adaptive shadow suppression and paper bleaching for crisp photocopier contrast",
+        image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+    ],
+  },
+  "pdf-signer": {
+    slug: "pdf-signer",
+    title: "PDF Signer & Official Stamp",
+    category: "DOCUMENTS",
+    coverImage: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&h=600&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=1920&q=80",
+    tagline: "Sign PDF documents, remove paper backgrounds, and apply realistic wet ink company stamps.",
+    activities: [
+      {
+        title: "Hand-Drawn & Uploaded TTD",
+        description: "Draw signatures on smooth touch pad or upload signature photo with auto-cutout",
+        image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+      {
+        title: "Authentic Wet Ink Stempel",
+        description: "Simulate physical rubber stamp pressure gradients, micro-porosity, and ink bleed",
+        image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+    ],
+  },
 };
 
 export function getConsoleAsset(slug: string): ConsoleAsset {

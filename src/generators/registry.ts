@@ -121,8 +121,16 @@ import BatchImageResizerGenerator from "./modules/batch-image-resizer/component"
 import { meta as imageConverterMeta } from "./modules/image-converter/meta";
 import ImageConverterGenerator from "./modules/image-converter/component";
 
+import { meta as docScannerMeta } from "./modules/document-scanner/meta";
+import DocumentScannerGenerator from "./modules/document-scanner/component";
+
+import { meta as pdfSignerMeta } from "./modules/pdf-signer/meta";
+import PdfSignerGenerator from "./modules/pdf-signer/component";
+
 export const registry: GeneratorModule[] = [
   // Flagship Workstation Modules
+  { meta: docScannerMeta, component: DocumentScannerGenerator },
+  { meta: pdfSignerMeta, component: PdfSignerGenerator },
   { meta: qrMeta, component: QrCodeGenerator },
   { meta: batchResizerMeta, component: BatchImageResizerGenerator },
   { meta: imageConverterMeta, component: ImageConverterGenerator },

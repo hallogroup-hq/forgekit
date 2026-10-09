@@ -2,7 +2,7 @@ import { ToolMeta } from "../../types";
 
 export const meta: ToolMeta = {
   slug: "password-passphrase",
-  title: "Password & Passphrase Studio",
+  title: "Password & Passphrase Generator",
   shortTitle: "Password Generator",
   description: "Cryptographically secure random passwords and memorable Diceware passphrases with real-time Shannon entropy analysis.",
   category: "developer",

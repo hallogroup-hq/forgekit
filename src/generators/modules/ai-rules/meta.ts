@@ -2,12 +2,12 @@ import { ToolMeta } from "../../types";
 
 export const meta: ToolMeta = {
   slug: "ai-rules",
-  title: "AI Rules & Context Studio (.cursorrules / CLAUDE.md)",
-  shortTitle: "AI Coding Rules",
+  title: "System Prompt & Agent Rules (.cursorrules / CLAUDE.md)",
+  shortTitle: "Agent Rules",
   description: "Generate tailored system instructions, tech-stack rules, and file constraints for Cursor, Claude Code, and Windsurf.",
   category: "vibe-coder",
-  tags: ["cursorrules", "claude", "cursor", "vibe-coder", "ai", "prompt", "typescript", "rules"],
-  icon: "Bot",
+  tags: ["cursorrules", "claude", "cursor", "developer", "prompt", "typescript", "rules"],
+  icon: "FileCode2",
   lifecycle: "development",
   isPopular: true,
   isNew: true,

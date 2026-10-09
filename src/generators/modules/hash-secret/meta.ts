@@ -2,7 +2,7 @@ import { ToolMeta } from "../../types";
 
 export const meta: ToolMeta = {
   slug: "hash-secret",
-  title: "Hash & Secret Key Studio",
+  title: "Hash & Secret Key Generator",
   shortTitle: "Hash & Secret",
   description: "Cryptographic hash digest calculator (SHA-256, SHA-512, SHA-384, SHA-1) and secure API token secret generator.",
   category: "developer",

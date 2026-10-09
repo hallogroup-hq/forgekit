@@ -2,13 +2,13 @@ import { ToolMeta } from "../../types";
 
 export const meta: ToolMeta = {
   slug: "prompt-optimizer",
-  title: "Prompt Optimizer Studio",
-  shortTitle: "Prompt Studio",
+  title: "Prompt Optimizer & System Prompts",
+  shortTitle: "Prompt Optimizer",
   description:
     "Refactor vague prompts into production-grade AI system prompts with context guards, chain-of-thought, and XML schemas.",
   category: "vibe-coder",
   tags: ["prompt", "ai", "llm", "claude", "cursor", "gpt", "system-prompt"],
-  icon: "Sparkles",
+  icon: "SlidersHorizontal",
   lifecycle: "development",
   isNew: true,
   isPopular: true,

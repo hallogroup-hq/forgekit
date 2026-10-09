@@ -2,7 +2,7 @@ import { ToolMeta } from "../../types";
 
 export const meta: ToolMeta = {
   slug: "email-signature",
-  title: "Email Signature Studio",
+  title: "Email Signature Builder",
   shortTitle: "Email Signature",
   description: "Craft modern, responsive HTML email signatures with rich text copy support for Gmail, Outlook, and Apple Mail.",
   category: "growth",

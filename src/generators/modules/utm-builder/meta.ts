@@ -2,7 +2,7 @@ import { ToolMeta } from "../../types";
 
 export const meta: ToolMeta = {
   slug: "utm-builder",
-  title: "UTM Campaign Builder & Matrix Studio",
+  title: "UTM Campaign Builder",
   shortTitle: "UTM Builder",
   description: "Build clean, consistent UTM tracking URLs with query/hash preservation, multi-channel batch matrix generation, and CSV export.",
   category: "growth",

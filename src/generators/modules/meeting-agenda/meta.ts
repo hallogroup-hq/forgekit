@@ -2,7 +2,7 @@ import { ToolMeta } from "../../types";
 
 export const meta: ToolMeta = {
   slug: "meeting-agenda",
-  title: "Meeting Agenda & Timebox Studio",
+  title: "Meeting Agenda Builder",
   shortTitle: "Meeting Agenda",
   description: "Structure crisp, timeboxed meeting agendas with automated timeline interval calculations, overrun alerts, and Markdown/Slack exports.",
   category: "content",

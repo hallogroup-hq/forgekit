@@ -2,7 +2,7 @@ import { ToolMeta } from "../../types";
 
 export const meta: ToolMeta = {
   slug: "opengraph-preview",
-  title: "OpenGraph & Meta Tag Studio",
+  title: "OpenGraph Meta Preview",
   shortTitle: "OpenGraph & SEO",
   description: "Live social share card previewer for Google, Twitter/X, and LinkedIn with HTML & Next.js metadata export.",
   category: "growth",

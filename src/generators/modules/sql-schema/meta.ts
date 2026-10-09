@@ -2,7 +2,7 @@ import { ToolMeta } from "../../types";
 
 export const meta: ToolMeta = {
   slug: "sql-schema",
-  title: "SQL Schema & Seed Studio (Postgres / MySQL / SQLite)",
+  title: "SQL Schema Generator",
   shortTitle: "SQL Schema & Seeds",
   description: "Design relational database tables, generate DDL schemas with indexes, realistic mock SQL INSERT seeds, and TypeScript interfaces.",
   category: "developer",

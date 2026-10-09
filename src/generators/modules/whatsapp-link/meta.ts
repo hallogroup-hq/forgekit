@@ -2,7 +2,7 @@ import { ToolMeta } from "../../types";
 
 export const meta: ToolMeta = {
   slug: "whatsapp-link",
-  title: "WhatsApp Direct Link & QR Studio",
+  title: "WhatsApp Direct Link",
   shortTitle: "WhatsApp Link",
   description: "Create direct wa.me chat links with country dial codes, prefilled messages, branded QR codes, and website HTML button snippets.",
   category: "growth",

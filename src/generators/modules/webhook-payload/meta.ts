@@ -2,7 +2,7 @@ import { ToolMeta } from "../../types";
 
 export const meta: ToolMeta = {
   slug: "webhook-payload",
-  title: "Webhook Payload Generator & Signature Studio",
+  title: "Webhook Payload Tester",
   shortTitle: "Webhook Studio",
   description: "Mock webhook payloads and signature headers for Stripe, GitHub, Shopify, Clerk, and Supabase.",
   category: "developer",

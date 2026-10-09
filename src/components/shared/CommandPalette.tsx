@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Search, X, Sparkles, ArrowRight, CornerDownLeft } from "lucide-react";
+import { Search, X, ArrowRight, CornerDownLeft } from "lucide-react";
 import { registry } from "@/generators/registry";
 import { CATEGORIES } from "@/generators/types";
 import { Icon } from "./Icon";
@@ -112,7 +112,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         <div className="max-h-[360px] overflow-y-auto p-2">
           {filteredTools.length === 0 ? (
             <div className="py-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
-              <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-30 text-amber-500" />
+              <Search className="w-8 h-8 mx-auto mb-2 opacity-30 text-zinc-400" />
               <p>No generators found for &ldquo;{query}&rdquo;</p>
               <p className="text-xs text-zinc-400 mt-1">Try searching by category or keywords.</p>
             </div>

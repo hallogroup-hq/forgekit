@@ -2,7 +2,7 @@ import { ToolMeta } from "../../types";
 
 export const meta: ToolMeta = {
   slug: "css-glass-shadow",
-  title: "CSS Glass & 3D Shadow Studio",
+  title: "CSS Glass & Shadow Generator",
   shortTitle: "CSS Glass & Shadow",
   description: "Craft modern Frosted Glassmorphism and layered 3D shadows with live visual preview and CSS/Tailwind export.",
   category: "design",

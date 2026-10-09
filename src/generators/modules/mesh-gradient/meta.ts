@@ -2,7 +2,7 @@ import { ToolMeta } from "../../types";
 
 export const meta: ToolMeta = {
   slug: "mesh-gradient",
-  title: "CSS Mesh Gradient & Shader Studio",
+  title: "Mesh Gradient Generator",
   shortTitle: "Mesh Gradient Studio",
   description: "Design multi-point fluid radial gradients and aurora mesh backgrounds with pure CSS, Tailwind, and SVG exports.",
   category: "design",

@@ -2,7 +2,7 @@ import { ToolMeta } from "../../types";
 
 export const meta: ToolMeta = {
   slug: "crontab",
-  title: "Crontab Expression Studio",
+  title: "Cron Expression Tester",
   shortTitle: "Crontab Generator",
   description: "Visual cron schedule builder with natural human explanations and next upcoming execution timestamps.",
   category: "developer",

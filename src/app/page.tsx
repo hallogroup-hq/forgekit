@@ -26,15 +26,16 @@ import { usePreferences } from "@/lib/hooks/usePreferences";
 import { soundManager } from "@/lib/sound";
 import { CommandPalette } from "@/components/shared/CommandPalette";
 import { getConsoleAsset } from "@/data/consoleAssets";
+import { ConsoleCartridgeCover } from "@/components/shared/ConsoleCartridgeCover";
 
 const CATEGORY_TABS = [
-  { id: "all", label: "All" },
+  { id: "all", label: "All Utilities" },
+  { id: "developer", label: "Developer" },
+  { id: "creative", label: "Design" },
   { id: "productivity", label: "Productivity" },
-  { id: "sales", label: "Sales" },
   { id: "marketing", label: "Marketing" },
-  { id: "creative", label: "Creative" },
-  { id: "vibe-coder", label: "Dev & AI" },
-  { id: "pinned", label: "Favorites" },
+  { id: "sales", label: "Sales & Docs" },
+  { id: "pinned", label: "Saved" },
 ];
 
 function matchesCategory(tool: GeneratorModule, categoryId: string): boolean {
@@ -43,13 +44,15 @@ function matchesCategory(tool: GeneratorModule, categoryId: string): boolean {
   const cat = tool.meta.category;
 
   if (categoryId === "productivity") {
-    return [
-      "csv-cleaner",
-      "text-cleaner",
-      "bulk-filename-builder",
-      "meeting-agenda",
-      "markdown-table",
-    ].includes(slug);
+    return (
+      [
+        "csv-cleaner",
+        "text-cleaner",
+        "bulk-filename-builder",
+        "meeting-agenda",
+        "markdown-table",
+      ].includes(slug) || cat === "content"
+    );
   }
 
   if (categoryId === "sales") {
@@ -90,7 +93,7 @@ function matchesCategory(tool: GeneratorModule, categoryId: string): boolean {
     );
   }
 
-  if (categoryId === "vibe-coder") {
+  if (categoryId === "developer" || categoryId === "vibe-coder") {
     return (
       [
         "ai-rules",
@@ -278,19 +281,62 @@ export default function PS5InspiredHomePage() {
 
   return (
     <div className="relative min-h-screen w-full bg-[#05070b] text-white flex flex-col justify-between overflow-x-hidden font-sans select-none selection:bg-white/20">
-      {/* 1. CINEMATIC FULL-SCREEN KEY ART BACKDROP */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        <img
-          key={activeAsset.backdropImage}
-          src={activeAsset.backdropImage}
-          alt={activeAsset.title}
-          className="w-full h-full object-cover object-center absolute inset-0 opacity-40 scale-105 transition-all duration-700 ease-out animate-in fade-in"
+      {/* 1. CINEMATIC PLAYSTATION 5 ATMOSPHERIC AMBIENT CANVAS */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 select-none">
+        {/* Deep PlayStation Canvas Base */}
+        <div className="absolute inset-0 bg-[#04060a]" />
+
+        {/* Dynamic Category Ambient Light Field */}
+        <div
+          className={`absolute -top-32 -right-32 w-[650px] h-[650px] rounded-full blur-[140px] opacity-25 transition-all duration-1000 ${
+            activeTool.meta.category === "developer" || activeTool.meta.category === "vibe-coder"
+              ? "bg-blue-600"
+              : activeTool.meta.category === "design"
+              ? "bg-purple-600"
+              : activeTool.meta.category === "growth"
+              ? "bg-emerald-600"
+              : "bg-slate-400"
+          }`}
+        />
+        <div
+          className={`absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full blur-[160px] opacity-20 transition-all duration-1000 ${
+            activeTool.meta.category === "developer" || activeTool.meta.category === "vibe-coder"
+              ? "bg-cyan-700"
+              : activeTool.meta.category === "design"
+              ? "bg-pink-700"
+              : activeTool.meta.category === "growth"
+              ? "bg-teal-700"
+              : "bg-zinc-600"
+          }`}
         />
 
-        {/* Cinematic Vignette Overlays for crisp contrast and readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#05070b] via-[#05070b]/60 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#05070b]/90 via-[#05070b]/40 to-transparent" />
-        <div className="absolute inset-0 bg-radial-at-c from-transparent via-[#05070b]/30 to-[#05070b]/80" />
+        {/* Authentic PlayStation 5 Ambient Wave Vector */}
+        <svg
+          className="absolute inset-0 w-full h-full opacity-[0.035]"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M-200,300 C400,100 800,600 1600,200 C2000,0 2400,400 2800,250"
+            fill="none"
+            stroke="#ffffff"
+            strokeWidth="2.5"
+          />
+          <path
+            d="M-200,450 C500,250 900,750 1700,350 C2100,150 2500,550 2900,400"
+            fill="none"
+            stroke="#ffffff"
+            strokeWidth="1.5"
+          />
+        </svg>
+
+        {/* Floating PS Controller Symbol Micro-watermark in Top-Right */}
+        <div className="absolute top-8 right-10 text-white/[0.04] text-[11px] font-mono tracking-[0.4em] hidden lg:block">
+          ○ ✕ △ □ · FORGEKIT ENTERTAINMENT SYSTEM
+        </div>
+
+        {/* Vignette Overlays for Crisp Text Contrast */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#04060a] via-[#04060a]/70 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#04060a]/90 via-[#04060a]/50 to-transparent" />
       </div>
 
       {/* 2. TOP HUD: BRAND & PRIMARY CONTROLS (UNBREAKABLE SINGLE ROW) */}
@@ -498,23 +544,16 @@ export default function PS5InspiredHomePage() {
                       <div
                         className={`w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-2xl relative overflow-hidden transition-all duration-300 ${
                           isSelected
-                            ? "ring-2 ring-white shadow-[0_0_25px_rgba(255,255,255,0.4)]"
-                            : "border border-white/10 hover:border-white/30"
+                            ? "ring-2 ring-white scale-105 shadow-xl shadow-black/80 z-10"
+                            : "border border-white/10 hover:border-white/30 opacity-80 hover:opacity-100"
                         }`}
                       >
-                        <img
-                          src={asset.coverImage}
-                          alt={asset.title}
-                          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
-                          loading="lazy"
+                        <ConsoleCartridgeCover
+                          slug={tool.meta.slug}
+                          title={asset.title}
+                          category={tool.meta.category}
+                          iconName={tool.meta.icon}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/20" />
-                        <div className="absolute top-2.5 left-2.5 p-1 rounded-md bg-black/50 backdrop-blur-md text-white/90">
-                          <Icon name={tool.meta.icon} size={14} />
-                        </div>
-                        <span className="absolute bottom-2 left-2 right-2 text-[10px] font-bold tracking-wide uppercase text-white/95 truncate drop-shadow">
-                          {asset.title}
-                        </span>
                       </div>
 
                       <div
@@ -522,7 +561,7 @@ export default function PS5InspiredHomePage() {
                           isSelected ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
                         }`}
                       >
-                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse shrink-0" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-white/70 shrink-0" />
                         <span className="text-[11px] font-semibold text-white/90 tracking-wide truncate max-w-[120px]">
                           {asset.title}
                         </span>
@@ -554,12 +593,13 @@ export default function PS5InspiredHomePage() {
                     >
                       <div className="flex items-start gap-3">
                         <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-white/10 relative">
-                          <img
-                            src={asset.coverImage}
-                            alt={asset.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          <ConsoleCartridgeCover
+                            slug={tool.meta.slug}
+                            title={asset.title}
+                            category={tool.meta.category}
+                            iconName={tool.meta.icon}
+                            compact
                           />
-                          <div className="absolute inset-0 bg-black/20" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-1">
@@ -612,7 +652,7 @@ export default function PS5InspiredHomePage() {
                   soundManager.playConfirm();
                   if (activeTool) router.push(`/tools/${activeTool.meta.slug}`);
                 }}
-                className="px-7 py-3 rounded-full bg-white hover:bg-zinc-200 text-black font-extrabold text-sm tracking-wide flex items-center gap-2.5 shadow-[0_0_25px_rgba(255,255,255,0.35)] transition-all transform active:scale-95 cursor-pointer"
+                className="px-7 py-3 rounded-full bg-white hover:bg-zinc-100 text-black font-extrabold text-sm tracking-wide flex items-center gap-2.5 shadow-lg shadow-black/60 transition-all transform active:scale-95 cursor-pointer"
               >
                 <span>Launch {activeAsset.title}</span>
                 <ArrowRight className="w-4 h-4" />
@@ -649,31 +689,28 @@ export default function PS5InspiredHomePage() {
               </button>
             </div>
 
-            {/* Feature Activity Cards with Real Photo Thumbnails */}
+            {/* Feature Activity Cards: Real Technical Capabilities */}
             <div className="hidden xl:flex items-center gap-3">
               {activeAsset.activities.map((act, i) => (
                 <div
                   key={i}
-                  className="w-56 rounded-xl bg-black/50 backdrop-blur-md border border-white/10 overflow-hidden flex flex-col group hover:border-white/20 transition-all"
+                  className="w-56 p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 transition-all flex flex-col justify-between space-y-2 select-none"
                 >
-                  <div className="h-20 w-full relative overflow-hidden">
-                    <img
-                      src={act.image}
-                      alt={act.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                    <div className="absolute bottom-1.5 left-2 flex items-center gap-1.5">
-                      <div className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center">
-                        <Play className="w-2.5 h-2.5 text-white fill-white" />
-                      </div>
-                      <span className="text-[10px] font-bold text-white truncate max-w-[170px]">
-                        {act.title}
-                      </span>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-mono font-bold tracking-widest uppercase text-white/50 bg-white/5 px-1.5 py-0.5 rounded border border-white/5">
+                      FEATURE 0{i + 1}
+                    </span>
+                    <span className="text-[10px] text-white/40 font-mono">
+                      {i === 0 ? "△ SPEC" : "□ CAPABILITY"}
+                    </span>
                   </div>
-                  <div className="p-2 text-[10px] text-white/60 leading-tight truncate">
-                    {act.description}
+                  <div>
+                    <h4 className="text-xs font-bold text-white tracking-tight truncate">
+                      {act.title}
+                    </h4>
+                    <p className="text-[11px] text-white/60 leading-relaxed line-clamp-2 mt-0.5">
+                      {act.description}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -687,7 +724,7 @@ export default function PS5InspiredHomePage() {
         <div className="flex items-center gap-2 text-white/50">
           <span className="font-bold text-white/80">ForgeKit</span>
           <span>·</span>
-          <span>Simple UI · Powerful Functionality · Real Usable Outputs</span>
+          <span>Offline-first developer & creative utilities</span>
         </div>
 
         <div className="flex items-center gap-5 text-white/60">
@@ -731,11 +768,13 @@ export default function PS5InspiredHomePage() {
             </button>
 
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl overflow-hidden ring-1 ring-white/20 shrink-0">
-                <img
-                  src={activeAsset.coverImage}
-                  alt={activeAsset.title}
-                  className="w-full h-full object-cover"
+              <div className="w-14 h-14 rounded-2xl overflow-hidden ring-1 ring-white/20 shrink-0">
+                <ConsoleCartridgeCover
+                  slug={activeTool.meta.slug}
+                  title={activeAsset.title}
+                  category={activeTool.meta.category}
+                  iconName={activeTool.meta.icon}
+                  compact
                 />
               </div>
               <div>

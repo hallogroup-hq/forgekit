@@ -2,7 +2,7 @@ import { ToolMeta } from "../../types";
 
 export const meta: ToolMeta = {
   slug: "bulk-filename-builder",
-  title: "Bulk Filename Renamer & Script Studio",
+  title: "Bulk File Renamer",
   shortTitle: "Bulk Renamer",
   description: "Batch rename files with custom prefixes, zero-padded numbering, casing rules, slugification, and export executable Bash/BAT scripts.",
   category: "developer",

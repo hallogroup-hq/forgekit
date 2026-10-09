@@ -12,624 +12,114 @@ export interface ConsoleAsset {
   }[];
 }
 
+function getCategoryTheme(category: string): { accent: string; label: string } {
+  const cat = category.toLowerCase();
+  if (cat.includes("dev") || cat.includes("code") || cat.includes("vibe")) {
+    return { accent: "#3b82f6", label: "DEV" };
+  }
+  if (cat.includes("design") || cat.includes("creat")) {
+    return { accent: "#a855f7", label: "DESIGN" };
+  }
+  if (cat.includes("growth") || cat.includes("market")) {
+    return { accent: "#10b981", label: "GROWTH" };
+  }
+  return { accent: "#94a3b8", label: "WORKFLOW" };
+}
+
+function createCoverSvg(title: string, category: string): string {
+  const { accent, label } = getCategoryTheme(category);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+    <defs>
+      <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#0f1422"/>
+        <stop offset="60%" stop-color="#080c16"/>
+        <stop offset="100%" stop-color="#030408"/>
+      </linearGradient>
+      <radialGradient id="glow" cx="50%" cy="45%" r="55%">
+        <stop offset="0%" stop-color="${accent}" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="${accent}" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="600" height="600" fill="url(#bg)"/>
+    <circle cx="300" cy="270" r="200" fill="url(#glow)"/>
+    <!-- PlayStation Corner Accents -->
+    <rect x="40" y="38" width="90" height="26" rx="6" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.15"/>
+    <text x="85" y="55" fill="#ffffff" fill-opacity="0.8" font-family="monospace" font-size="12" font-weight="bold" letter-spacing="2" text-anchor="middle">${label}</text>
+    <text x="540" y="55" fill="#ffffff" fill-opacity="0.25" font-family="monospace" font-size="13" letter-spacing="3" text-anchor="end">○ ✕ △ □</text>
+    <!-- Center Emblem -->
+    <rect x="220" y="190" width="160" height="160" rx="36" fill="#000000" fill-opacity="0.45" stroke="#ffffff" stroke-opacity="0.18" stroke-width="2"/>
+    <circle cx="300" cy="270" r="38" fill="${accent}" fill-opacity="0.25"/>
+    <circle cx="300" cy="270" r="14" fill="${accent}" fill-opacity="0.9"/>
+    <!-- Bottom Title & Specifications -->
+    <rect x="0" y="440" width="600" height="160" fill="#000000" fill-opacity="0.75"/>
+    <text x="45" y="490" fill="#ffffff" fill-opacity="0.4" font-family="monospace" font-size="12" letter-spacing="2">IN-BROWSER · LOCAL</text>
+    <text x="45" y="530" fill="#ffffff" font-family="sans-serif" font-size="26" font-weight="900" letter-spacing="-0.5">${title.toUpperCase().slice(0, 32)}</text>
+  </svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+function createBackdropSvg(category: string): string {
+  const { accent } = getCategoryTheme(category);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+    <defs>
+      <radialGradient id="aura" cx="75%" cy="30%" r="65%">
+        <stop offset="0%" stop-color="${accent}" stop-opacity="0.22"/>
+        <stop offset="100%" stop-color="#04060a" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="aura2" cx="20%" cy="80%" r="55%">
+        <stop offset="0%" stop-color="${accent}" stop-opacity="0.12"/>
+        <stop offset="100%" stop-color="#04060a" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="1920" height="1080" fill="#04060a"/>
+    <rect width="1920" height="1080" fill="url(#aura)"/>
+    <rect width="1920" height="1080" fill="url(#aura2)"/>
+    <!-- PlayStation Ambient Ribbon -->
+    <path d="M-200,300 C400,100 800,600 1600,200 C2000,0 2400,400 2800,250" fill="none" stroke="#ffffff" stroke-opacity="0.035" stroke-width="2.5"/>
+    <path d="M-200,450 C500,250 900,750 1700,350 C2100,150 2500,550 2900,400" fill="none" stroke="#ffffff" stroke-opacity="0.02" stroke-width="1.5"/>
+    <text x="1860" y="80" fill="#ffffff" fill-opacity="0.04" font-family="monospace" font-size="14" letter-spacing="6" text-anchor="end">○ ✕ △ □ · FORGEKIT</text>
+  </svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
 export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
   "qr-code": {
     slug: "qr-code",
-    title: "QR Code Studio",
-    category: "CREATIVE",
-    coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Generate high-contrast QR codes with custom styling and instant SVG export.",
+    title: "QR Code Generator",
+    category: "GROWTH",
+    coverImage: createCoverSvg("QR Code Generator", "GROWTH"),
+    backdropImage: createBackdropSvg("GROWTH"),
+    tagline: "Generate high-contrast QR codes with custom colors, frame styling, and instant SVG/PNG export.",
     activities: [
       {
-        title: "Preset Palettes",
-        description: "Dark, neon, and high-contrast color styles",
-        image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=400&h=250&q=80",
+        title: "Vector SVG & PNG",
+        description: "Export crisp vector files or high-DPI raster images with transparent backgrounds",
+        image: "",
       },
       {
-        title: "Vector SVG",
-        description: "Infinite resolution vector downloads",
-        image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&h=250&q=80",
+        title: "Reed-Solomon Correction",
+        description: "Configure error correction levels from Low (7%) up to High (30%)",
+        image: "",
       },
     ],
   },
   "design-md": {
     slug: "design-md",
-    title: "DESIGN.MD Extractor",
+    title: "Design.md Inspector",
     category: "DESIGN",
-    coverImage: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Extract typography, palette, and layout principles from any live website.",
+    coverImage: createCoverSvg("Design.md Inspector", "DESIGN"),
+    backdropImage: createBackdropSvg("DESIGN"),
+    tagline: "Extract typography scales, color palettes, and layout systems from real websites or custom specifications.",
     activities: [
       {
-        title: "Live URL Crawler",
-        description: "Inspect DOM styles and color hierarchies",
-        image: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=400&h=250&q=80",
+        title: "3-Layer Architecture",
+        description: "Generate structured Design Tokens, Layout Primitives, and Component Patterns",
+        image: "",
       },
       {
-        title: "Token Export",
-        description: "Clean markdown ready for AI agents",
-        image: "https://images.unsplash.com/photo-1542744094-3a31727221eb?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "prompt-optimizer": {
-    slug: "prompt-optimizer",
-    title: "Prompt Refiner",
-    category: "VIBE CODER",
-    coverImage: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1618172193763-c511deb635ca?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Refine and structure prompts for Claude, Gemini, and GPT with zero fluff.",
-    activities: [
-      {
-        title: "Model Dialing",
-        description: "Optimized formats for coding assistants",
-        image: "https://images.unsplash.com/photo-1617791160505-6f00504e3519?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Few-Shot Injection",
-        description: "Structure context, constraints, and outputs",
-        image: "https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "ai-rules": {
-    slug: "ai-rules",
-    title: "Agent Rules Architect",
-    category: "VIBE CODER",
-    coverImage: "https://images.unsplash.com/photo-1617791160505-6f00504e3519?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Craft custom cursor rules, Claude instructions, and agent configs.",
-    activities: [
-      {
-        title: "Preset Library",
-        description: "Next.js, Python, Rust, and Tailwind best practices",
-        image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Anti-Slop Guard",
-        description: "Eliminate repetitive boilerplate agent outputs",
-        image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  character: {
-    slug: "character",
-    title: "Character Studio RPG",
-    category: "CREATIVE",
-    coverImage: "https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Generate rich RPG character profiles with voice, backstory, and personality.",
-    activities: [
-      {
-        title: "Archetype Generator",
-        description: "Sci-Fi, Cyberpunk, and Dark Fantasy roles",
-        image: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Dialogue Profiles",
-        description: "Distinct speech quirks and emotional flaws",
-        image: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "regex-cheat": {
-    slug: "regex-cheat",
-    title: "Regex Matrix Lab",
-    category: "VIBE CODER",
-    coverImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Test expressions in real-time with an instant syntax cheat sheet.",
-    activities: [
-      {
-        title: "Live Matcher",
-        description: "Zero latency match highlighting",
-        image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Common Patterns",
-        description: "Emails, URLs, UUIDs, and IPv4 presets",
-        image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "jwt-inspector": {
-    slug: "jwt-inspector",
-    title: "JWT Vault Inspector",
-    category: "DEVOPS",
-    coverImage: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Decode headers, claims, expiration dates, and verify HMAC signatures.",
-    activities: [
-      {
-        title: "Expiry Detection",
-        description: "Visual time-to-live countdowns",
-        image: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Local Decoding",
-        description: "Zero data leaves your browser memory",
-        image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "sql-schema": {
-    slug: "sql-schema",
-    title: "SQL Schema Foundry",
-    category: "VIBE CODER",
-    coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Convert natural language descriptions into Postgres, SQLite, or MySQL DDL.",
-    activities: [
-      {
-        title: "Multi Dialect",
-        description: "Postgres, SQLite, MySQL, and Supabase types",
-        image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Index Automation",
-        description: "Primary keys, foreign keys, and indexes",
-        image: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "mesh-gradient": {
-    slug: "mesh-gradient",
-    title: "Mesh Gradient Studio",
-    category: "DESIGN",
-    coverImage: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Design interactive multi-point CSS mesh gradients and copy clean code.",
-    activities: [
-      {
-        title: "4-Point Canvas",
-        description: "Interactive color coordinate draggers",
-        image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "CSS & SVG Export",
-        description: "Zero external dependencies",
-        image: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "svg-blob": {
-    slug: "svg-blob",
-    title: "SVG Blob Sculptor",
-    category: "DESIGN",
-    coverImage: "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Sculpt organic SVG shapes with randomness seeds and smooth bezier curves.",
-    activities: [
-      {
-        title: "Seed Randomizer",
-        description: "Unique organic shapes per seed value",
-        image: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Complexity Dials",
-        description: "Point counts from subtle to chaotic",
-        image: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "aspect-ratio": {
-    slug: "aspect-ratio",
-    title: "Aspect Ratio Calculator",
-    category: "DESIGN",
-    coverImage: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Calculate exact pixel dimensions, responsive CSS padding, and video scales.",
-    activities: [
-      {
-        title: "Cinema Presets",
-        description: "16:9, 21:9 anamorphic, 9:16 vertical, and 4:3",
-        image: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "CSS Snippets",
-        description: "aspect-ratio rules and padding-bottom hacks",
-        image: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "color-contrast": {
-    slug: "color-contrast",
-    title: "WCAG Contrast Checker",
-    category: "DESIGN",
-    coverImage: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Test foreground and background combinations against WCAG 2.1 AA and AAA standards.",
-    activities: [
-      {
-        title: "WCAG AA / AAA",
-        description: "Instant pass/fail scoring for text and icons",
-        image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Color Swapper",
-        description: "Live adjustments with instant ratio re-calculation",
-        image: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "utm-builder": {
-    slug: "utm-builder",
-    title: "UTM Campaign Builder",
-    category: "GROWTH",
-    coverImage: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Build clean campaign tracking links with source, medium, and campaign tags.",
-    activities: [
-      {
-        title: "Preset Channels",
-        description: "Google Ads, Meta, Twitter, and Newsletter presets",
-        image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Instant Verification",
-        description: "Verify encoded parameters without broken URLs",
-        image: "https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "social-bio": {
-    slug: "social-bio",
-    title: "Social Bio Studio",
-    category: "GROWTH",
-    coverImage: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Compose sharp bios for X, GitHub, LinkedIn, and Instagram with live character counts.",
-    activities: [
-      {
-        title: "Platform Limits",
-        description: "Precise character countdowns per network",
-        image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Tone Switches",
-        description: "Technical, founder, creative, and witty profiles",
-        image: "https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "copywriting-framework": {
-    slug: "copywriting-framework",
-    title: "Copy Framework Matrix",
-    category: "GROWTH",
-    coverImage: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Structure pitches using proven marketing formulas like PAS, AIDA, and BAB.",
-    activities: [
-      {
-        title: "PAS Engine",
-        description: "Problem, Agitation, and Solution clarity",
-        image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Hero Hooks",
-        description: "Punchy headlines without AI jargon",
-        image: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "readme-badge": {
-    slug: "readme-badge",
-    title: "README Badge Generator",
-    category: "VIBE CODER",
-    coverImage: "https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Generate shields.io markdown badges for tech stacks, licenses, and releases.",
-    activities: [
-      {
-        title: "Tech Stack Shields",
-        description: "React, Next.js, TypeScript, and Docker badges",
-        image: "https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Custom Labels",
-        description: "Dynamic colors, logos, and links",
-        image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "mock-data": {
-    slug: "mock-data",
-    title: "Mock Data Forge",
-    category: "VIBE CODER",
-    coverImage: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Generate realistic JSON arrays for users, products, orders, and metrics.",
-    activities: [
-      {
-        title: "Entity Presets",
-        description: "User profiles, credit cards, transactions, and addresses",
-        image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "JSON Export",
-        description: "Instant array download with customizable count",
-        image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "css-glass-shadow": {
-    slug: "css-glass-shadow",
-    title: "Glass & Shadow Studio",
-    category: "DESIGN",
-    coverImage: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1507499739999-097706ad8914?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Tune backdrop-blur, specular reflections, and layered box shadows in real-time.",
-    activities: [
-      {
-        title: "Multi Layer Shadow",
-        description: "Physically based diffuse ambient occlusions",
-        image: "https://images.unsplash.com/photo-1507499739999-097706ad8914?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Glassmorphism",
-        description: "Translucent materials with border highlights",
-        image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "password-passphrase": {
-    slug: "password-passphrase",
-    title: "Password & Passphrase Vault",
-    category: "DEVOPS",
-    coverImage: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Generate cryptographically secure passwords and memorable diceware passphrases.",
-    activities: [
-      {
-        title: "Diceware Words",
-        description: "Memorable passphrases with high entropy",
-        image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Entropy Meter",
-        description: "Bit-strength calculations and crack time estimates",
-        image: "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "uuid-nanoid": {
-    slug: "uuid-nanoid",
-    title: "UUID & NanoID Generator",
-    category: "VIBE CODER",
-    coverImage: "https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Generate batches of UUID v4, NanoID, or CUID strings with one tap.",
-    activities: [
-      {
-        title: "Batch Mode",
-        description: "Create up to 100 unique identifiers simultaneously",
-        image: "https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Multiple Formats",
-        description: "UUID v4, NanoID, ULID, and short alphanumeric codes",
-        image: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  crontab: {
-    slug: "crontab",
-    title: "Crontab Guru Console",
-    category: "DEVOPS",
-    coverImage: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Build cron schedule expressions with plain-English descriptions.",
-    activities: [
-      {
-        title: "Expression Parser",
-        description: "Human-readable schedule translation",
-        image: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Execution Timetable",
-        description: "Preview upcoming triggers across days and hours",
-        image: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "docker-gitignore": {
-    slug: "docker-gitignore",
-    title: "Docker & Gitignore Foundry",
-    category: "DEVOPS",
-    coverImage: "https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Generate production Dockerfiles and curated .gitignore presets for any language.",
-    activities: [
-      {
-        title: "Multi Stage Docker",
-        description: "Lightweight production containers for Node, Go, and Python",
-        image: "https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Clean .gitignore",
-        description: "Exclude node_modules, build artifacts, and OS temp files",
-        image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "hash-secret": {
-    slug: "hash-secret",
-    title: "Hash & Secret Generator",
-    category: "DEVOPS",
-    coverImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1510511459019-5dda7724fd87?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Compute SHA-256, SHA-512, MD5 hashes and generate secure hex tokens.",
-    activities: [
-      {
-        title: "SubtleCrypto Core",
-        description: "Hardware accelerated client hashing",
-        image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Secret Tokens",
-        description: "Generate 32, 64, or 128-byte API keys and secrets",
-        image: "https://images.unsplash.com/photo-1510511459019-5dda7724fd87?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "markdown-table": {
-    slug: "markdown-table",
-    title: "Markdown Table Grid",
-    category: "CREATIVE",
-    coverImage: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Format spreadsheets and CSV text into GitHub Flavored Markdown tables.",
-    activities: [
-      {
-        title: "CSV & TSV Paste",
-        description: "Convert spreadsheet clips into clean pipes",
-        image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Column Alignment",
-        description: "Set left, center, or right aligned formatting",
-        image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "opengraph-preview": {
-    slug: "opengraph-preview",
-    title: "OpenGraph Social Preview",
-    category: "GROWTH",
-    coverImage: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Simulate social share cards across Twitter, Facebook, LinkedIn, and Discord.",
-    activities: [
-      {
-        title: "Card Simulator",
-        description: "Live view across Twitter large summary and Facebook",
-        image: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Meta Tag Export",
-        description: "Clean HTML head tags ready to paste into layout",
-        image: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "invoice-receipt": {
-    slug: "invoice-receipt",
-    title: "Invoice & Receipt Maker",
-    category: "CREATIVE",
-    coverImage: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Generate clean printable PDF-ready receipts with custom tax and line items.",
-    activities: [
-      {
-        title: "Print Ready Layout",
-        description: "Clean monochrome typography styled for thermal or A4 print",
-        image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Automatic Math",
-        description: "Subtotal, tax calculation, and discounts calculated live",
-        image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "meeting-agenda": {
-    slug: "meeting-agenda",
-    title: "Meeting Agenda Architect",
-    category: "GROWTH",
-    coverImage: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Create timed meeting agendas with discussion goals and action items.",
-    activities: [
-      {
-        title: "Time Allocator",
-        description: "Ensure discussions stay within scheduled meeting limits",
-        image: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Action Item Export",
-        description: "Direct markdown output ready for Slack or Notion",
-        image: "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "email-signature": {
-    slug: "email-signature",
-    title: "HTML Email Signature Studio",
-    category: "GROWTH",
-    coverImage: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Format clean HTML email signatures with social links and contact badges.",
-    activities: [
-      {
-        title: "Table Layout",
-        description: "Email client compatibility with Outlook and Gmail",
-        image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "One-Click Copy",
-        description: "Copy rich HTML directly into mail preferences",
-        image: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "app-prd": {
-    slug: "app-prd",
-    title: "App PRD Spec Architect",
-    category: "VIBE CODER",
-    coverImage: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Draft structured Product Requirement Documents with user stories and scope.",
-    activities: [
-      {
-        title: "Feature Scoping",
-        description: "Must-have vs nice-to-have boundary mapping",
-        image: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Technical Stack",
-        description: "Frontend, database, and authentication definitions",
-        image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "curl-converter": {
-    slug: "curl-converter",
-    title: "cURL Code Converter",
-    category: "DEVOPS",
-    coverImage: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Convert cURL commands into JavaScript Fetch, Python Requests, Go, and Axios.",
-    activities: [
-      {
-        title: "Multi Language",
-        description: "JavaScript, Python, Go, PHP, and Rust output",
-        image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Header Parser",
-        description: "Accurate token extraction from raw command line flags",
-        image: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-    ],
-  },
-  "webhook-payload": {
-    slug: "webhook-payload",
-    title: "Webhook Telemetry Simulator",
-    category: "DEVOPS",
-    coverImage: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Inspect and simulate incoming webhook JSON payloads for Stripe, GitHub, and Shopify.",
-    activities: [
-      {
-        title: "Provider Schemas",
-        description: "Stripe payment_intent, GitHub push, Shopify checkout events",
-        image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=400&h=250&q=80",
-      },
-      {
-        title: "Header Signature",
-        description: "Simulate webhook HMAC verification headers",
-        image: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=400&h=250&q=80",
+        title: "AI Coding Context",
+        description: "Export verified markdown directly compatible with Cursor, Claude Code, and Windsurf",
+        image: "",
       },
     ],
   },
@@ -637,19 +127,19 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     slug: "batch-image-resizer",
     title: "Batch Image Resizer",
     category: "DESIGN",
-    coverImage: "https://images.unsplash.com/photo-1542744094-3a31727221eb?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Batch resize photos and graphics to exact dimensions, aspect ratios, and ZIP export.",
+    coverImage: createCoverSvg("Batch Image Resizer", "DESIGN"),
+    backdropImage: createBackdropSvg("DESIGN"),
+    tagline: "Resize multiple images simultaneously to exact dimensions and download in a single ZIP package.",
     activities: [
       {
-        title: "Multi-file Canvas Resizing",
-        description: "Scale tens of images simultaneously with bicubic smoothing",
-        image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=400&h=250&q=80",
+        title: "Client-Side Processing",
+        description: "Runs entirely in browser memory using HTML5 Canvas with bicubic smoothing",
+        image: "",
       },
       {
         title: "Batch ZIP Export",
-        description: "Download all resized images in a single compressed package",
-        image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&h=250&q=80",
+        description: "Package all processed images without server uploads or latency",
+        image: "",
       },
     ],
   },
@@ -657,19 +147,559 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     slug: "image-converter",
     title: "Image Converter & Compressor",
     category: "DESIGN",
-    coverImage: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Compress and convert images to WebP, JPEG, and PNG with real-time payload metrics.",
+    coverImage: createCoverSvg("Image Converter", "DESIGN"),
+    backdropImage: createBackdropSvg("DESIGN"),
+    tagline: "Convert and compress images across WebP, JPEG, and PNG with real-time compression metrics.",
     activities: [
       {
-        title: "Modern WebP Encoding",
-        description: "Slash image payloads by up to 80% without visible quality loss",
-        image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=400&h=250&q=80",
+        title: "WebP Encoding",
+        description: "Modern image encoding for faster page loads with lossless or lossy quality controls",
+        image: "",
       },
       {
-        title: "Batch Compression ZIP",
-        description: "Package optimized assets instantly without server upload",
-        image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&h=250&q=80",
+        title: "Zero Server Upload",
+        description: "All conversions happen locally without sending images to any remote server",
+        image: "",
+      },
+    ],
+  },
+  "text-cleaner": {
+    slug: "text-cleaner",
+    title: "Text Cleaner & Formatter",
+    category: "WORKFLOW",
+    coverImage: createCoverSvg("Text Cleaner", "WORKFLOW"),
+    backdropImage: createBackdropSvg("WORKFLOW"),
+    tagline: "Strip whitespace, fix line breaks, convert casing, and deduplicate text lines instantly.",
+    activities: [
+      {
+        title: "Case Transformation",
+        description: "Convert instantly between camelCase, snake_case, kebab-case, Title Case, and UPPERCASE",
+        image: "",
+      },
+      {
+        title: "Whitespace Normalization",
+        description: "Strip trailing spaces, collapse multiple blank lines, and clean tab indents",
+        image: "",
+      },
+    ],
+  },
+  "csv-cleaner": {
+    slug: "csv-cleaner",
+    title: "CSV Data Cleaner",
+    category: "DEV",
+    coverImage: createCoverSvg("CSV Data Cleaner", "DEV"),
+    backdropImage: createBackdropSvg("DEV"),
+    tagline: "Sanitize tabular CSV data, trim columns, handle quoted delimiters, and export clean datasets.",
+    activities: [
+      {
+        title: "Delimited Parsing",
+        description: "RFC 4180 compliant CSV parser with quote escaping and auto-detected separators",
+        image: "",
+      },
+      {
+        title: "Column Filtering",
+        description: "Remove duplicate rows, clean whitespace, and reorder fields with instant download",
+        image: "",
+      },
+    ],
+  },
+  "bulk-filename-builder": {
+    slug: "bulk-filename-builder",
+    title: "Bulk File Renamer",
+    category: "DEV",
+    coverImage: createCoverSvg("Bulk File Renamer", "DEV"),
+    backdropImage: createBackdropSvg("DEV"),
+    tagline: "Generate safe batch rename rules, sequential numbering schemes, and bash/PowerShell scripts.",
+    activities: [
+      {
+        title: "Pattern Rules",
+        description: "Prefixes, suffixes, date stamps, zero-padded counters, and regex find-replace",
+        image: "",
+      },
+      {
+        title: "Shell Scripts",
+        description: "Export executable bash (.sh) and PowerShell (.ps1) commands for local execution",
+        image: "",
+      },
+    ],
+  },
+  "whatsapp-link": {
+    slug: "whatsapp-link",
+    title: "WhatsApp Direct Link",
+    category: "GROWTH",
+    coverImage: createCoverSvg("WhatsApp Direct Link", "GROWTH"),
+    backdropImage: createBackdropSvg("GROWTH"),
+    tagline: "Build sanitized wa.me click-to-chat links and QR codes with pre-filled messages.",
+    activities: [
+      {
+        title: "Phone Normalization",
+        description: "Validates country codes and strips non-numeric punctuation safely",
+        image: "",
+      },
+      {
+        title: "One-Click Share",
+        description: "Generate copy-ready markdown, HTML buttons, and QR code codes",
+        image: "",
+      },
+    ],
+  },
+  "campaign-url-qa": {
+    slug: "campaign-url-qa",
+    title: "Campaign URL QA & Auditor",
+    category: "GROWTH",
+    coverImage: createCoverSvg("Campaign URL QA", "GROWTH"),
+    backdropImage: createBackdropSvg("GROWTH"),
+    tagline: "Audit marketing URLs for UTM parameter completeness, valid formatting, and redirect chains.",
+    activities: [
+      {
+        title: "UTM Verification",
+        description: "Check for required source, medium, and campaign parameters with casing consistency",
+        image: "",
+      },
+      {
+        title: "Character Escaping",
+        description: "Detect illegal spaces, unescaped characters, and duplicate query delimiters",
+        image: "",
+      },
+    ],
+  },
+  "curl-converter": {
+    slug: "curl-converter",
+    title: "cURL to Code Converter",
+    category: "DEV",
+    coverImage: createCoverSvg("cURL to Code", "DEV"),
+    backdropImage: createBackdropSvg("DEV"),
+    tagline: "Convert raw cURL shell commands into idiomatic JavaScript, Python, Go, and Rust requests.",
+    activities: [
+      {
+        title: "Multi-Language Output",
+        description: "Native fetch(), Axios, Python requests, Go net/http, and Rust reqwest snippets",
+        image: "",
+      },
+      {
+        title: "Header Parsing",
+        description: "Accurately decomposes authentication headers, cookies, and JSON request bodies",
+        image: "",
+      },
+    ],
+  },
+  "regex-cheat": {
+    slug: "regex-cheat",
+    title: "Regex Tester & Cheatsheet",
+    category: "DEV",
+    coverImage: createCoverSvg("Regex Tester", "DEV"),
+    backdropImage: createBackdropSvg("DEV"),
+    tagline: "Evaluate regular expressions in real time with syntax explanation and quick reference patterns.",
+    activities: [
+      {
+        title: "Live Match Inspection",
+        description: "Instant highlighting of capture groups, match indices, and flags",
+        image: "",
+      },
+      {
+        title: "Common Patterns",
+        description: "Curated presets for email, URLs, IPv4/IPv6, UUIDs, dates, and passwords",
+        image: "",
+      },
+    ],
+  },
+  "svg-blob": {
+    slug: "svg-blob",
+    title: "SVG Blob & Wave Generator",
+    category: "DESIGN",
+    coverImage: createCoverSvg("SVG Blob & Wave", "DESIGN"),
+    backdropImage: createBackdropSvg("DESIGN"),
+    tagline: "Create organic organic vector shapes, smooth section dividers, and wave paths with SVG export.",
+    activities: [
+      {
+        title: "Bézier Math",
+        description: "Deterministic cubic Bézier curve calculation with configurable complexity and randomness",
+        image: "",
+      },
+      {
+        title: "Clean Markup",
+        description: "Lightweight, unstyled SVG code ready to drop into React or HTML templates",
+        image: "",
+      },
+    ],
+  },
+  "aspect-ratio": {
+    slug: "aspect-ratio",
+    title: "Aspect Ratio Calculator",
+    category: "DESIGN",
+    coverImage: createCoverSvg("Aspect Ratio Calculator", "DESIGN"),
+    backdropImage: createBackdropSvg("DESIGN"),
+    tagline: "Calculate responsive dimensions, aspect ratios, CSS padding-bottom values, and GCD ratios.",
+    activities: [
+      {
+        title: "Standard Presets",
+        description: "16:9, 4:3, 1:1, 21:9 ultra-wide, 9:16 vertical video, and custom width/height",
+        image: "",
+      },
+      {
+        title: "CSS Snippets",
+        description: "Generates aspect-ratio CSS and legacy padding-bottom percentage hacks",
+        image: "",
+      },
+    ],
+  },
+  "color-contrast": {
+    slug: "color-contrast",
+    title: "Palette Contrast Auto-Tuner",
+    category: "DESIGN",
+    coverImage: createCoverSvg("Palette Auto-Tuner", "DESIGN"),
+    backdropImage: createBackdropSvg("DESIGN"),
+    tagline: "Automatically adjust foreground and background colors to satisfy WCAG AA and AAA standards.",
+    activities: [
+      {
+        title: "DeltaE Minimization",
+        description: "Nudges lightness just enough to hit contrast thresholds while preserving hue",
+        image: "",
+      },
+      {
+        title: "Vision Deficiency Simulation",
+        description: "Simulate Protanopia, Deuteranopia, Tritanopia, and Achromatopsia perception",
+        image: "",
+      },
+    ],
+  },
+  "contrast-checker": {
+    slug: "contrast-checker",
+    title: "WCAG Contrast Checker",
+    category: "DESIGN",
+    coverImage: createCoverSvg("WCAG Contrast", "DESIGN"),
+    backdropImage: createBackdropSvg("DESIGN"),
+    tagline: "Verify text and UI element contrast ratios against WCAG 2.1 AA and AAA criteria.",
+    activities: [
+      {
+        title: "Relative Luminance",
+        description: "Exact WCAG 2.1 relative luminance formula calculation (4.5:1, 3.0:1, 7.0:1)",
+        image: "",
+      },
+      {
+        title: "Grade Ratings",
+        description: "Clear pass/fail ratings for normal text, large headings, and graphical controls",
+        image: "",
+      },
+    ],
+  },
+  "utm-builder": {
+    slug: "utm-builder",
+    title: "UTM Campaign Builder",
+    category: "GROWTH",
+    coverImage: createCoverSvg("UTM Campaign Builder", "GROWTH"),
+    backdropImage: createBackdropSvg("GROWTH"),
+    tagline: "Generate standardized Google Analytics UTM campaign tracking links with parameter presets.",
+    activities: [
+      {
+        title: "Parameter Presets",
+        description: "Quick-fill standard sources: Google Ads, Meta, Newsletter, LinkedIn, and Twitter",
+        image: "",
+      },
+      {
+        title: "Batch Generation",
+        description: "Create parameter matrices across multiple channels simultaneously",
+        image: "",
+      },
+    ],
+  },
+  "social-bio": {
+    slug: "social-bio",
+    title: "Social Bio Formatter",
+    category: "GROWTH",
+    coverImage: createCoverSvg("Social Bio Formatter", "GROWTH"),
+    backdropImage: createBackdropSvg("GROWTH"),
+    tagline: "Format and test profile bios for Twitter, LinkedIn, GitHub, and Instagram with character counters.",
+    activities: [
+      {
+        title: "Platform Limits",
+        description: "Strict character and line limit validation for Twitter (160), GitHub (160), LinkedIn",
+        image: "",
+      },
+      {
+        title: "Unicode Formatting",
+        description: "Live preview across mobile card frames and desktop profile views",
+        image: "",
+      },
+    ],
+  },
+  "readme-badge": {
+    slug: "readme-badge",
+    title: "GitHub README Badges",
+    category: "DEV",
+    coverImage: createCoverSvg("GitHub README Badges", "DEV"),
+    backdropImage: createBackdropSvg("DEV"),
+    tagline: "Generate Shields.io and custom SVG status badges for GitHub open-source repositories.",
+    activities: [
+      {
+        title: "Popular Tech Stacks",
+        description: "TypeScript, React, Next.js, Rust, Python, Docker, and MIT license badges",
+        image: "",
+      },
+      {
+        title: "Markdown & HTML",
+        description: "One-click copy for Markdown READMEs, reStructuredText, or HTML markup",
+        image: "",
+      },
+    ],
+  },
+  "mock-data": {
+    slug: "mock-data",
+    title: "Mock Data & JSON Generator",
+    category: "DEV",
+    coverImage: createCoverSvg("Mock Data Generator", "DEV"),
+    backdropImage: createBackdropSvg("DEV"),
+    tagline: "Generate realistic JSON, CSV, and SQL mock datasets for testing and database seeding.",
+    activities: [
+      {
+        title: "Structured Schema",
+        description: "Configurable fields: names, emails, UUIDs, dates, addresses, numbers, and booleans",
+        image: "",
+      },
+      {
+        title: "Multi-Format Export",
+        description: "Export instant JSON arrays, raw CSV tables, or SQL INSERT statements",
+        image: "",
+      },
+    ],
+  },
+  "css-glass-shadow": {
+    slug: "css-glass-shadow",
+    title: "CSS Glass & Shadow Generator",
+    category: "DESIGN",
+    coverImage: createCoverSvg("CSS Glass & Shadow", "DESIGN"),
+    backdropImage: createBackdropSvg("DESIGN"),
+    tagline: "Tune layered backdrop filters, subtle border highlights, and layered elevation shadows.",
+    activities: [
+      {
+        title: "Layered Shadows",
+        description: "Multi-layer box-shadow curves for realistic ambient elevation without mud",
+        image: "",
+      },
+      {
+        title: "Cross-Browser CSS",
+        description: "Outputs clean backdrop-filter with webkit prefixes and fallback background colors",
+        image: "",
+      },
+    ],
+  },
+  "password-passphrase": {
+    slug: "password-passphrase",
+    title: "Password & Passphrase Generator",
+    category: "DEV",
+    coverImage: createCoverSvg("Password Generator", "DEV"),
+    backdropImage: createBackdropSvg("DEV"),
+    tagline: "Generate cryptographic passwords and memorable Diceware passphrases using Web Crypto CSPRNG.",
+    activities: [
+      {
+        title: "CSPRNG Security",
+        description: "Uses window.crypto.getRandomValues with zero predictable PRNG bias",
+        image: "",
+      },
+      {
+        title: "Diceware Wordlists",
+        description: "Generates high-entropy multi-word passphrases with custom separators",
+        image: "",
+      },
+    ],
+  },
+  "uuid-nanoid": {
+    slug: "uuid-nanoid",
+    title: "UUID & NanoID Generator",
+    category: "DEV",
+    coverImage: createCoverSvg("UUID & NanoID", "DEV"),
+    backdropImage: createBackdropSvg("DEV"),
+    tagline: "Generate RFC 9562 UUIDv4, monotonic UUIDv7, and URL-safe NanoIDs using CSPRNG entropy.",
+    activities: [
+      {
+        title: "Monotonic UUIDv7",
+        description: "Time-ordered 128-bit identifiers with strict clock rollback protection (RFC 9562)",
+        image: "",
+      },
+      {
+        title: "Batch Generation",
+        description: "Instant batch output up to 1,000 keys with uppercase and hyphen options",
+        image: "",
+      },
+    ],
+  },
+  "crontab": {
+    slug: "crontab",
+    title: "Cron Expression Tester",
+    category: "DEV",
+    coverImage: createCoverSvg("Cron Expression Tester", "DEV"),
+    backdropImage: createBackdropSvg("DEV"),
+    tagline: "Translate cron expressions into plain English schedules and calculate upcoming trigger dates.",
+    activities: [
+      {
+        title: "Human Explanation",
+        description: "Instant English schedule translation across minutes, hours, days, months, and weekdays",
+        image: "",
+      },
+      {
+        title: "Next Trigger Times",
+        description: "Calculates the next 5 execution timestamps based on local and UTC time",
+        image: "",
+      },
+    ],
+  },
+  "docker-gitignore": {
+    slug: "docker-gitignore",
+    title: "Dockerfile & .gitignore Builder",
+    category: "DEV",
+    coverImage: createCoverSvg("Docker & Gitignore", "DEV"),
+    backdropImage: createBackdropSvg("DEV"),
+    tagline: "Generate hardened multi-stage Dockerfiles and comprehensive .gitignore files for popular runtimes.",
+    activities: [
+      {
+        title: "Multi-Stage Dockerfiles",
+        description: "Minimal Alpine/Debian slim production builds for Node.js, Go, Python, and Rust",
+        image: "",
+      },
+      {
+        title: "Gitignore Presets",
+        description: "Curated ignores for OS metadata (.DS_Store), secrets (.env*), and build artifacts",
+        image: "",
+      },
+    ],
+  },
+  "hash-secret": {
+    slug: "hash-secret",
+    title: "Hash & Secret Key Generator",
+    category: "DEV",
+    coverImage: createCoverSvg("Hash & Secret Generator", "DEV"),
+    backdropImage: createBackdropSvg("DEV"),
+    tagline: "Calculate cryptographic hashes (SHA-256, SHA-512, MD5) and generate random secret keys.",
+    activities: [
+      {
+        title: "Web Crypto Subscriptions",
+        description: "Fast in-browser cryptographic hashing without external native libraries",
+        image: "",
+      },
+      {
+        title: "Secret Key Generation",
+        description: "Random 256-bit and 512-bit hex/base64 keys for JWT and HMAC signing",
+        image: "",
+      },
+    ],
+  },
+  "markdown-table": {
+    slug: "markdown-table",
+    title: "Markdown Table Formatter",
+    category: "WORKFLOW",
+    coverImage: createCoverSvg("Markdown Table", "WORKFLOW"),
+    backdropImage: createBackdropSvg("WORKFLOW"),
+    tagline: "Create, format, and align GitHub-flavored markdown tables with column alignment controls.",
+    activities: [
+      {
+        title: "Spreadsheet Editing",
+        description: "Interactive cell editor with row/column insertions and CSV import",
+        image: "",
+      },
+      {
+        title: "Column Alignment",
+        description: "Configure left, center, or right alignment with pipe formatting",
+        image: "",
+      },
+    ],
+  },
+  "opengraph-preview": {
+    slug: "opengraph-preview",
+    title: "OpenGraph Meta Preview",
+    category: "GROWTH",
+    coverImage: createCoverSvg("OpenGraph Meta Preview", "GROWTH"),
+    backdropImage: createBackdropSvg("GROWTH"),
+    tagline: "Test social card metadata and preview how links appear on Twitter, Facebook, LinkedIn, and Slack.",
+    activities: [
+      {
+        title: "Multi-Platform Cards",
+        description: "Pixel-accurate card rendering for Twitter Summary, Twitter Large, and Facebook feeds",
+        image: "",
+      },
+      {
+        title: "HTML Meta Tags",
+        description: "Generates production `<meta property=\"og:...\" />` tags ready for `<head>` injection",
+        image: "",
+      },
+    ],
+  },
+  "invoice-receipt": {
+    slug: "invoice-receipt",
+    title: "Invoice & Receipt Builder",
+    category: "WORKFLOW",
+    coverImage: createCoverSvg("Invoice & Receipt", "WORKFLOW"),
+    backdropImage: createBackdropSvg("WORKFLOW"),
+    tagline: "Create clean commercial invoices and purchase receipts with tax calculations and PDF print styling.",
+    activities: [
+      {
+        title: "Automatic Line Totals",
+        description: "Real-time calculation of subtotal, sales tax percentages, discounts, and total due",
+        image: "",
+      },
+      {
+        title: "Clean Print CSS",
+        description: "Print-optimized stylesheet for crisp browser PDF printing without headers or margins",
+        image: "",
+      },
+    ],
+  },
+  "quotation-generator": {
+    slug: "quotation-generator",
+    title: "Project Quotation Builder",
+    category: "WORKFLOW",
+    coverImage: createCoverSvg("Quotation Builder", "WORKFLOW"),
+    backdropImage: createBackdropSvg("WORKFLOW"),
+    tagline: "Draft formal freelance and software development proposals with milestone budgets.",
+    activities: [
+      {
+        title: "Milestone Scoping",
+        description: "Break down projects by deliverable phase, estimated hours, and hourly/fixed rates",
+        image: "",
+      },
+      {
+        title: "Terms & Payment Terms",
+        description: "Standard commercial validity windows, deposit requirements, and scope disclaimers",
+        image: "",
+      },
+    ],
+  },
+  "meeting-agenda": {
+    slug: "meeting-agenda",
+    title: "Meeting Agenda Builder",
+    category: "WORKFLOW",
+    coverImage: createCoverSvg("Meeting Agenda", "WORKFLOW"),
+    backdropImage: createBackdropSvg("WORKFLOW"),
+    tagline: "Structure productive meetings with timed agenda items, designated leaders, and action items.",
+    activities: [
+      {
+        title: "Timeboxing Calculations",
+        description: "Calculates total meeting duration and per-topic time allocations automatically",
+        image: "",
+      },
+      {
+        title: "Markdown Export",
+        description: "Generates clean agenda templates ready to paste into Slack, Notion, or calendar invites",
+        image: "",
+      },
+    ],
+  },
+  "email-signature": {
+    slug: "email-signature",
+    title: "Email Signature Builder",
+    category: "WORKFLOW",
+    coverImage: createCoverSvg("Email Signature", "WORKFLOW"),
+    backdropImage: createBackdropSvg("WORKFLOW"),
+    tagline: "Build clean, table-based HTML email signatures compatible with Gmail, Outlook, and Apple Mail.",
+    activities: [
+      {
+        title: "Table-Based Layout",
+        description: "Inline CSS and robust nested HTML tables that render reliably across email clients",
+        image: "",
+      },
+      {
+        title: "One-Click Copy",
+        description: "Copy rich rendered HTML or raw source code directly into your email settings",
+        image: "",
       },
     ],
   },
@@ -677,23 +707,29 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
 
 export function getConsoleAsset(slug: string): ConsoleAsset {
   if (CONSOLE_ASSETS[slug]) return CONSOLE_ASSETS[slug];
+
+  const formattedTitle = slug
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+
   return {
     slug,
-    title: slug.toUpperCase().replace(/-/g, " "),
-    category: "TOOL",
-    coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1920&q=80",
-    tagline: "Specialized browser workstation generator tool.",
+    title: formattedTitle,
+    category: "DEV",
+    coverImage: createCoverSvg(formattedTitle, "DEV"),
+    backdropImage: createBackdropSvg("DEV"),
+    tagline: "Specialized developer workstation utility.",
     activities: [
       {
-        title: "Instant Execution",
-        description: "Runs entirely client-side in browser memory",
-        image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=400&h=250&q=80",
+        title: "Client-Side Execution",
+        description: "Runs entirely in browser memory with zero server data collection",
+        image: "",
       },
       {
-        title: "Zero Latency",
-        description: "Deterministic outputs with instant copy export",
-        image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&h=250&q=80",
+        title: "Instant Export",
+        description: "Deterministic outputs with one-click clipboard copying and file export",
+        image: "",
       },
     ],
   };

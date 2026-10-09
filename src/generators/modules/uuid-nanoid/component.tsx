@@ -117,7 +117,7 @@ export default function UuidNanoidGenerator() {
                 type="checkbox"
                 checked={uppercase}
                 onChange={(e) => setUppercase(e.target.checked)}
-                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
+                className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
               />
               <span>Uppercase (A-Z)</span>
             </label>
@@ -128,7 +128,7 @@ export default function UuidNanoidGenerator() {
                   type="checkbox"
                   checked={hyphens}
                   onChange={(e) => setHyphens(e.target.checked)}
-                  className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
+                  className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
                 />
                 <span>Include Hyphens</span>
               </label>

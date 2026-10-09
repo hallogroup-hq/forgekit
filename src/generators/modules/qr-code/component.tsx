@@ -474,7 +474,7 @@ export default function QrCodeGenerator() {
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://example.com"
-                className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-600"
               />
             </div>
           )}
@@ -524,7 +524,7 @@ export default function QrCodeGenerator() {
                   type="checkbox"
                   checked={wifiHidden}
                   onChange={(e) => setWifiHidden(e.target.checked)}
-                  className="rounded text-blue-600"
+                  className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-0"
                 />
                 <span>Hidden Network SSID</span>
               </label>
@@ -840,7 +840,7 @@ export default function QrCodeGenerator() {
                 </button>
               ))}
 
-              <label className="px-2.5 py-1 text-xs rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-blue-600 dark:text-blue-400 hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer flex items-center gap-1">
+              <label className="px-2.5 py-1 text-xs rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer flex items-center gap-1">
                 <Upload className="w-3 h-3" />
                 <span>Upload Custom Logo</span>
                 <input

@@ -436,12 +436,13 @@ export default function PS5InspiredHomePage() {
         <div className="space-y-4">
           {/* Active Tool Headline (Clean & High Contrast) */}
           <div className="space-y-1.5 max-w-3xl">
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-mono font-bold tracking-widest uppercase px-2 py-0.5 rounded bg-white/10 text-white/80 border border-white/10">
+            <div className="flex items-center gap-2 text-xs font-mono">
+              <span className="text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded bg-white/10 text-white/90 border border-white/15">
                 {activeAsset.category}
               </span>
-              <span className="text-xs font-mono text-white/40">
-                Showing {visibleTools.length} {visibleTools.length === 1 ? "tool" : "tools"}
+              <span className="text-white/30">•</span>
+              <span className="text-white/50 text-[11px]">
+                {visibleTools.length} {visibleTools.length === 1 ? "tool" : "tools"} available
               </span>
             </div>
 
@@ -594,7 +595,7 @@ export default function PS5InspiredHomePage() {
                               <Heart className={`w-3.5 h-3.5 ${fav ? "fill-rose-400 text-rose-400" : ""}`} />
                             </button>
                           </div>
-                          <h3 className="font-bold text-sm text-white truncate leading-tight group-hover:text-blue-400 transition-colors">
+                          <h3 className="font-bold text-sm text-white truncate leading-tight group-hover:text-zinc-100 transition-colors">
                             {tool.meta.title}
                           </h3>
                         </div>
@@ -668,37 +669,45 @@ export default function PS5InspiredHomePage() {
             {/* Feature Activity Cards: Real Technical Capabilities */}
             <div className="hidden xl:flex items-center gap-3">
               {activeAsset.activities.map((act, i) => (
-                <div
+                <button
                   key={i}
-                  className="w-56 p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 transition-all flex flex-col justify-between space-y-2 select-none"
+                  type="button"
+                  onClick={() => {
+                    soundManager.playConfirm();
+                    if (activeTool) router.push(`/tools/${activeTool.meta.slug}`);
+                  }}
+                  className="w-56 p-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/30 transition-all flex flex-col justify-between space-y-2 select-none text-left group cursor-pointer active:scale-98"
+                  title={`Open ${act.title} in ${activeAsset.title}`}
                 >
                   {act.image && (
-                    <div className="w-full h-20 rounded-lg overflow-hidden border border-white/10">
+                    <div className="w-full h-20 rounded-lg overflow-hidden border border-white/10 relative">
                       <img
                         src={act.image}
                         alt={act.title}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
                       />
+                      <div className="absolute inset-0 bg-black/15 group-hover:bg-transparent transition-colors" />
                     </div>
                   )}
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between w-full">
                     <span className="text-[9px] font-mono font-bold tracking-widest uppercase text-white/50 bg-white/5 px-1.5 py-0.5 rounded border border-white/5">
                       FEATURE 0{i + 1}
                     </span>
-                    <span className="text-[10px] text-white/40 font-mono">
-                      {i === 0 ? "SPEC" : "CAPABILITY"}
+                    <span className="text-[10px] text-white/40 font-mono group-hover:text-white/80 transition-colors flex items-center gap-1">
+                      <span>{i === 0 ? "SPEC" : "CAPABILITY"}</span>
+                      <ArrowRight className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </span>
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-white tracking-tight truncate">
+                    <h4 className="text-xs font-bold text-white tracking-tight truncate group-hover:text-white">
                       {act.title}
                     </h4>
                     <p className="text-[11px] text-white/60 leading-relaxed line-clamp-2 mt-0.5">
                       {act.description}
                     </p>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </div>

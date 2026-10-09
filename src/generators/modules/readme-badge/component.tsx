@@ -172,7 +172,7 @@ export default function ReadmeBadgeGenerator() {
                     type="checkbox"
                     checked={b.enabled}
                     onChange={() => toggleBadge(b.id)}
-                    className="rounded text-blue-600 focus:ring-0"
+                    className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-0"
                   />
                   <span className="font-mono text-zinc-800 dark:text-zinc-200 truncate">
                     {b.label}: {b.message}

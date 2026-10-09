@@ -345,7 +345,7 @@ export default function BulkFilenameBuilderGenerator() {
                 type="checkbox"
                 checked={slugify}
                 onChange={(e) => setSlugify(e.target.checked)}
-                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500 w-4 h-4"
+                className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500 w-4 h-4"
               />
               <span className="font-medium">Clean Spaces & Symbols</span>
             </label>
@@ -357,7 +357,7 @@ export default function BulkFilenameBuilderGenerator() {
                 type="checkbox"
                 checked={numbering}
                 onChange={(e) => setNumbering(e.target.checked)}
-                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500 w-4 h-4"
+                className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500 w-4 h-4"
               />
               <span className="font-medium">Number Sequence (001, 002)</span>
             </label>

@@ -144,7 +144,7 @@ export default function TextCleanerGenerator() {
                 type="checkbox"
                 checked={normalizeWhitespace}
                 onChange={(e) => setNormalizeWhitespace(e.target.checked)}
-                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
+                className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
               />
               <span className="font-medium text-zinc-800 dark:text-zinc-200">
                 Normalize Spaces
@@ -156,7 +156,7 @@ export default function TextCleanerGenerator() {
                 type="checkbox"
                 checked={trimLines}
                 onChange={(e) => setTrimLines(e.target.checked)}
-                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
+                className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
               />
               <span className="font-medium text-zinc-800 dark:text-zinc-200">
                 Trim Line Margins
@@ -168,7 +168,7 @@ export default function TextCleanerGenerator() {
                 type="checkbox"
                 checked={removeEmptyLines}
                 onChange={(e) => setRemoveEmptyLines(e.target.checked)}
-                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
+                className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
               />
               <span className="font-medium text-zinc-800 dark:text-zinc-200">
                 Strip Blank Lines
@@ -180,7 +180,7 @@ export default function TextCleanerGenerator() {
                 type="checkbox"
                 checked={removeDuplicateLines}
                 onChange={(e) => setRemoveDuplicateLines(e.target.checked)}
-                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
+                className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
               />
               <span className="font-medium text-zinc-800 dark:text-zinc-200">
                 Deduplicate Lines
@@ -192,7 +192,7 @@ export default function TextCleanerGenerator() {
                 type="checkbox"
                 checked={stripHtml}
                 onChange={(e) => setStripHtml(e.target.checked)}
-                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
+                className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
               />
               <span className="font-medium text-zinc-800 dark:text-zinc-200">
                 Strip HTML Tags (&lt;p&gt;, &lt;div&gt;, etc.)

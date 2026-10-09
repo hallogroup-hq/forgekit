@@ -174,7 +174,7 @@ export default function CsvCleanerGenerator() {
                 type="checkbox"
                 checked={trimCells}
                 onChange={(e) => setTrimCells(e.target.checked)}
-                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500 w-4 h-4"
+                className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500 w-4 h-4"
               />
               <span className="font-medium">Trim Whitespace</span>
             </label>
@@ -184,7 +184,7 @@ export default function CsvCleanerGenerator() {
                 type="checkbox"
                 checked={removeEmptyRows}
                 onChange={(e) => setRemoveEmptyRows(e.target.checked)}
-                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500 w-4 h-4"
+                className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500 w-4 h-4"
               />
               <span className="font-medium">Drop Empty Rows</span>
             </label>
@@ -194,7 +194,7 @@ export default function CsvCleanerGenerator() {
                 type="checkbox"
                 checked={removeDuplicates}
                 onChange={(e) => setRemoveDuplicates(e.target.checked)}
-                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500 w-4 h-4"
+                className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500 w-4 h-4"
               />
               <span className="font-medium">Deduplicate Records</span>
             </label>

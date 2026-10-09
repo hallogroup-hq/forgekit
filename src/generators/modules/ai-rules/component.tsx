@@ -165,7 +165,7 @@ ${strictTypes ? "- TypeScript Strictness: NEVER use `any`. Always use explicit i
                 type="checkbox"
                 checked={strictTypes}
                 onChange={(e) => setStrictTypes(e.target.checked)}
-                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
+                className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
               />
               <span>Zero Any: Ban `any` in TypeScript</span>
             </label>
@@ -174,7 +174,7 @@ ${strictTypes ? "- TypeScript Strictness: NEVER use `any`. Always use explicit i
                 type="checkbox"
                 checked={noSlopComments}
                 onChange={(e) => setNoSlopComments(e.target.checked)}
-                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
+                className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
               />
               <span>Anti-Slop: Strip generic AI explanation comments</span>
             </label>
@@ -183,7 +183,7 @@ ${strictTypes ? "- TypeScript Strictness: NEVER use `any`. Always use explicit i
                 type="checkbox"
                 checked={earlyReturns}
                 onChange={(e) => setEarlyReturns(e.target.checked)}
-                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
+                className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
               />
               <span>Clean Code: Guard clauses & early returns</span>
             </label>
@@ -192,7 +192,7 @@ ${strictTypes ? "- TypeScript Strictness: NEVER use `any`. Always use explicit i
                 type="checkbox"
                 checked={smallComponents}
                 onChange={(e) => setSmallComponents(e.target.checked)}
-                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
+                className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
               />
               <span>Modularity: Max 150 lines per component</span>
             </label>
@@ -201,7 +201,7 @@ ${strictTypes ? "- TypeScript Strictness: NEVER use `any`. Always use explicit i
                 type="checkbox"
                 checked={mobileFirst}
                 onChange={(e) => setMobileFirst(e.target.checked)}
-                className="rounded text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
+                className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
               />
               <span>Accessibility: Mobile responsive & WCAG AA</span>
             </label>

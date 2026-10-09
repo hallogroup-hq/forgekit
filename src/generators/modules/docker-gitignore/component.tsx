@@ -110,7 +110,7 @@ export default function DockerGitignoreGenerator() {
               type="checkbox"
               checked={nonRoot}
               onChange={(e) => setNonRoot(e.target.checked)}
-              className="rounded text-blue-600"
+              className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
             />
           </div>
         </div>

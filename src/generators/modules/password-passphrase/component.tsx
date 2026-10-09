@@ -187,7 +187,7 @@ export default function PasswordGenerator() {
                   max="64"
                   value={length}
                   onChange={(e) => setLength(Number(e.target.value))}
-                  className="w-full accent-blue-600"
+                  className="w-full accent-zinc-900 dark:accent-zinc-100"
                 />
               </div>
 
@@ -197,7 +197,7 @@ export default function PasswordGenerator() {
                     type="checkbox"
                     checked={useUpper}
                     onChange={(e) => setUseUpper(e.target.checked)}
-                    className="rounded text-blue-600 focus:ring-blue-500"
+                    className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
                   />
                   <span>Uppercase (A-Z)</span>
                 </label>
@@ -206,7 +206,7 @@ export default function PasswordGenerator() {
                     type="checkbox"
                     checked={useLower}
                     onChange={(e) => setUseLower(e.target.checked)}
-                    className="rounded text-blue-600 focus:ring-blue-500"
+                    className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
                   />
                   <span>Lowercase (a-z)</span>
                 </label>
@@ -215,7 +215,7 @@ export default function PasswordGenerator() {
                     type="checkbox"
                     checked={useNumbers}
                     onChange={(e) => setUseNumbers(e.target.checked)}
-                    className="rounded text-blue-600 focus:ring-blue-500"
+                    className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
                   />
                   <span>Numbers (0-9)</span>
                 </label>
@@ -224,7 +224,7 @@ export default function PasswordGenerator() {
                     type="checkbox"
                     checked={useSymbols}
                     onChange={(e) => setUseSymbols(e.target.checked)}
-                    className="rounded text-blue-600 focus:ring-blue-500"
+                    className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
                   />
                   <span>Symbols (!@#$)</span>
                 </label>
@@ -236,7 +236,7 @@ export default function PasswordGenerator() {
                     type="checkbox"
                     checked={excludeAmbiguous}
                     onChange={(e) => setExcludeAmbiguous(e.target.checked)}
-                    className="rounded text-blue-600 focus:ring-blue-500"
+                    className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
                   />
                   <span>Avoid ambiguous characters (1, l, I, 0, O)</span>
                 </label>
@@ -255,7 +255,7 @@ export default function PasswordGenerator() {
                   max="7"
                   value={wordCount}
                   onChange={(e) => setWordCount(Number(e.target.value))}
-                  className="w-full accent-blue-600"
+                  className="w-full accent-zinc-900 dark:accent-zinc-100"
                 />
               </div>
 
@@ -282,7 +282,7 @@ export default function PasswordGenerator() {
                       type="checkbox"
                       checked={capitalize}
                       onChange={(e) => setCapitalize(e.target.checked)}
-                      className="rounded text-blue-600 focus:ring-blue-500"
+                      className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
                     />
                     <span>Capitalize Words</span>
                   </label>
@@ -291,7 +291,7 @@ export default function PasswordGenerator() {
                       type="checkbox"
                       checked={includeNumber}
                       onChange={(e) => setIncludeNumber(e.target.checked)}
-                      className="rounded text-blue-600 focus:ring-blue-500"
+                      className="rounded accent-zinc-900 dark:accent-zinc-100 text-zinc-900 dark:text-zinc-100 focus:ring-zinc-500"
                     />
                     <span>Append Number</span>
                   </label>

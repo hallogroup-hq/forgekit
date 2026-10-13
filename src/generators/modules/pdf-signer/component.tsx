@@ -9,6 +9,7 @@ import {
   Stamp,
   Eraser,
   RotateCw,
+  RotateCcw,
   Trash2,
   Check,
   ChevronLeft,
@@ -30,6 +31,7 @@ import {
   removeSignatureBackground,
   generateOfficialRoundStamp,
   bakeElementsIntoPdf,
+  trimCanvasWhitespace,
 } from "./engine";
 
 export default function PdfSignerGenerator() {
@@ -164,50 +166,167 @@ export default function PdfSignerGenerator() {
   // Signature Pad Drawing Handling
   const isDrawingSig = useRef(false);
   const lastSigPoint = useRef<{ x: number; y: number } | null>(null);
+  const lastMidPoint = useRef<{ x: number; y: number } | null>(null);
+  const hasMovedInStroke = useRef(false);
+  const sigHistoryRef = useRef<ImageData[]>([]);
 
-  const startSigDraw = (e: React.PointerEvent<HTMLCanvasElement>) => {
+  // Coordinate helper that accurately scales from CSS rect to canvas internal resolution
+  const getCanvasCoords = (e: React.PointerEvent<HTMLCanvasElement> | PointerEvent) => {
     const canvas = sigCanvasRef.current;
-    if (!canvas) return;
+    if (!canvas) return { x: 0, y: 0, scale: 1 };
     const rect = canvas.getBoundingClientRect();
-    isDrawingSig.current = true;
-    lastSigPoint.current = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
+    const scaleX = canvas.width / (rect.width || 1);
+    const scaleY = canvas.height / (rect.height || 1);
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY,
+      scale: (scaleX + scaleY) / 2,
     };
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
 
-  const drawSig = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!isDrawingSig.current || !lastSigPoint.current) return;
+  const startSigDraw = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const canvas = sigCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const currentX = e.clientX - rect.left;
-    const currentY = e.clientY - rect.top;
+    // Save snapshot for Undo before drawing a new stroke
+    try {
+      const snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      sigHistoryRef.current.push(snapshot);
+      if (sigHistoryRef.current.length > 25) {
+        sigHistoryRef.current.shift();
+      }
+    } catch {}
+
+    const coords = getCanvasCoords(e);
+    isDrawingSig.current = true;
+    hasMovedInStroke.current = false;
+    lastSigPoint.current = { x: coords.x, y: coords.y };
+    lastMidPoint.current = { x: coords.x, y: coords.y };
+
+    // Draw initial ink contact dot for single-tap or start of stroke
+    const effectiveWidth = sigPenWidth * coords.scale;
+    ctx.fillStyle = sigPenColor;
+    ctx.beginPath();
+    ctx.arc(coords.x, coords.y, effectiveWidth / 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    setHasDrawnSig(true);
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const processPoint = (coords: { x: number; y: number; scale: number }) => {
+    if (!isDrawingSig.current || !lastSigPoint.current || !lastMidPoint.current) return;
+    const canvas = sigCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const dx = coords.x - lastSigPoint.current.x;
+    const dy = coords.y - lastSigPoint.current.y;
+    // Skip negligible subpixel noise to keep the curve perfectly smooth
+    if (dx * dx + dy * dy < 1.0) return;
+
+    hasMovedInStroke.current = true;
+    const effectiveWidth = sigPenWidth * coords.scale;
 
     ctx.strokeStyle = sigPenColor;
-    ctx.lineWidth = sigPenWidth;
+    ctx.fillStyle = sigPenColor;
+    ctx.lineWidth = effectiveWidth;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
-    // Quadratic curve for natural smoothness
+    // New midpoint between previous control point and current position
+    const currentMid = {
+      x: (lastSigPoint.current.x + coords.x) / 2,
+      y: (lastSigPoint.current.y + coords.y) / 2,
+    };
+
+    // Continuous Bezier curve: connects lastMidPoint to currentMid seamlessly with zero gaps
     ctx.beginPath();
-    ctx.moveTo(lastSigPoint.current.x, lastSigPoint.current.y);
-    const midX = (lastSigPoint.current.x + currentX) / 2;
-    const midY = (lastSigPoint.current.y + currentY) / 2;
-    ctx.quadraticCurveTo(lastSigPoint.current.x, lastSigPoint.current.y, midX, midY);
+    ctx.moveTo(lastMidPoint.current.x, lastMidPoint.current.y);
+    ctx.quadraticCurveTo(
+      lastSigPoint.current.x,
+      lastSigPoint.current.y,
+      currentMid.x,
+      currentMid.y
+    );
     ctx.stroke();
 
-    lastSigPoint.current = { x: currentX, y: currentY };
+    // The next segment begins EXACTLY where this segment ended
+    lastMidPoint.current = currentMid;
+    lastSigPoint.current = { x: coords.x, y: coords.y };
+
     setHasDrawnSig(true);
   };
 
-  const stopSigDraw = () => {
+  const drawSig = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!isDrawingSig.current) return;
+
+    // Use coalesced events if available for high-frequency smooth handwriting (stylus / tablets)
+    const nativeEvent = e.nativeEvent as any;
+    if (nativeEvent?.getCoalescedEvents && typeof nativeEvent.getCoalescedEvents === "function") {
+      const coalesced = nativeEvent.getCoalescedEvents();
+      if (coalesced && coalesced.length > 0) {
+        for (const ce of coalesced) {
+          const coords = getCanvasCoords(ce);
+          processPoint(coords);
+        }
+        return;
+      }
+    }
+
+    const coords = getCanvasCoords(e);
+    processPoint(coords);
+  };
+
+  const stopSigDraw = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!isDrawingSig.current) return;
+    const canvas = sigCanvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      if (ctx && lastSigPoint.current && lastMidPoint.current && hasMovedInStroke.current) {
+        // Complete the final tail of the stroke
+        const coords = getCanvasCoords(e);
+        const effectiveWidth = sigPenWidth * coords.scale;
+        ctx.strokeStyle = sigPenColor;
+        ctx.lineWidth = effectiveWidth;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.beginPath();
+        ctx.moveTo(lastMidPoint.current.x, lastMidPoint.current.y);
+        ctx.lineTo(lastSigPoint.current.x, lastSigPoint.current.y);
+        ctx.stroke();
+      }
+    }
+
     isDrawingSig.current = false;
     lastSigPoint.current = null;
+    lastMidPoint.current = null;
+    hasMovedInStroke.current = false;
+
+    try {
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {}
+  };
+
+  const undoSigStroke = () => {
+    const canvas = sigCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const previousSnapshot = sigHistoryRef.current.pop();
+    if (previousSnapshot) {
+      ctx.putImageData(previousSnapshot, 0, 0);
+      if (sigHistoryRef.current.length === 0) {
+        setHasDrawnSig(false);
+      }
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      setHasDrawnSig(false);
+    }
   };
 
   const clearSigPad = () => {
@@ -215,6 +334,7 @@ export default function PdfSignerGenerator() {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     ctx?.clearRect(0, 0, canvas.width, canvas.height);
+    sigHistoryRef.current = [];
     setHasDrawnSig(false);
   };
 
@@ -224,7 +344,8 @@ export default function PdfSignerGenerator() {
     if (sigMode === "draw") {
       const canvas = sigCanvasRef.current;
       if (!canvas || !hasDrawnSig) return;
-      dataUrl = canvas.toDataURL("image/png");
+      // Auto-trim transparent borders for snug, accurate placement
+      dataUrl = trimCanvasWhitespace(canvas, 10);
     }
 
     if (!dataUrl) return;
@@ -235,8 +356,8 @@ export default function PdfSignerGenerator() {
       pageNumber: currentPage,
       x: 35, // centered horizontally
       y: 65, // bottom area
-      width: 28,
-      height: 14,
+      width: 26,
+      height: 13,
       dataUrl,
       opacity: 0.95,
       rotation: 0,
@@ -600,33 +721,46 @@ export default function PdfSignerGenerator() {
                     </div>
 
                     {sigMode === "draw" && (
-                      <button
-                        onClick={clearSigPad}
-                        className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-rose-400 cursor-pointer"
-                        title="Hapus Goresan"
-                      >
-                        <Eraser className="h-3 w-3" />
-                        <span>Hapus</span>
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={undoSigStroke}
+                          disabled={!hasDrawnSig}
+                          className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-colors"
+                          title="Urungkan Goresan Terakhir"
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                          <span>Undo</span>
+                        </button>
+                        <button
+                          onClick={clearSigPad}
+                          disabled={!hasDrawnSig}
+                          className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-rose-400 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition-colors"
+                          title="Hapus Semua Goresan"
+                        >
+                          <Eraser className="h-3 w-3" />
+                          <span>Hapus</span>
+                        </button>
+                      </div>
                     )}
                   </div>
 
                   {/* Draw Signature Pad */}
                   {sigMode === "draw" && (
                     <div className="flex flex-col gap-2">
-                      <div className="relative h-40 w-full rounded-xl bg-white border border-zinc-700 overflow-hidden shadow-inner touch-none">
+                      <div className="relative h-44 w-full rounded-xl bg-white border border-zinc-700 overflow-hidden shadow-inner touch-none">
                         <canvas
                           ref={sigCanvasRef}
-                          width={440}
-                          height={160}
+                          width={800}
+                          height={320}
                           onPointerDown={startSigDraw}
                           onPointerMove={drawSig}
                           onPointerUp={stopSigDraw}
-                          className="w-full h-full cursor-crosshair touch-none"
+                          onPointerCancel={stopSigDraw}
+                          className="w-full h-full cursor-crosshair touch-none select-none block"
                         />
                         {!hasDrawnSig && (
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-zinc-400 text-xs italic">
-                            Tanda tangan di sini dengan jari / mouse
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-zinc-400 text-xs italic select-none">
+                            Tanda tangan di sini dengan jari / stylus / mouse
                           </div>
                         )}
                       </div>
@@ -636,16 +770,17 @@ export default function PdfSignerGenerator() {
                         <div className="flex items-center gap-1.5">
                           <span className="text-[11px] text-zinc-400">Tinta:</span>
                           {[
-                            { color: "#1e3a8a", label: "Biru" },
-                            { color: "#09090b", label: "Hitam" },
+                            { color: "#1a44a0", label: "Biru Ballpoint" },
+                            { color: "#09090b", label: "Hitam Pekat" },
+                            { color: "#b91c1c", label: "Merah Resmi" },
                           ].map((c) => (
                             <button
                               key={c.color}
                               onClick={() => setSigPenColor(c.color)}
                               className={`h-5 w-5 rounded-full border-2 cursor-pointer transition-all ${
                                 sigPenColor === c.color
-                                  ? "border-sky-400 scale-110"
-                                  : "border-transparent"
+                                  ? "border-sky-400 scale-110 shadow-sm shadow-sky-500/30"
+                                  : "border-transparent opacity-80 hover:opacity-100"
                               }`}
                               style={{ backgroundColor: c.color }}
                               title={c.label}
@@ -655,17 +790,21 @@ export default function PdfSignerGenerator() {
 
                         <div className="flex items-center gap-1.5">
                           <span className="text-[11px] text-zinc-400">Tebal:</span>
-                          {[1.8, 2.5, 3.5].map((w) => (
+                          {[
+                            { width: 2.0, label: "Halus" },
+                            { width: 3.0, label: "Sedang" },
+                            { width: 4.5, label: "Tebal" },
+                          ].map((item) => (
                             <button
-                              key={w}
-                              onClick={() => setSigPenWidth(w)}
-                              className={`px-1.5 py-0.5 rounded text-[10px] font-mono cursor-pointer ${
-                                sigPenWidth === w
-                                  ? "bg-sky-500/20 text-sky-400 font-bold"
+                              key={item.width}
+                              onClick={() => setSigPenWidth(item.width)}
+                              className={`px-2 py-0.5 rounded text-[10px] font-mono cursor-pointer transition-all ${
+                                sigPenWidth === item.width
+                                  ? "bg-sky-500/20 text-sky-400 font-bold border border-sky-500/30"
                                   : "text-zinc-500 hover:text-zinc-300"
                               }`}
                             >
-                              {w}px
+                              {item.label}
                             </button>
                           ))}
                         </div>

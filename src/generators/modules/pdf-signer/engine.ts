@@ -134,12 +134,65 @@ export function processWetInkStamp(
 }
 
 /**
+ * Automatically trims transparent whitespace margins around canvas content
+ */
+export function trimCanvasWhitespace(canvas: HTMLCanvasElement, padding = 12): string {
+  if (typeof document === "undefined") return "";
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas.toDataURL("image/png");
+  const w = canvas.width;
+  const h = canvas.height;
+  const imgData = ctx.getImageData(0, 0, w, h);
+  const data = imgData.data;
+
+  let minX = w;
+  let minY = h;
+  let maxX = 0;
+  let maxY = 0;
+  let hasPixel = false;
+
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const alpha = data[(y * w + x) * 4 + 3];
+      if (alpha > 8) {
+        hasPixel = true;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+
+  if (!hasPixel) return canvas.toDataURL("image/png");
+
+  minX = Math.max(0, minX - padding);
+  minY = Math.max(0, minY - padding);
+  maxX = Math.min(w - 1, maxX + padding);
+  maxY = Math.min(h - 1, maxY + padding);
+
+  const cropW = Math.max(1, maxX - minX + 1);
+  const cropH = Math.max(1, maxY - minY + 1);
+
+  const trimmedCanvas = document.createElement("canvas");
+  trimmedCanvas.width = cropW;
+  trimmedCanvas.height = cropH;
+  const tCtx = trimmedCanvas.getContext("2d");
+  if (!tCtx) return canvas.toDataURL("image/png");
+
+  tCtx.drawImage(canvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+  return trimmedCanvas.toDataURL("image/png");
+}
+
+/**
  * Removes white paper background from an uploaded signature photo
+ * Uses adaptive brightness estimation to preserve solid ink without dotted noise
  */
 export function removeSignatureBackground(sourceImg: HTMLImageElement): string {
+  if (typeof document === "undefined") return "";
   const canvas = document.createElement("canvas");
-  canvas.width = sourceImg.naturalWidth;
-  canvas.height = sourceImg.naturalHeight;
+  canvas.width = sourceImg.naturalWidth || sourceImg.width;
+  canvas.height = sourceImg.naturalHeight || sourceImg.height;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) return "";
 
@@ -147,23 +200,48 @@ export function removeSignatureBackground(sourceImg: HTMLImageElement): string {
   const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = imgData.data;
 
+  // Estimate paper background from corner border pixels
+  const w = canvas.width;
+  const h = canvas.height;
+  const cornerLums: number[] = [];
+  const sampleCoords = [
+    [4, 4],
+    [Math.floor(w / 2), 4],
+    [Math.max(0, w - 5), 4],
+    [4, Math.max(0, h - 5)],
+    [Math.floor(w / 2), Math.max(0, h - 5)],
+    [Math.max(0, w - 5), Math.max(0, h - 5)],
+  ];
+
+  for (const [sx, sy] of sampleCoords) {
+    const idx = (sy * w + sx) * 4;
+    const l = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
+    cornerLums.push(l);
+  }
+
+  cornerLums.sort((a, b) => a - b);
+  const paperLum = Math.max(185, cornerLums[Math.floor(cornerLums.length * 0.75)] || 220);
+  const cutoff = paperLum - 18;
+  const darkFloor = Math.max(40, cutoff - 80);
+
   for (let i = 0; i < data.length; i += 4) {
     const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-    if (lum > 210) {
+    if (lum >= cutoff) {
       // Paper background
       data[i + 3] = 0;
     } else {
-      // Deepen pen ink to clean dark blue-black
-      const darkFactor = Math.min(1, (210 - lum) / 120);
-      data[i] = Math.round(data[i] * 0.4);
-      data[i + 1] = Math.round(data[i + 1] * 0.45);
-      data[i + 2] = Math.round(data[i + 2] * 0.6); // slight pen ink tint
-      data[i + 3] = Math.round(255 * darkFactor);
+      // Smooth alpha ramp to eliminate dotted noise/speckles
+      const factor = Math.max(0, Math.min(1, (cutoff - lum) / (cutoff - darkFloor)));
+      // Deepen pen ink to clean dark ballpoint blue-black
+      data[i] = Math.round(data[i] * 0.25);
+      data[i + 1] = Math.round(data[i + 1] * 0.35);
+      data[i + 2] = Math.round(data[i + 2] * 0.65);
+      data[i + 3] = Math.round(255 * Math.pow(factor, 0.7));
     }
   }
 
   ctx.putImageData(imgData, 0, 0);
-  return canvas.toDataURL("image/png");
+  return trimCanvasWhitespace(canvas, 10);
 }
 
 /**

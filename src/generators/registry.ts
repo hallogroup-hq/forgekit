@@ -127,8 +127,12 @@ import DocumentScannerGenerator from "./modules/document-scanner/component";
 import { meta as pdfSignerMeta } from "./modules/pdf-signer/meta";
 import PdfSignerGenerator from "./modules/pdf-signer/component";
 
+import { meta as pdfCompressorMeta } from "./modules/pdf-compressor/meta";
+import PdfCompressorGenerator from "./modules/pdf-compressor/component";
+
 export const registry: GeneratorModule[] = [
   // Flagship Workstation Modules
+  { meta: pdfCompressorMeta, component: PdfCompressorGenerator },
   { meta: docScannerMeta, component: DocumentScannerGenerator },
   { meta: pdfSignerMeta, component: PdfSignerGenerator },
   { meta: qrMeta, component: QrCodeGenerator },

@@ -46,6 +46,7 @@ function matchesCategory(tool: GeneratorModule, categoryId: string): boolean {
   if (categoryId === "productivity") {
     return (
       [
+        "pdf-compressor",
         "document-scanner",
         "pdf-signer",
         "csv-cleaner",
@@ -59,6 +60,7 @@ function matchesCategory(tool: GeneratorModule, categoryId: string): boolean {
 
   if (categoryId === "sales") {
     return [
+      "pdf-compressor",
       "pdf-signer",
       "document-scanner",
       "invoice-receipt",

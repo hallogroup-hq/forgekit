@@ -853,6 +853,26 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
       },
     ],
   },
+  "pdf-compressor": {
+    slug: "pdf-compressor",
+    title: "PDF Compressor",
+    category: "DOCUMENTS",
+    coverImage: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&h=600&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1920&q=80",
+    tagline: "Compress PDF file sizes with balanced image clarity and crisp text rendering.",
+    activities: [
+      {
+        title: "Preset 25% / 50% / 75%",
+        description: "Choose balanced compression presets or manual quality tuning",
+        image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+      {
+        title: "Visual Quality Inspector",
+        description: "Inspect first-page before/after clarity before downloading",
+        image: "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+    ],
+  },
 };
 
 export function getConsoleAsset(slug: string): ConsoleAsset {

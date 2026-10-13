@@ -23,13 +23,13 @@ describe("PDF Compressor Engine", () => {
     assert.ok(p50.scale >= p25.scale);
 
     assert.equal(p75.scale, 1.5);
-    assert.equal(p75.quality, 0.82);
+    assert.equal(p75.quality, 0.88);
 
     assert.equal(p50.scale, 1.25);
-    assert.equal(p50.quality, 0.68);
+    assert.equal(p50.quality, 0.78);
 
     assert.equal(p25.scale, 1.0);
-    assert.equal(p25.quality, 0.52);
+    assert.equal(p25.quality, 0.68);
   });
 
   it("should format file sizes accurately into human-readable strings", () => {

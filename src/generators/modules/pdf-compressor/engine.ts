@@ -1,11 +1,13 @@
 import { PDFDocument } from "pdf-lib";
 
 export type CompressionPreset = "25" | "50" | "75" | "custom";
+export type ImageFormat = "jpg" | "png";
 
 export interface CompressionOptions {
   preset: CompressionPreset;
   scale: number; // Render resolution multiplier (e.g. 0.9 to 1.8)
-  quality: number; // JPEG quality factor (0.40 to 0.92)
+  quality: number; // Quality factor (0.50 to 0.95)
+  format?: ImageFormat; // 'jpg' (standard high-efficiency) or 'png' (100% lossless colors)
 }
 
 export interface PresetDetails {
@@ -24,19 +26,19 @@ export const COMPRESSION_PRESETS: Record<Exclude<CompressionPreset, "custom">, P
     id: "75",
     title: "75% Kualitas Tinggi",
     badge: "Ringan",
-    description: "Kompresi ringan dengan detail gambar & teks hampir identik dengan aslinya.",
+    description: "Kompresi ringan dengan detail gambar & teks tajam mendekati asli, warna 100% terjaga.",
     scale: 1.5,
-    quality: 0.82,
+    quality: 0.88,
     targetReduction: "±25-35%",
-    recommendedFor: "Portofolio, proposal desain, dan dokumen cetak",
+    recommendedFor: "Portofolio, proposal desain, foto warna & dokumen cetak",
   },
   "50": {
     id: "50",
     title: "50% Seimbang",
     badge: "Rekomendasi",
-    description: "Ukuran file terpangkas signifikan, teks tetap tajam dan gambar sangat nyaman dibaca.",
+    description: "Ukuran file terpangkas signifikan, akurasi warna tetap natural dan teks sangat jernih.",
     scale: 1.25,
-    quality: 0.68,
+    quality: 0.78,
     targetReduction: "±50-65%",
     recommendedFor: "Dokumen kantor, laporan kerja, invoice & surat resmi",
   },
@@ -44,9 +46,9 @@ export const COMPRESSION_PRESETS: Record<Exclude<CompressionPreset, "custom">, P
     id: "25",
     title: "25% Kompak Maksimal",
     badge: "Minimum",
-    description: "Ukuran sekecil mungkin agar lolos batas upload form tanpa membuat teks pecah.",
+    description: "Ukuran sekecil mungkin agar lolos batas upload form tanpa membuat warna pudar/bergeser.",
     scale: 1.0,
-    quality: 0.52,
+    quality: 0.68,
     targetReduction: "±70-85%",
     recommendedFor: "Upload portal beasiswa, CPNS, dan batas attachment email (1-2 MB)",
   },
@@ -110,16 +112,29 @@ export function dataUrlToUint8Array(dataUrl: string): Uint8Array {
   return bytes;
 }
 
+export interface RenderedPageImage {
+  dataUrl: string;
+  bytes: Uint8Array;
+  format: ImageFormat;
+  origWidth: number;
+  origHeight: number;
+}
+
 /**
- * Renders a PDF page to canvas and returns JPEG data URL
+ * Renders a PDF page to canvas with strict color preservation:
+ * - Locks canvas to standard sRGB colorSpace (prevents Mac Display-P3 desaturation/tint shifts)
+ * - Uses 'print' rendering intent for full color accuracy
+ * - Renders transparency groups naturally, then fills background white via 'destination-over'
+ *   to avoid pre-fill blend mode contamination
  */
-export async function renderPageToJpeg(
+export async function renderPageToImage(
   page: any,
   scale: number,
-  quality: number
-): Promise<{ dataUrl: string; width: number; height: number; origWidth: number; origHeight: number }> {
+  quality: number,
+  format: ImageFormat = "jpg"
+): Promise<RenderedPageImage> {
   if (typeof document === "undefined") {
-    return { dataUrl: "", width: 0, height: 0, origWidth: 0, origHeight: 0 };
+    return { dataUrl: "", bytes: new Uint8Array(), format, origWidth: 0, origHeight: 0 };
   }
 
   const origViewport = page.getViewport({ scale: 1.0 });
@@ -129,24 +144,37 @@ export async function renderPageToJpeg(
   canvas.width = Math.round(viewport.width);
   canvas.height = Math.round(viewport.height);
 
-  const ctx = canvas.getContext("2d", { alpha: false, willReadFrequently: false });
+  // Explicit sRGB colorSpace prevents Mac Display-P3 wide-gamut mismatch
+  const ctx = canvas.getContext("2d", {
+    colorSpace: "srgb",
+    willReadFrequently: false,
+  });
   if (!ctx) throw new Error("Could not acquire 2D rendering context");
 
-  // Fill pure white background for crisp rendering before PDF render
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+  // Render PDF page with print intent to guarantee color accuracy
   await (page.render as any)({
     canvasContext: ctx,
     viewport,
     canvas,
+    intent: "print",
   }).promise;
 
-  const dataUrl = canvas.toDataURL("image/jpeg", quality);
+  // Fill transparent paper background with white BEHIND the rendered PDF content
+  // using 'destination-over' so it never corrupts PDF.js blend modes or image colors
+  ctx.save();
+  ctx.globalCompositeOperation = "destination-over";
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
+
+  const mimeType = format === "png" ? "image/png" : "image/jpeg";
+  const dataUrl = canvas.toDataURL(mimeType, format === "png" ? undefined : quality);
+  const bytes = dataUrlToUint8Array(dataUrl);
+
   return {
     dataUrl,
-    width: canvas.width,
-    height: canvas.height,
+    bytes,
+    format,
     origWidth: origViewport.width,
     origHeight: origViewport.height,
   };
@@ -155,7 +183,7 @@ export async function renderPageToJpeg(
 /**
  * Full client-side PDF compression pipeline:
  * 1. Reads pages via pdfjs-dist
- * 2. Renders pages at calibrated DPI scale with progressive JPEG compression
+ * 2. Renders pages at calibrated DPI scale with sRGB-locked color preservation
  * 3. Reassembles vector-compatible multi-page PDF preserving exact page dimensions
  */
 export async function compressPdfDocument(
@@ -172,6 +200,8 @@ export async function compressPdfDocument(
   let firstPageOriginalUrl: string | undefined;
   let firstPageCompressedUrl: string | undefined;
 
+  const targetFormat: ImageFormat = options.format || "jpg";
+
   for (let pageNum = 1; pageNum <= numPages; pageNum++) {
     onProgress?.({
       currentPage: pageNum,
@@ -182,23 +212,24 @@ export async function compressPdfDocument(
 
     const page = await pdfDoc.getPage(pageNum);
 
-    // If page 1, optionally render a 1.0 scale snapshot for before/after comparison
+    // If page 1, render a 1.0 scale snapshot for before/after comparison
     if (pageNum === 1) {
       try {
-        const origRender = await renderPageToJpeg(page, 1.0, 0.85);
+        const origRender = await renderPageToImage(page, 1.0, 0.92, "png");
         firstPageOriginalUrl = origRender.dataUrl;
       } catch {}
     }
 
-    // Render target compressed page
-    const { dataUrl, origWidth, origHeight } = await renderPageToJpeg(
+    // Render target compressed page with sRGB color preservation
+    const pageImage = await renderPageToImage(
       page,
       options.scale,
-      options.quality
+      options.quality,
+      targetFormat
     );
 
     if (pageNum === 1) {
-      firstPageCompressedUrl = dataUrl;
+      firstPageCompressedUrl = pageImage.dataUrl;
     }
 
     onProgress?.({
@@ -209,15 +240,17 @@ export async function compressPdfDocument(
     });
 
     // Embed into output PDF preserving original point coordinates
-    const jpgBytes = dataUrlToUint8Array(dataUrl);
-    const embeddedImage = await newPdfDoc.embedJpg(jpgBytes);
+    const embeddedImage =
+      pageImage.format === "png"
+        ? await newPdfDoc.embedPng(pageImage.bytes)
+        : await newPdfDoc.embedJpg(pageImage.bytes);
 
-    const newPage = newPdfDoc.addPage([origWidth, origHeight]);
+    const newPage = newPdfDoc.addPage([pageImage.origWidth, pageImage.origHeight]);
     newPage.drawImage(embeddedImage, {
       x: 0,
       y: 0,
-      width: origWidth,
-      height: origHeight,
+      width: pageImage.origWidth,
+      height: pageImage.origHeight,
     });
   }
 

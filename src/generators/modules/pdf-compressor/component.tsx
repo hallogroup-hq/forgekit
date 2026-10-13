@@ -22,6 +22,7 @@ import {
   CompressionOptions,
   COMPRESSION_PRESETS,
   CompressionResult,
+  ImageFormat,
   formatBytes,
   compressPdfDocument,
   loadPdfJs,
@@ -35,8 +36,9 @@ export default function PdfCompressorGenerator() {
 
   // Compression configuration
   const [selectedPreset, setSelectedPreset] = useState<CompressionPreset>("50");
-  const [customQuality, setCustomQuality] = useState<number>(65);
-  const [customScale, setCustomScale] = useState<number>(1.2);
+  const [colorFormat, setColorFormat] = useState<ImageFormat>("jpg");
+  const [customQuality, setCustomQuality] = useState<number>(75);
+  const [customScale, setCustomScale] = useState<number>(1.25);
 
   // Compression state
   const [isCompressing, setIsCompressing] = useState<boolean>(false);
@@ -72,18 +74,26 @@ export default function PdfCompressorGenerator() {
       const doc = await pdfjs.getDocument({ data: bytes.slice(0) }).promise;
       setPageCount(doc.numPages);
 
-      // Render thumbnail of page 1
+      // Render thumbnail of page 1 with strict sRGB color preservation
       const page1 = await doc.getPage(1);
       const vp = page1.getViewport({ scale: 0.6 });
       const canvas = document.createElement("canvas");
       canvas.width = Math.round(vp.width);
       canvas.height = Math.round(vp.height);
-      const ctx = canvas.getContext("2d");
+      const ctx = canvas.getContext("2d", { colorSpace: "srgb" });
       if (ctx) {
+        await (page1.render as any)({
+          canvasContext: ctx,
+          viewport: vp,
+          canvas,
+          intent: "print",
+        }).promise;
+        ctx.save();
+        ctx.globalCompositeOperation = "destination-over";
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        await (page1.render as any)({ canvasContext: ctx, viewport: vp, canvas }).promise;
-        setFirstPageThumb(canvas.toDataURL("image/jpeg", 0.8));
+        ctx.restore();
+        setFirstPageThumb(canvas.toDataURL("image/png"));
       }
     } catch (err: any) {
       console.error(err);
@@ -108,6 +118,7 @@ export default function PdfCompressorGenerator() {
           preset: "custom",
           scale: customScale,
           quality: customQuality / 100,
+          format: colorFormat,
         };
       } else {
         const p = COMPRESSION_PRESETS[selectedPreset];
@@ -115,6 +126,7 @@ export default function PdfCompressorGenerator() {
           preset: selectedPreset,
           scale: p.scale,
           quality: p.quality,
+          format: colorFormat,
         };
       }
 
@@ -316,6 +328,41 @@ export default function PdfCompressorGenerator() {
                     </button>
                   );
                 })}
+              </div>
+
+              {/* Color Preservation Selector */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 rounded-xl bg-zinc-950/70 border border-zinc-800 text-xs">
+                <div className="flex flex-col">
+                  <span className="font-semibold text-zinc-200">Akurasi Warna Dokumen</span>
+                  <span className="text-[11px] text-zinc-400">
+                    Kunci gamut sRGB & eliminasi pergeseran warna pada gambar/stempel
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 p-1 rounded-lg bg-zinc-900 border border-zinc-800 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => setColorFormat("jpg")}
+                    className={`px-3 py-1 rounded text-[11px] font-medium transition-all cursor-pointer ${
+                      colorFormat === "jpg"
+                        ? "bg-zinc-800 text-sky-400 font-bold shadow-sm"
+                        : "text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    Otomatis sRGB (Hemat)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setColorFormat("png")}
+                    className={`px-3 py-1 rounded text-[11px] font-medium transition-all cursor-pointer ${
+                      colorFormat === "png"
+                        ? "bg-zinc-800 text-sky-400 font-bold shadow-sm"
+                        : "text-zinc-400 hover:text-white"
+                    }`}
+                    title="100% warna identik tanpa kompresi warna yang hilang"
+                  >
+                    100% Lossless Warna (PNG)
+                  </button>
+                </div>
               </div>
 
               {/* Custom Sliders Toggle */}

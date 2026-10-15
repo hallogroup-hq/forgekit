@@ -15,12 +15,14 @@ import {
   FileCheck,
   Minimize2,
   ArrowRight,
+  Target,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import {
   CompressionPreset,
   CompressionOptions,
   COMPRESSION_PRESETS,
+  TARGET_SIZE_PRESETS,
   CompressionResult,
   ImageFormat,
   formatBytes,
@@ -39,6 +41,10 @@ export default function PdfCompressorGenerator() {
   const [colorFormat, setColorFormat] = useState<ImageFormat>("jpg");
   const [customQuality, setCustomQuality] = useState<number>(75);
   const [customScale, setCustomScale] = useState<number>(1.25);
+
+  // Exact target size configuration
+  const [targetUnit, setTargetUnit] = useState<"MB" | "KB">("MB");
+  const [targetValue, setTargetValue] = useState<string>("2");
 
   // Compression state
   const [isCompressing, setIsCompressing] = useState<boolean>(false);
@@ -68,6 +74,18 @@ export default function PdfCompressorGenerator() {
       const buffer = await file.arrayBuffer();
       const bytes = new Uint8Array(buffer);
       setPdfBytes(bytes);
+
+      // Suggest sensible target size preset based on input size
+      if (file.size > 3 * 1024 * 1024) {
+        setTargetUnit("MB");
+        setTargetValue("2");
+      } else if (file.size > 1024 * 1024) {
+        setTargetUnit("MB");
+        setTargetValue("1");
+      } else {
+        setTargetUnit("KB");
+        setTargetValue("500");
+      }
 
       // Inspect page count and render quick thumbnail
       const pdfjs = await loadPdfJs();
@@ -101,6 +119,12 @@ export default function PdfCompressorGenerator() {
     }
   };
 
+  // Current calculated target in bytes
+  const numTargetVal = parseFloat(String(targetValue)) || 0;
+  const currentTargetBytes = Math.round(
+    targetUnit === "MB" ? numTargetVal * 1024 * 1024 : numTargetVal * 1024
+  );
+
   // Execute compression
   const handleStartCompression = async () => {
     if (!pdfBytes) return;
@@ -113,7 +137,17 @@ export default function PdfCompressorGenerator() {
     try {
       let options: CompressionOptions;
 
-      if (selectedPreset === "custom") {
+      if (selectedPreset === "target") {
+        const numVal = parseFloat(String(targetValue)) || 1;
+        const targetBytes = Math.round(targetUnit === "MB" ? numVal * 1024 * 1024 : numVal * 1024);
+        options = {
+          preset: "target",
+          scale: 1.25,
+          quality: 0.75,
+          format: colorFormat,
+          targetSizeBytes: targetBytes,
+        };
+      } else if (selectedPreset === "custom") {
         options = {
           preset: "custom",
           scale: customScale,
@@ -289,8 +323,8 @@ export default function PdfCompressorGenerator() {
                 </span>
               </div>
 
-              {/* Presets Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Presets Cards: 4 Options */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {(["75", "50", "25"] as const).map((pid) => {
                   const p = COMPRESSION_PRESETS[pid];
                   const isSelected = selectedPreset === pid;
@@ -299,7 +333,7 @@ export default function PdfCompressorGenerator() {
                       key={pid}
                       type="button"
                       onClick={() => setSelectedPreset(pid)}
-                      className={`flex flex-col text-left p-3.5 rounded-xl border transition-all cursor-pointer ${
+                      className={`flex flex-col text-left p-3 rounded-xl border transition-all cursor-pointer ${
                         isSelected
                           ? "bg-zinc-800/90 border-sky-500/70 ring-1 ring-sky-500/30"
                           : "bg-zinc-950/40 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-950/80"
@@ -307,7 +341,7 @@ export default function PdfCompressorGenerator() {
                     >
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-xs font-bold text-zinc-100">
-                          {p.title}
+                          {p.title.split(" ")[0]}
                         </span>
                         <span
                           className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold ${
@@ -316,19 +350,180 @@ export default function PdfCompressorGenerator() {
                               : "bg-zinc-800 text-zinc-400"
                           }`}
                         >
-                          {p.targetReduction}
+                          {p.badge}
                         </span>
                       </div>
-                      <p className="text-[11px] text-zinc-400 leading-snug mb-2">
+                      <p className="text-[11px] text-zinc-400 leading-snug mb-2 line-clamp-2">
                         {p.description}
                       </p>
                       <span className="text-[10px] text-zinc-500 mt-auto pt-1 border-t border-zinc-800/50">
-                        {p.recommendedFor}
+                        {p.targetReduction}
                       </span>
                     </button>
                   );
                 })}
+
+                {/* 4th Card: Target Ukuran Pasti (MB / KB) */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedPreset("target")}
+                  className={`flex flex-col text-left p-3 rounded-xl border transition-all cursor-pointer ${
+                    selectedPreset === "target"
+                      ? "bg-zinc-800/90 border-sky-500/70 ring-1 ring-sky-500/30"
+                      : "bg-zinc-950/40 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-950/80"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-bold text-zinc-100 flex items-center gap-1">
+                      <Target className="h-3 w-3 text-sky-400" />
+                      Target MB
+                    </span>
+                    <span
+                      className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                        selectedPreset === "target"
+                          ? "bg-sky-500/20 text-sky-300"
+                          : "bg-zinc-800 text-zinc-400"
+                      }`}
+                    >
+                      Kustom
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-zinc-400 leading-snug mb-2 line-clamp-2">
+                    Tentukan batas ukuran pasti (misal 1 MB, 2 MB, 500 KB) agar lolos batas upload form.
+                  </p>
+                  <span className="text-[10px] text-sky-400 font-mono mt-auto pt-1 border-t border-zinc-800/50">
+                    ≤ {targetValue} {targetUnit}
+                  </span>
+                </button>
               </div>
+
+              {/* DEDICATED TARGET SIZE INPUT PANEL (When target preset is active) */}
+              {selectedPreset === "target" && (
+                <div className="flex flex-col gap-3.5 p-4 rounded-xl bg-zinc-950 border border-sky-500/40">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800/80 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <Target className="h-4 w-4 text-sky-400" />
+                      <span className="text-xs font-semibold text-zinc-100">
+                        Atur Target Ukuran Pasti
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-zinc-400">
+                      Kalibrasi otomatis menjamin file lolos batas form
+                    </span>
+                  </div>
+
+                  {/* Preset Quick Chips */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] text-zinc-400 mr-1">Pilihan Cepat:</span>
+                    {TARGET_SIZE_PRESETS.map((t) => {
+                      const isCurrent =
+                        targetUnit === (t.bytes >= 1024 * 1024 ? "MB" : "KB") &&
+                        parseFloat(String(targetValue)) === (t.bytes >= 1024 * 1024 ? t.bytes / (1024 * 1024) : t.bytes / 1024);
+                      return (
+                        <button
+                          key={t.label}
+                          type="button"
+                          onClick={() => {
+                            if (t.bytes >= 1024 * 1024) {
+                              setTargetUnit("MB");
+                              setTargetValue(String(t.bytes / (1024 * 1024)));
+                            } else {
+                              setTargetUnit("KB");
+                              setTargetValue(String(t.bytes / 1024));
+                            }
+                          }}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition-colors cursor-pointer ${
+                            isCurrent
+                              ? "bg-sky-500/20 text-sky-300 border border-sky-500/40 font-bold"
+                              : "bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800"
+                          }`}
+                          title={t.description}
+                        >
+                          {t.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Number Input & Unit Switcher */}
+                  <div className="flex items-center rounded-xl bg-zinc-900 border border-zinc-800 focus-within:border-sky-500/60 overflow-hidden">
+                    <span className="text-xs text-zinc-400 pl-3 pr-2 select-none">Maksimal:</span>
+                    <input
+                      type="number"
+                      min="0.1"
+                      max="500"
+                      step={targetUnit === "MB" ? "0.1" : "50"}
+                      value={targetValue}
+                      onChange={(e) => setTargetValue(e.target.value)}
+                      placeholder={targetUnit === "MB" ? "Misal 1.5" : "Misal 500"}
+                      className="flex-1 bg-transparent py-2.5 px-2 text-sm font-mono text-zinc-100 placeholder-zinc-600 focus:outline-none"
+                    />
+                    <div className="flex items-center bg-zinc-950 p-1 m-1 rounded-lg border border-zinc-800 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (targetUnit !== "MB") {
+                            const val = parseFloat(String(targetValue)) || 500;
+                            setTargetValue((val / 1024).toFixed(1));
+                            setTargetUnit("MB");
+                          }
+                        }}
+                        className={`px-2.5 py-1 rounded text-[11px] font-bold cursor-pointer transition-all ${
+                          targetUnit === "MB"
+                            ? "bg-zinc-800 text-sky-400 shadow-sm"
+                            : "text-zinc-400 hover:text-white"
+                        }`}
+                      >
+                        MB
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (targetUnit !== "KB") {
+                            const val = parseFloat(String(targetValue)) || 1;
+                            setTargetValue(Math.round(val * 1024).toString());
+                            setTargetUnit("KB");
+                          }
+                        }}
+                        className={`px-2.5 py-1 rounded text-[11px] font-bold cursor-pointer transition-all ${
+                          targetUnit === "KB"
+                            ? "bg-zinc-800 text-sky-400 shadow-sm"
+                            : "text-zinc-400 hover:text-white"
+                        }`}
+                      >
+                        KB
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Real-time comparison feedback */}
+                  <div className="flex flex-col gap-1 text-[11px] text-zinc-400">
+                    <div className="flex items-center justify-between">
+                      <span>Batas Target Kompresi:</span>
+                      <span className="font-mono font-bold text-sky-400">
+                        ≤ {formatBytes(currentTargetBytes)}
+                      </span>
+                    </div>
+                    {pdfFile && (
+                      <span className="text-zinc-500 leading-relaxed">
+                        {currentTargetBytes < pdfFile.size ? (
+                          <>
+                            File asli ({formatBytes(pdfFile.size)}) akan dikurangi sekitar{" "}
+                            <strong className="text-zinc-300">
+                              {Math.round(((pdfFile.size - currentTargetBytes) / pdfFile.size) * 100)}%
+                            </strong>{" "}
+                            dengan kalibrasi resolusi adaptif agar pas di bawah batas.
+                          </>
+                        ) : (
+                          <>
+                            File asli ({formatBytes(pdfFile.size)}) sudah berada di bawah target. Kompresi akan mempertahankan kualitas visual tertinggi.
+                          </>
+                        )}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Color Preservation Selector */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 rounded-xl bg-zinc-950/70 border border-zinc-800 text-xs">
@@ -516,6 +711,21 @@ export default function PdfCompressorGenerator() {
                       -{formatBytes(compressionResult.savingsBytes)}
                     </span>
                   </div>
+
+                  {/* Exact Target Result Indicator */}
+                  {compressionResult.targetSizeBytes && (
+                    <div className="flex items-center justify-between p-2.5 rounded-lg bg-zinc-900/90 border border-zinc-800 text-xs">
+                      <div className="flex items-center gap-1.5 text-zinc-300">
+                        <Target className="h-3.5 w-3.5 text-sky-400" />
+                        <span>Target: ≤ {formatBytes(compressionResult.targetSizeBytes)}</span>
+                      </div>
+                      <span className="font-mono text-[11px] text-sky-400 font-semibold">
+                        {compressionResult.compressedSize <= compressionResult.targetSizeBytes
+                          ? "✓ Lolos Batas Form"
+                          : `+${formatBytes(compressionResult.compressedSize - compressionResult.targetSizeBytes)}`}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Download Button */}
                   <button

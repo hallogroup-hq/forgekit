@@ -66,4 +66,60 @@ describe("PDF Compressor Engine", () => {
     assert.equal(savedBytes[2], 0x44); // D
     assert.equal(savedBytes[3], 0x46); // F
   });
+
+  it("should estimate optimal target compression parameters based on target size and page count", async () => {
+    const { estimateTargetCompressionParams, TARGET_SIZE_PRESETS } = await import(
+      "../src/generators/modules/pdf-compressor/engine"
+    );
+
+    // Verify presets
+    assert.equal(TARGET_SIZE_PRESETS.length, 5);
+    assert.equal(TARGET_SIZE_PRESETS[0].bytes, 300 * 1024);
+    assert.equal(TARGET_SIZE_PRESETS[2].bytes, 1024 * 1024);
+
+    // Large budget for 1 page (e.g. 5 MB target) -> should assign high scale and quality
+    const highBudget = estimateTargetCompressionParams(5 * 1024 * 1024, 1);
+    assert.ok(highBudget.scale >= 1.4);
+    assert.ok(highBudget.quality >= 0.85);
+
+    // Moderate budget (e.g. 1 MB target for 5 pages = ~190KB/page)
+    const midBudget = estimateTargetCompressionParams(1024 * 1024, 5);
+    assert.ok(midBudget.scale >= 1.0 && midBudget.scale <= 1.6);
+    assert.ok(midBudget.quality >= 0.70 && midBudget.quality <= 0.90);
+
+    // Tight budget (e.g. 300 KB target for 10 pages = ~30KB/page)
+    const tightBudget = estimateTargetCompressionParams(300 * 1024, 10);
+    assert.ok(tightBudget.scale <= 1.0);
+    assert.ok(tightBudget.quality <= 0.65);
+  });
+
+  it("should calibrate target parameters with sample page probe data accurately", async () => {
+    const { estimateTargetCompressionParams } = await import(
+      "../src/generators/modules/pdf-compressor/engine"
+    );
+
+    // Simulated probe on page 1 at scale 1.25:
+    // Q85 = 120 KB, Q65 = 70 KB, Q45 = 40 KB
+    const probe = {
+      sampleScale: 1.25,
+      bytesAtQ85: 120 * 1024,
+      bytesAtQ65: 70 * 1024,
+      bytesAtQ45: 40 * 1024,
+    };
+
+    // If target is 2 MB for 2 pages = 1 MB / page (targetPerPage >> bytesAtQ85)
+    const generousResult = estimateTargetCompressionParams(2 * 1024 * 1024, 2, probe);
+    assert.ok(generousResult.scale >= 1.25);
+    assert.equal(generousResult.quality, 0.88);
+
+    // If target is 200 KB for 2 pages = 100 KB / page (between Q65 and Q85)
+    const interpResult = estimateTargetCompressionParams(200 * 1024, 2, probe);
+    assert.equal(interpResult.scale, 1.25);
+    assert.ok(interpResult.quality >= 0.65 && interpResult.quality <= 0.85);
+
+    // If target is 60 KB for 2 pages = 30 KB / page (below Q45)
+    const constrainedResult = estimateTargetCompressionParams(60 * 1024, 2, probe);
+    assert.ok(constrainedResult.scale < 1.25);
+    assert.ok(constrainedResult.quality < 0.60);
+  });
 });

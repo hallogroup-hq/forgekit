@@ -31,10 +31,10 @@ export function GeneratorHarness({ meta, children }: GeneratorHarnessProps) {
   }, []);
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] bg-zinc-50/50 dark:bg-zinc-950 py-4 px-4 sm:px-6">
-      <div className="max-w-7xl mx-auto space-y-4">
+    <div className="min-h-[calc(100vh-3.5rem)] bg-zinc-50/50 dark:bg-zinc-950 py-4 px-4 sm:px-6 print:min-h-0 print:bg-white print:p-0 print:m-0">
+      <div className="max-w-7xl mx-auto space-y-4 print:max-w-none print:space-y-0 print:m-0">
         {/* Compact Tool Header & Controls */}
-        <div className="flex items-center justify-between gap-4 pb-3 border-b border-zinc-200/80 dark:border-zinc-800/80">
+        <div className="flex items-center justify-between gap-4 pb-3 border-b border-zinc-200/80 dark:border-zinc-800/80 print:hidden">
           <div className="flex items-center gap-3 min-w-0">
             <Link
               href="/"
@@ -96,7 +96,7 @@ export function GeneratorHarness({ meta, children }: GeneratorHarnessProps) {
         </div>
 
         {/* Generator Main Content */}
-        <div className="bg-white dark:bg-zinc-900/90 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-4 sm:p-6">
+        <div className="bg-white dark:bg-zinc-900/90 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-4 sm:p-6 print:border-none print:shadow-none print:p-0 print:bg-white print:rounded-none">
           {children}
         </div>
       </div>

@@ -130,8 +130,12 @@ import PdfSignerGenerator from "./modules/pdf-signer/component";
 import { meta as pdfCompressorMeta } from "./modules/pdf-compressor/meta";
 import PdfCompressorGenerator from "./modules/pdf-compressor/component";
 
+import { meta as bgRemoverMeta } from "./modules/background-remover/meta";
+import BackgroundRemoverGenerator from "./modules/background-remover/component";
+
 export const registry: GeneratorModule[] = [
   // Flagship Workstation Modules
+  { meta: bgRemoverMeta, component: BackgroundRemoverGenerator },
   { meta: pdfCompressorMeta, component: PdfCompressorGenerator },
   { meta: docScannerMeta, component: DocumentScannerGenerator },
   { meta: pdfSignerMeta, component: PdfSignerGenerator },

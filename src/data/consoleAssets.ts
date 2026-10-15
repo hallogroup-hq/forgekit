@@ -873,6 +873,26 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
       },
     ],
   },
+  "background-remover": {
+    slug: "background-remover",
+    title: "Background Remover",
+    category: "CREATIVE",
+    coverImage: "https://images.unsplash.com/photo-1542744094-3a31f272c490?auto=format&fit=crop&w=600&h=600&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1920&q=80",
+    tagline: "Remove image backgrounds into clean transparent PNGs with magic wand flood-fill, feathering, and touch-up brushes.",
+    activities: [
+      {
+        title: "Magic Wand & Chroma Key",
+        description: "Contiguous flood-fill to preserve subject interior or global color keying",
+        image: "https://images.unsplash.com/photo-1542744094-3a31f272c490?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+      {
+        title: "Feathering & Touch-up Brushes",
+        description: "Cubic Hermite antialiasing, defringing, and manual restore/erase brushes",
+        image: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+    ],
+  },
 };
 
 export function getConsoleAsset(slug: string): ConsoleAsset {

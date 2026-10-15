@@ -46,6 +46,7 @@ function matchesCategory(tool: GeneratorModule, categoryId: string): boolean {
   if (categoryId === "productivity") {
     return (
       [
+        "background-remover",
         "pdf-compressor",
         "document-scanner",
         "pdf-signer",
@@ -86,6 +87,7 @@ function matchesCategory(tool: GeneratorModule, categoryId: string): boolean {
   if (categoryId === "creative") {
     return (
       [
+        "background-remover",
         "batch-image-resizer",
         "image-converter",
         "aspect-ratio",

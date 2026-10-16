@@ -100,6 +100,20 @@ export default function CodeSnapper() {
       const cardW = cardRect.width;
       const cardH = cardRect.height;
 
+      const safeRoundRect = (
+        rx: number,
+        ry: number,
+        rw: number,
+        rh: number,
+        radii: number | number[]
+      ) => {
+        if (typeof ctx.roundRect === "function") {
+          ctx.roundRect(rx, ry, rw, rh, radii);
+        } else {
+          ctx.rect(rx, ry, rw, rh);
+        }
+      };
+
       // Draw card shadow
       ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
       ctx.shadowBlur = 30;
@@ -107,7 +121,7 @@ export default function CodeSnapper() {
 
       ctx.fillStyle = currentTheme.bg;
       ctx.beginPath();
-      ctx.roundRect(cardX, cardY, cardW, cardH, 12);
+      safeRoundRect(cardX, cardY, cardW, cardH, 12);
       ctx.fill();
 
       // Reset shadow
@@ -123,7 +137,7 @@ export default function CodeSnapper() {
       // Header titlebar
       ctx.fillStyle = currentTheme.titleBg;
       ctx.beginPath();
-      ctx.roundRect(cardX, cardY, cardW, 36, [12, 12, 0, 0]);
+      safeRoundRect(cardX, cardY, cardW, 36, [12, 12, 0, 0]);
       ctx.fill();
 
       // Traffic light dots

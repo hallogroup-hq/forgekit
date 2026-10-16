@@ -33,6 +33,7 @@ export default function PdfOrganizer() {
   const [rangeInput, setRangeInput] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,6 +47,13 @@ export default function PdfOrganizer() {
       const newBuffers = { ...fileBuffers };
       const newFileList = [...fileList];
       const newPages: PageItem[] = [...pages];
+      const newThumbnails = { ...thumbnails };
+
+      // Load pdfjs-dist for thumbnail rendering
+      const pdfjs = await import("pdfjs-dist");
+      if (!pdfjs.GlobalWorkerOptions.workerSrc) {
+        pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+      }
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
@@ -61,20 +69,42 @@ export default function PdfOrganizer() {
         newBuffers[fileId] = bytes;
         newFileList.push({ id: fileId, name: file.name, pageCount: count });
 
-        for (let pageIdx = 0; pageIdx < count; pageIdx++) {
-          newPages.push({
-            id: `p_${fileId}_${pageIdx}`,
-            fileId,
-            sourceFileName: file.name,
-            sourcePageIndex: pageIdx,
-            rotation: 0,
-          });
+        // Render PDF pages to mini thumbnails
+        try {
+          const loadingTask = pdfjs.getDocument({ data: bytes });
+          const renderedPdf = await loadingTask.promise;
+
+          for (let pageIdx = 0; pageIdx < count; pageIdx++) {
+            const pageId = `p_${fileId}_${pageIdx}`;
+            newPages.push({
+              id: pageId,
+              fileId,
+              sourceFileName: file.name,
+              sourcePageIndex: pageIdx,
+              rotation: 0,
+            });
+
+            const page = await renderedPdf.getPage(pageIdx + 1);
+            const viewport = page.getViewport({ scale: 0.25 });
+            const canvas = document.createElement("canvas");
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            const ctx = canvas.getContext("2d");
+            if (ctx) {
+              // @ts-expect-error - canvasContext
+              await page.render({ canvasContext: ctx, viewport }).promise;
+              newThumbnails[pageId] = canvas.toDataURL("image/jpeg", 0.7);
+            }
+          }
+        } catch (thumbErr) {
+          console.warn("Could not render page thumbnail", thumbErr);
         }
       }
 
       setFileBuffers(newBuffers);
       setFileList(newFileList);
       setPages(newPages);
+      setThumbnails(newThumbnails);
     } catch (err) {
       console.error("PDF load error", err);
       setErrorMsg("Gagal membaca file PDF. Pastikan file tidak terkunci password.");
@@ -252,21 +282,31 @@ export default function PdfOrganizer() {
                 className="group relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 flex flex-col justify-between shadow-sm hover:border-zinc-400 dark:hover:border-zinc-700 transition"
               >
                 {/* Simulated Paper Graphic with rotation */}
-                <div className="aspect-[3/4] bg-zinc-50 dark:bg-zinc-950 rounded border border-zinc-200 dark:border-zinc-800 flex flex-col items-center justify-center p-3 text-center overflow-hidden relative">
+                <div className="aspect-[3/4] bg-zinc-100 dark:bg-zinc-950 rounded-lg border border-zinc-200 dark:border-zinc-800 flex flex-col items-center justify-center overflow-hidden relative shadow-inner">
                   <div
                     style={{
                       transform: `rotate(${page.rotation}deg)`,
                       transition: "transform 0.2s ease",
                     }}
-                    className="flex flex-col items-center justify-center gap-1.5"
+                    className="w-full h-full flex items-center justify-center p-1"
                   >
-                    <FileText size={24} className="text-zinc-400" />
-                    <span className="text-[10px] text-zinc-400 truncate max-w-[90px]">
-                      {page.sourceFileName}
-                    </span>
-                    <span className="font-mono text-xs font-bold text-zinc-700 dark:text-zinc-300">
-                      Hal {page.sourcePageIndex + 1}
-                    </span>
+                    {thumbnails[page.id] ? (
+                      <img
+                        src={thumbnails[page.id]}
+                        alt={`Halaman ${page.sourcePageIndex + 1}`}
+                        className="w-full h-full object-contain rounded pointer-events-none select-none"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center gap-1.5 p-3 text-center">
+                        <FileText size={24} className="text-zinc-400" />
+                        <span className="text-[10px] text-zinc-400 truncate max-w-[90px]">
+                          {page.sourceFileName}
+                        </span>
+                        <span className="font-mono text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                          Hal {page.sourcePageIndex + 1}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Absolute Badge Order Number */}

@@ -170,9 +170,25 @@ export default function DeviceMockupStudio() {
             ctx.shadowOffsetY = 16;
           }
 
+          // Helper for safe roundRect
+          const safeRoundRect = (
+            rx: number,
+            ry: number,
+            rw: number,
+            rh: number,
+            radii: number | number[]
+          ) => {
+            if (typeof ctx.roundRect === "function") {
+              ctx.roundRect(rx, ry, rw, rh, radii);
+            } else {
+              const rad = typeof radii === "number" ? radii : radii[0] || 0;
+              ctx.rect(rx, ry, rw, rh);
+            }
+          };
+
           // Device outline shape
           ctx.beginPath();
-          ctx.roundRect(x, y, devW, devH, spec.borderRadius);
+          safeRoundRect(x, y, devW, devH, spec.borderRadius);
           ctx.fillStyle = config.deviceColor === "dark" ? "#18181b" : "#e4e4e7";
           ctx.fill();
 
@@ -188,7 +204,7 @@ export default function DeviceMockupStudio() {
             // Draw browser chrome
             ctx.fillStyle = config.deviceColor === "dark" ? "#27272a" : "#f4f4f5";
             ctx.beginPath();
-            ctx.roundRect(x, y, devW, 38, [spec.borderRadius, spec.borderRadius, 0, 0]);
+            safeRoundRect(x, y, devW, 38, [spec.borderRadius, spec.borderRadius, 0, 0]);
             ctx.fill();
 
             // Traffic light buttons
@@ -203,7 +219,7 @@ export default function DeviceMockupStudio() {
             if (config.showAddressBar) {
               ctx.fillStyle = config.deviceColor === "dark" ? "#18181b" : "#ffffff";
               ctx.beginPath();
-              ctx.roundRect(x + 75, y + 8, devW - 150, 22, 6);
+              safeRoundRect(x + 75, y + 8, devW - 150, 22, 6);
               ctx.fill();
 
               ctx.font = "11px system-ui, sans-serif";
@@ -217,19 +233,40 @@ export default function DeviceMockupStudio() {
           ctx.save();
           ctx.beginPath();
           if (config.device === "browser") {
-            ctx.roundRect(x, screenOffsetY, devW, spec.screenHeight, [0, 0, spec.borderRadius, spec.borderRadius]);
+            safeRoundRect(x, screenOffsetY, devW, spec.screenHeight, [0, 0, spec.borderRadius, spec.borderRadius]);
           } else {
-            ctx.roundRect(x + 4, y + 4, devW - 8, devH - 8, spec.borderRadius - 4);
+            safeRoundRect(x + 4, y + 4, devW - 8, devH - 8, Math.max(4, spec.borderRadius - 4));
           }
           ctx.clip();
-          ctx.drawImage(img, x, screenOffsetY, devW, spec.screenHeight);
+
+          // Aspect-ratio cover to prevent image stretching
+          const targetW = devW;
+          const targetH = spec.screenHeight;
+          const imgAspect = img.width / img.height;
+          const targetAspect = targetW / targetH;
+          let drawW = targetW;
+          let drawH = targetH;
+          let drawX = x;
+          let drawY = screenOffsetY;
+
+          if (imgAspect > targetAspect) {
+            drawH = targetH;
+            drawW = targetH * imgAspect;
+            drawX = x + (targetW - drawW) / 2;
+          } else {
+            drawW = targetW;
+            drawH = targetW / imgAspect;
+            drawY = screenOffsetY; // align top
+          }
+
+          ctx.drawImage(img, drawX, drawY, drawW, drawH);
           ctx.restore();
 
           // Dynamic Island for iPhone
           if (config.device === "iphone") {
             ctx.fillStyle = "#000000";
             ctx.beginPath();
-            ctx.roundRect(x + devW / 2 - 45, y + 12, 90, 24, 12);
+            safeRoundRect(x + devW / 2 - 45, y + 12, 90, 24, 12);
             ctx.fill();
           }
 
@@ -513,14 +550,14 @@ export default function DeviceMockupStudio() {
               <div
                 style={{
                   width: `${DEVICE_SPECS[config.device].screenWidth}px`,
-                  maxHeight: `${DEVICE_SPECS[config.device].screenHeight}px`,
+                  height: `${DEVICE_SPECS[config.device].screenHeight}px`,
                 }}
-                className="overflow-hidden flex items-center justify-center bg-zinc-950"
+                className="overflow-hidden bg-zinc-950"
               >
                 <img
                   src={imageSrc}
                   alt="Mockup Screen"
-                  className="w-full h-auto object-cover select-none pointer-events-none"
+                  className="w-full h-full object-cover object-top select-none pointer-events-none"
                 />
               </div>
 

@@ -504,98 +504,226 @@ export default function AtsResumeBuilder() {
       <div
         className={`bg-white text-zinc-900 p-8 sm:p-12 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-800 max-w-4xl mx-auto ${
           activeTab === "edit" ? "hidden print:block" : "block"
-        }`}
+        } ${data.template === "executive" ? "font-serif" : "font-sans"}`}
       >
-        {/* Header */}
-        <div className="border-b-2 border-zinc-900 pb-3 mb-5 text-center sm:text-left">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 uppercase">
-            {data.fullName}
-          </h1>
-          <p className="text-sm font-medium text-zinc-700 mt-0.5">{data.title}</p>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-600 mt-2 font-mono">
-            {data.email && <span>{data.email}</span>}
-            {data.phone && <span>• {data.phone}</span>}
-            {data.location && <span>• {data.location}</span>}
-            {data.linkedin && <span>• {data.linkedin}</span>}
-            {data.github && <span>• {data.github}</span>}
-            {data.website && <span>• {data.website}</span>}
-          </div>
-        </div>
-
-        {/* Summary */}
-        {data.summary && (
-          <div className="mb-5">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-300 pb-1 mb-2">
-              Professional Summary
-            </h2>
-            <p className="text-xs text-zinc-800 leading-relaxed text-justify">{data.summary}</p>
-          </div>
-        )}
-
-        {/* Work Experience */}
-        {data.experiences.length > 0 && (
-          <div className="mb-5">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-300 pb-1 mb-3">
-              Work Experience
-            </h2>
-            <div className="space-y-4">
-              {data.experiences.map((exp) => (
-                <div key={exp.id} className="text-xs">
-                  <div className="flex flex-col sm:flex-row justify-between sm:items-baseline font-bold text-zinc-900">
-                    <span>
-                      {exp.position} — <span className="font-semibold text-zinc-800">{exp.company}</span>
-                    </span>
-                    <span className="font-mono text-[11px] text-zinc-600 font-normal">
-                      {exp.startDate} – {exp.endDate} | {exp.location}
-                    </span>
-                  </div>
-                  <ul className="list-disc list-outside pl-4 mt-1.5 space-y-1 text-zinc-700 leading-relaxed">
-                    {exp.bullets.map((bullet, idx) => (
-                      <li key={idx}>{bullet}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Education */}
-        {data.education.length > 0 && (
-          <div className="mb-5">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-300 pb-1 mb-2">
-              Education
-            </h2>
-            <div className="space-y-2">
-              {data.education.map((edu) => (
-                <div key={edu.id} className="text-xs flex justify-between items-baseline">
-                  <div>
-                    <span className="font-bold text-zinc-900">
-                      {edu.degree} in {edu.field}
-                    </span>
-                    <span className="text-zinc-700">, {edu.school}</span>
-                    {edu.gpa && <span className="text-zinc-500 text-[11px]"> ({edu.gpa})</span>}
-                  </div>
-                  <span className="font-mono text-zinc-600 text-[11px]">{edu.year}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Skills */}
-        {data.skills.length > 0 && (
+        {/* TEMPLATE 1 & 2: SINGLE COLUMN (Tech ATS & Executive) */}
+        {data.template !== "compact" ? (
           <div>
-            <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-300 pb-1 mb-2">
-              Skills & Technologies
-            </h2>
-            <div className="space-y-1.5 text-xs">
-              {data.skills.map((s) => (
-                <div key={s.id} className="flex flex-col sm:flex-row gap-1 sm:gap-2">
-                  <span className="font-semibold text-zinc-900 min-w-[170px]">{s.category}:</span>
-                  <span className="text-zinc-700">{s.skills}</span>
+            {/* Header */}
+            <div
+              className={`border-b-2 border-zinc-900 pb-3 mb-5 ${
+                data.template === "executive" ? "text-center" : "text-left"
+              }`}
+            >
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 uppercase">
+                {data.fullName}
+              </h1>
+              <p
+                className={`text-sm font-medium text-zinc-700 mt-0.5 ${
+                  data.template === "executive" ? "italic" : ""
+                }`}
+              >
+                {data.title}
+              </p>
+              <div
+                className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-600 mt-2 font-mono ${
+                  data.template === "executive" ? "justify-center" : "justify-start"
+                }`}
+              >
+                {data.email && <span>{data.email}</span>}
+                {data.phone && <span>• {data.phone}</span>}
+                {data.location && <span>• {data.location}</span>}
+                {data.linkedin && <span>• {data.linkedin}</span>}
+                {data.github && <span>• {data.github}</span>}
+                {data.website && <span>• {data.website}</span>}
+              </div>
+            </div>
+
+            {/* Summary */}
+            {data.summary && (
+              <div className="mb-5">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-300 pb-1 mb-2">
+                  Professional Summary
+                </h2>
+                <p className="text-xs text-zinc-800 leading-relaxed text-justify">{data.summary}</p>
+              </div>
+            )}
+
+            {/* Work Experience */}
+            {data.experiences.length > 0 && (
+              <div className="mb-5">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-300 pb-1 mb-3">
+                  Work Experience
+                </h2>
+                <div className="space-y-4">
+                  {data.experiences.map((exp) => (
+                    <div key={exp.id} className="text-xs">
+                      <div className="flex flex-col sm:flex-row justify-between sm:items-baseline font-bold text-zinc-900">
+                        <span>
+                          {exp.position} —{" "}
+                          <span className={`font-semibold text-zinc-800 ${data.template === "executive" ? "italic" : ""}`}>
+                            {exp.company}
+                          </span>
+                        </span>
+                        <span className="font-mono text-[11px] text-zinc-600 font-normal">
+                          {exp.startDate} – {exp.endDate} | {exp.location}
+                        </span>
+                      </div>
+                      <ul className="list-disc list-outside pl-4 mt-1.5 space-y-1 text-zinc-700 leading-relaxed">
+                        {exp.bullets.map((bullet, idx) => (
+                          <li key={idx}>{bullet}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+            )}
+
+            {/* Education */}
+            {data.education.length > 0 && (
+              <div className="mb-5">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-300 pb-1 mb-2">
+                  Education
+                </h2>
+                <div className="space-y-2">
+                  {data.education.map((edu) => (
+                    <div key={edu.id} className="text-xs flex justify-between items-baseline">
+                      <div>
+                        <span className="font-bold text-zinc-900">
+                          {edu.degree} in {edu.field}
+                        </span>
+                        <span className="text-zinc-700">, {edu.school}</span>
+                        {edu.gpa && <span className="text-zinc-500 text-[11px]"> ({edu.gpa})</span>}
+                      </div>
+                      <span className="font-mono text-zinc-600 text-[11px]">{edu.year}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Skills */}
+            {data.skills.length > 0 && (
+              <div>
+                <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-300 pb-1 mb-2">
+                  Skills & Technologies
+                </h2>
+                <div className="space-y-1.5 text-xs">
+                  {data.skills.map((s) => (
+                    <div key={s.id} className="flex flex-col sm:flex-row gap-1 sm:gap-2">
+                      <span className="font-semibold text-zinc-900 min-w-[170px]">{s.category}:</span>
+                      <span className="text-zinc-700">{s.skills}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* TEMPLATE 3: MODERN COMPACT (TWO COLUMN) */
+          <div>
+            {/* Header */}
+            <div className="border-b-2 border-zinc-900 pb-3 mb-5">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 uppercase">
+                {data.fullName}
+              </h1>
+              <p className="text-sm font-medium text-zinc-700 mt-0.5">{data.title}</p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-6">
+              {/* Left Column: Contact, Skills, Education */}
+              <div className="col-span-1 space-y-5 border-r border-zinc-200 pr-5 text-xs">
+                {/* Contact */}
+                <div>
+                  <h3 className="font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-300 pb-1 mb-2 text-[11px]">
+                    Contact
+                  </h3>
+                  <div className="space-y-1 font-mono text-[11px] text-zinc-700 break-words">
+                    {data.email && <div>{data.email}</div>}
+                    {data.phone && <div>{data.phone}</div>}
+                    {data.location && <div>{data.location}</div>}
+                    {data.linkedin && <div>{data.linkedin}</div>}
+                    {data.github && <div>{data.github}</div>}
+                  </div>
+                </div>
+
+                {/* Skills */}
+                {data.skills.length > 0 && (
+                  <div>
+                    <h3 className="font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-300 pb-1 mb-2 text-[11px]">
+                      Skills
+                    </h3>
+                    <div className="space-y-2 text-[11px]">
+                      {data.skills.map((s) => (
+                        <div key={s.id}>
+                          <span className="font-semibold block text-zinc-800">{s.category}</span>
+                          <span className="text-zinc-600">{s.skills}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Education */}
+                {data.education.length > 0 && (
+                  <div>
+                    <h3 className="font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-300 pb-1 mb-2 text-[11px]">
+                      Education
+                    </h3>
+                    <div className="space-y-2 text-[11px]">
+                      {data.education.map((edu) => (
+                        <div key={edu.id}>
+                          <span className="font-bold text-zinc-900 block">{edu.degree}</span>
+                          <span className="text-zinc-700 block">{edu.field}</span>
+                          <span className="text-zinc-500 block">{edu.school}</span>
+                          <span className="font-mono text-zinc-400 block">{edu.year}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Summary, Work Experience */}
+              <div className="col-span-2 space-y-5 text-xs">
+                {/* Summary */}
+                {data.summary && (
+                  <div>
+                    <h3 className="font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-300 pb-1 mb-2 text-[11px]">
+                      Professional Summary
+                    </h3>
+                    <p className="text-zinc-800 leading-relaxed text-justify">{data.summary}</p>
+                  </div>
+                )}
+
+                {/* Experience */}
+                {data.experiences.length > 0 && (
+                  <div>
+                    <h3 className="font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-300 pb-1 mb-3 text-[11px]">
+                      Work Experience
+                    </h3>
+                    <div className="space-y-4">
+                      {data.experiences.map((exp) => (
+                        <div key={exp.id}>
+                          <div className="flex justify-between items-baseline font-bold text-zinc-900">
+                            <span>{exp.position}</span>
+                            <span className="font-mono text-[11px] text-zinc-500 font-normal">
+                              {exp.startDate} – {exp.endDate}
+                            </span>
+                          </div>
+                          <div className="text-zinc-600 font-medium mb-1">{exp.company} — {exp.location}</div>
+                          <ul className="list-disc list-outside pl-4 space-y-1 text-zinc-700 leading-relaxed">
+                            {exp.bullets.map((b, idx) => (
+                              <li key={idx}>{b}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

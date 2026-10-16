@@ -11,6 +11,9 @@ export type BackgroundPreset =
 
 export type ShadowStyle = "none" | "subtle" | "deep" | "crisp";
 
+export type ScreenRatioMode = "auto" | "16:10" | "16:9";
+export type ImageFitMode = "cover" | "contain";
+
 export interface MockupConfig {
   device: DeviceType;
   background: BackgroundPreset;
@@ -19,6 +22,8 @@ export interface MockupConfig {
   deviceColor: "dark" | "silver";
   showAddressBar?: boolean;
   browserUrl?: string;
+  ratioMode?: ScreenRatioMode;
+  fitMode?: ImageFitMode;
 }
 
 export interface DeviceSpec {
@@ -124,7 +129,8 @@ export const SHADOW_PRESETS: Record<ShadowStyle, string> = {
 export function calculateCanvasSize(
   device: DeviceType,
   padding: number,
-  scale: number = 2
+  scale: number = 2,
+  customHeight?: number
 ): { width: number; height: number; deviceWidth: number; deviceHeight: number } {
   const spec = DEVICE_SPECS[device];
   const deviceWidth = spec.screenWidth;
@@ -132,7 +138,7 @@ export function calculateCanvasSize(
   let extraHeight = 0;
   if (device === "macbook") extraHeight = 44; // base & chin
   if (device === "browser") extraHeight = 38; // titlebar
-  const deviceHeight = spec.screenHeight + extraHeight;
+  const deviceHeight = (customHeight || spec.screenHeight) + extraHeight;
 
   const width = Math.round((deviceWidth + padding * 2) * scale);
   const height = Math.round((deviceHeight + padding * 2) * scale);
@@ -152,5 +158,7 @@ export function getDefaultMockupConfig(): MockupConfig {
     deviceColor: "dark",
     showAddressBar: true,
     browserUrl: "https://forgekit.dev",
+    ratioMode: "auto",
+    fitMode: "cover",
   };
 }

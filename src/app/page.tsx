@@ -305,7 +305,10 @@ export default function PS5InspiredHomePage() {
         <img
           key={activeAsset.backdropImage}
           src={activeAsset.backdropImage}
-          alt={activeAsset.title}
+          alt=""
+          onError={(e) => {
+            e.currentTarget.style.display = "none";
+          }}
           className="w-full h-full object-cover object-center absolute inset-0 opacity-35 scale-105 transition-all duration-700 ease-out animate-in fade-in"
         />
 
@@ -531,7 +534,7 @@ export default function PS5InspiredHomePage() {
                     >
                       {/* Box Tile */}
                       <div
-                        className={`w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-2xl relative overflow-hidden transition-all duration-300 ${
+                        className={`w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-2xl relative overflow-hidden transition-all duration-300 bg-zinc-900 ${
                           isSelected
                             ? "ring-2 ring-white scale-105 shadow-2xl shadow-black/80 z-10"
                             : "border border-white/10 hover:border-white/30 opacity-80 hover:opacity-100"
@@ -539,7 +542,10 @@ export default function PS5InspiredHomePage() {
                       >
                         <img
                           src={asset.coverImage}
-                          alt={asset.title}
+                          alt=""
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
                           className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
                           loading="lazy"
                         />
@@ -588,10 +594,13 @@ export default function PS5InspiredHomePage() {
                       className="group relative rounded-2xl border border-white/10 hover:border-white/30 bg-black/50 hover:bg-black/70 backdrop-blur-md overflow-hidden flex flex-col justify-between transition-all hover:-translate-y-1 p-3.5 space-y-3 shadow-lg"
                     >
                       <div className="flex items-start gap-3">
-                        <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-white/10 relative">
+                        <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-white/10 relative bg-zinc-900">
                           <img
                             src={asset.coverImage}
-                            alt={asset.title}
+                            alt=""
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                             loading="lazy"
                           />
@@ -699,10 +708,13 @@ export default function PS5InspiredHomePage() {
                   title={`Open ${act.title} in ${activeAsset.title}`}
                 >
                   {act.image && (
-                    <div className="w-full h-20 rounded-lg overflow-hidden border border-white/10 relative">
+                    <div className="w-full h-20 rounded-lg overflow-hidden border border-white/10 relative bg-zinc-900">
                       <img
                         src={act.image}
-                        alt={act.title}
+                        alt=""
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
                       />
@@ -782,10 +794,13 @@ export default function PS5InspiredHomePage() {
             </button>
 
             <div className="flex items-center gap-3">
-              <div className="w-14 h-14 rounded-2xl overflow-hidden ring-1 ring-white/20 shrink-0 relative">
+              <div className="w-14 h-14 rounded-2xl overflow-hidden ring-1 ring-white/20 shrink-0 relative bg-zinc-900">
                 <img
                   src={activeAsset.coverImage}
-                  alt={activeAsset.title}
+                  alt=""
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
                   className="w-full h-full object-cover"
                 />
               </div>

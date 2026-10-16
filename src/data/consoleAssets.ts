@@ -878,7 +878,7 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     title: "Background Remover",
     category: "CREATIVE",
     coverImage: "https://images.unsplash.com/photo-1542744094-3a31f272c490?auto=format&fit=crop&w=600&h=600&q=80",
-    backdropImage: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1920&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=1920&q=80",
     tagline: "Remove image backgrounds into clean transparent PNGs with magic wand flood-fill, feathering, and touch-up brushes.",
     activities: [
       {
@@ -889,7 +889,7 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
       {
         title: "Feathering & Touch-up Brushes",
         description: "Cubic Hermite antialiasing, defringing, and manual restore/erase brushes",
-        image: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=400&h=250&q=80",
+        image: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=400&h=250&q=80",
       },
     ],
   },
@@ -937,14 +937,14 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
     slug: "screen-recorder",
     title: "Browser Screen & Webcam Recorder",
     category: "PRODUCTIVITY",
-    coverImage: "https://images.unsplash.com/photo-1536240478700-b869070f9279?auto=format&fit=crop&w=600&h=600&q=80",
+    coverImage: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=600&h=600&q=80",
     backdropImage: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1920&q=80",
     tagline: "Capture screen, mic narration, and tab recordings with zero duration limits and no watermarks.",
     activities: [
       {
         title: "1080p HD Capture",
         description: "Hardware accelerated local encoding via WebCodecs",
-        image: "https://images.unsplash.com/photo-1536240478700-b869070f9279?auto=format&fit=crop&w=400&h=250&q=80",
+        image: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=400&h=250&q=80",
       },
       {
         title: "100% Privacy",

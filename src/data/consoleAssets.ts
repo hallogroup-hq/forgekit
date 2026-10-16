@@ -893,6 +893,166 @@ export const CONSOLE_ASSETS: Record<string, ConsoleAsset> = {
       },
     ],
   },
+  "device-mockup": {
+    slug: "device-mockup",
+    title: "Device Mockup Studio",
+    category: "DESIGN",
+    coverImage: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=600&h=600&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1920&q=80",
+    tagline: "Wrap screenshots into sleek iPhone, MacBook, and browser window frames.",
+    activities: [
+      {
+        title: "Hardware Silhouettes",
+        description: "iPhone 16 Pro, MacBook, Pixel, and macOS Browser frames",
+        image: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+      {
+        title: "Retina 4K Export",
+        description: "Zero compression blur with direct clipboard copy",
+        image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+    ],
+  },
+  "favicon-generator": {
+    slug: "favicon-generator",
+    title: "Favicon & App Icon Pack Builder",
+    category: "DEVELOPER",
+    coverImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&h=600&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1920&q=80",
+    tagline: "Generate modern favicon.ico, Apple touch icons, PWA icons, and webmanifest in one ZIP.",
+    activities: [
+      {
+        title: "Multi-Resolution ICO",
+        description: "Includes 16x16, 32x32, and 48x48 icon payloads",
+        image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+      {
+        title: "Live Preview Simulator",
+        description: "Simulated browser tabs and iOS home screen icons",
+        image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+    ],
+  },
+  "screen-recorder": {
+    slug: "screen-recorder",
+    title: "Browser Screen & Webcam Recorder",
+    category: "PRODUCTIVITY",
+    coverImage: "https://images.unsplash.com/photo-1536240478700-b869070f9279?auto=format&fit=crop&w=600&h=600&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1920&q=80",
+    tagline: "Capture screen, mic narration, and tab recordings with zero duration limits and no watermarks.",
+    activities: [
+      {
+        title: "1080p HD Capture",
+        description: "Hardware accelerated local encoding via WebCodecs",
+        image: "https://images.unsplash.com/photo-1536240478700-b869070f9279?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+      {
+        title: "100% Privacy",
+        description: "Never uploads private desktop footage to external servers",
+        image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+    ],
+  },
+  "payslip-generator": {
+    slug: "payslip-generator",
+    title: "Slip Gaji (Payslip) Generator",
+    category: "SALES & DOCS",
+    coverImage: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&h=600&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=1920&q=80",
+    tagline: "Generate official company payslips with earnings, BPJS/tax deductions, and clean A4 printout.",
+    activities: [
+      {
+        title: "Indonesian Terbilang",
+        description: "Automatic spell-out of take-home pay in Indonesian words",
+        image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+      {
+        title: "A4 Clean Printout",
+        description: "Completely isolated print layout without shell bleed",
+        image: "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+    ],
+  },
+  "pdf-organizer": {
+    slug: "pdf-organizer",
+    title: "PDF Merge, Split & Page Organizer",
+    category: "PRODUCTIVITY",
+    coverImage: "https://images.unsplash.com/photo-1568667256549-094345857637?auto=format&fit=crop&w=600&h=600&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1920&q=80",
+    tagline: "Combine multiple PDFs, rotate, reorder, and split pages visually in browser memory.",
+    activities: [
+      {
+        title: "Visual Page Grid",
+        description: "Interactive thumbnails with drag-and-drop ordering and rotation",
+        image: "https://images.unsplash.com/photo-1568667256549-094345857637?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+      {
+        title: "Unlimited Merge",
+        description: "No daily paywall caps or file upload limits",
+        image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+    ],
+  },
+  "pdf-image-converter": {
+    slug: "pdf-image-converter",
+    title: "Image to PDF & PDF to Image",
+    category: "PRODUCTIVITY",
+    coverImage: "https://images.unsplash.com/photo-1516259762381-22954d7d3ad2?auto=format&fit=crop&w=600&h=600&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1920&q=80",
+    tagline: "Convert image collections into clean A4 PDFs, or extract every PDF page into sharp PNG/JPGs.",
+    activities: [
+      {
+        title: "Batch Images to PDF",
+        description: "Combine multiple photos into single A4 PDF with custom margins",
+        image: "https://images.unsplash.com/photo-1516259762381-22954d7d3ad2?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+      {
+        title: "PDF Page Extraction",
+        description: "2x high-res rendering with bulk ZIP archive download",
+        image: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+    ],
+  },
+  "code-to-image": {
+    slug: "code-to-image",
+    title: "Code & Terminal to Image (Snapper)",
+    category: "DEVELOPER",
+    coverImage: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=600&h=600&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1920&q=80",
+    tagline: "Transform code snippets and terminal logs into beautiful graphics with macOS window frames.",
+    activities: [
+      {
+        title: "macOS Window Chrome",
+        description: "Traffic light header, custom titles, and line highlighting",
+        image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+      {
+        title: "Copy Image to Clipboard",
+        description: "Instant 2x retina PNG ready to paste into Slack or GitHub",
+        image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+    ],
+  },
+  "ats-resume": {
+    slug: "ats-resume",
+    title: "ATS Resume / CV Builder",
+    category: "SALES & DOCS",
+    coverImage: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=600&h=600&q=80",
+    backdropImage: "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=1920&q=80",
+    tagline: "Build clean, parser-friendly professional resumes with A4 PDF export and zero paywalls.",
+    activities: [
+      {
+        title: "ATS Compatibility Heuristics",
+        description: "Live audit score checking contact completeness and section headings",
+        image: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+      {
+        title: "100% Free A4 Export",
+        description: "Zero bait-and-switch paywalls and zero watermarks",
+        image: "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=400&h=250&q=80",
+      },
+    ],
+  },
 };
 
 export function getConsoleAsset(slug: string): ConsoleAsset {

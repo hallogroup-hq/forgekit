@@ -133,8 +133,40 @@ import PdfCompressorGenerator from "./modules/pdf-compressor/component";
 import { meta as bgRemoverMeta } from "./modules/background-remover/meta";
 import BackgroundRemoverGenerator from "./modules/background-remover/component";
 
+import { meta as deviceMockupMeta } from "./modules/device-mockup/meta";
+import DeviceMockupGenerator from "./modules/device-mockup/component";
+
+import { meta as faviconMeta } from "./modules/favicon-generator/meta";
+import FaviconGenerator from "./modules/favicon-generator/component";
+
+import { meta as screenRecorderMeta } from "./modules/screen-recorder/meta";
+import ScreenRecorderGenerator from "./modules/screen-recorder/component";
+
+import { meta as payslipMeta } from "./modules/payslip-generator/meta";
+import PayslipGenerator from "./modules/payslip-generator/component";
+
+import { meta as pdfOrganizerMeta } from "./modules/pdf-organizer/meta";
+import PdfOrganizerGenerator from "./modules/pdf-organizer/component";
+
+import { meta as pdfImageConvMeta } from "./modules/pdf-image-converter/meta";
+import PdfImageConverterGenerator from "./modules/pdf-image-converter/component";
+
+import { meta as codeToImageMeta } from "./modules/code-to-image/meta";
+import CodeToImageGenerator from "./modules/code-to-image/component";
+
+import { meta as atsResumeMeta } from "./modules/ats-resume/meta";
+import AtsResumeGenerator from "./modules/ats-resume/component";
+
 export const registry: GeneratorModule[] = [
   // Flagship Workstation Modules
+  { meta: deviceMockupMeta, component: DeviceMockupGenerator },
+  { meta: pdfOrganizerMeta, component: PdfOrganizerGenerator },
+  { meta: pdfImageConvMeta, component: PdfImageConverterGenerator },
+  { meta: screenRecorderMeta, component: ScreenRecorderGenerator },
+  { meta: codeToImageMeta, component: CodeToImageGenerator },
+  { meta: faviconMeta, component: FaviconGenerator },
+  { meta: payslipMeta, component: PayslipGenerator },
+  { meta: atsResumeMeta, component: AtsResumeGenerator },
   { meta: bgRemoverMeta, component: BackgroundRemoverGenerator },
   { meta: pdfCompressorMeta, component: PdfCompressorGenerator },
   { meta: docScannerMeta, component: DocumentScannerGenerator },

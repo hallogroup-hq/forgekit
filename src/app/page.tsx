@@ -48,6 +48,9 @@ function matchesCategory(tool: GeneratorModule, categoryId: string): boolean {
       [
         "background-remover",
         "pdf-compressor",
+        "pdf-organizer",
+        "pdf-image-converter",
+        "screen-recorder",
         "document-scanner",
         "pdf-signer",
         "csv-cleaner",
@@ -62,10 +65,13 @@ function matchesCategory(tool: GeneratorModule, categoryId: string): boolean {
   if (categoryId === "sales") {
     return [
       "pdf-compressor",
+      "pdf-organizer",
       "pdf-signer",
       "document-scanner",
       "invoice-receipt",
       "quotation-generator",
+      "payslip-generator",
+      "ats-resume",
       "email-signature",
     ].includes(slug);
   }
@@ -87,6 +93,9 @@ function matchesCategory(tool: GeneratorModule, categoryId: string): boolean {
   if (categoryId === "creative") {
     return (
       [
+        "device-mockup",
+        "favicon-generator",
+        "pdf-image-converter",
         "background-remover",
         "batch-image-resizer",
         "image-converter",
@@ -104,6 +113,8 @@ function matchesCategory(tool: GeneratorModule, categoryId: string): boolean {
   if (categoryId === "developer" || categoryId === "vibe-coder") {
     return (
       [
+        "code-to-image",
+        "favicon-generator",
         "ai-rules",
         "app-prd",
         "prompt-optimizer",
